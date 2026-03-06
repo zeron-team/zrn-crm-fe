@@ -34,6 +34,7 @@ export default function TimeTracking() {
     const [summary, setSummary] = useState<{ total_days: number; total_hours: number; avg_hours_per_day: number; days: DaySummary[] } | null>(null);
     const [loading, setLoading] = useState(false);
     const [view, setView] = useState<'clock' | 'history'>('clock');
+    const [toast, setToast] = useState<string | null>(null);
 
     // Overview data (all employees)
     const [overviewChart, setOverviewChart] = useState<any[]>([]);
@@ -95,11 +96,16 @@ export default function TimeTracking() {
         setLoading(true);
         try {
             await api.post('/time-entries/', { employee_id: selectedEmployee, entry_type: entryType });
+            const label = (ENTRY_TYPES as any)[entryType]?.label || entryType;
+            setToast(`✅ ${label} registrado correctamente`);
+            setTimeout(() => setToast(null), 3000);
             fetchToday();
             fetchSummary();
             fetchOverview();
         } catch (e: any) {
-            alert(e.response?.data?.detail || 'Error');
+            const msg = e.response?.data?.detail || 'Error al registrar fichada';
+            setToast(`❌ ${msg}`);
+            setTimeout(() => setToast(null), 4000);
         } finally { setLoading(false); }
     };
 
@@ -297,7 +303,7 @@ export default function TimeTracking() {
                                     const isAllowed = allowed.has(type);
                                     return (
                                         <button key={type} onClick={() => clockAction(type)} disabled={loading || !isAllowed}
-                                            className={`p-4 rounded-xl border shadow-sm transition-all text-center ${isAllowed ? `${config.bg} ${config.border} hover:shadow-md cursor-pointer` : 'bg-gray-50 border-gray-200 opacity-40 cursor-not-allowed'}`}>
+                                            className={`p-4 rounded-xl border shadow-sm transition-all text-center ${isAllowed ? `${config.bg} ${config.border} hover:shadow-md cursor-pointer ${isStart && isAllowed ? 'ring-2 ring-offset-1 ring-green-400 animate-pulse' : ''}` : 'bg-gray-50 border-gray-200 opacity-40 cursor-not-allowed'}`}>
                                             <div className={`w-12 h-12 bg-gradient-to-br ${isAllowed ? config.color : 'from-gray-300 to-gray-400'} rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm`}>
                                                 {isStart ? <Play size={20} className="text-white" /> : <Square size={20} className="text-white" />}
                                             </div>
@@ -424,6 +430,12 @@ export default function TimeTracking() {
                         )}
                     </div>
                 </>
+            )}
+            {/* Toast notification */}
+            {toast && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-gray-900 text-white rounded-xl shadow-2xl text-sm font-bold animate-bounce">
+                    {toast}
+                </div>
             )}
         </div>
     );

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
-import { Plus, Pencil, Trash2, FileText, UploadCloud, X, ChevronRight, CreditCard, CheckCircle2, Clock, AlertCircle, ArrowLeft, Receipt, FolderKanban, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, UploadCloud, X, ChevronRight, CreditCard, CheckCircle2, Clock, AlertCircle, ArrowLeft, Receipt, FolderKanban, AlertTriangle, List, LayoutGrid, GripVertical } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface Quote {
@@ -106,6 +106,8 @@ export default function Quotes() {
     // Lead-to-client conversion warning for project creation
     const [convertWarningQuote, setConvertWarningQuote] = useState<Quote | null>(null);
     const [converting, setConverting] = useState(false);
+    const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
+    const [draggedQuoteId, setDraggedQuoteId] = useState<number | null>(null);
 
     const statuses = ["Draft", "Sent", "Accepted", "Rejected"];
     const currencies = ["ARS", "USD", "EUR"];
@@ -380,6 +382,24 @@ export default function Quotes() {
         }
     };
 
+    const handleStatusChange = async (quoteId: number, newStatus: string) => {
+        try {
+            const quote = quotes.find(q => q.id === quoteId);
+            if (!quote || quote.status === newStatus) return;
+            await api.put(`/quotes/${quoteId}`, { ...quote, status: newStatus });
+            setQuotes(prev => prev.map(q => q.id === quoteId ? { ...q, status: newStatus } : q));
+        } catch (error) {
+            console.error('Failed to update quote status', error);
+        }
+    };
+
+    const kanbanColumns = [
+        { status: 'Draft', label: 'Borrador', icon: '📝', gradient: 'from-slate-500 to-gray-600', bg: 'bg-slate-50', border: 'border-slate-200', badge: 'bg-slate-100 text-slate-700' },
+        { status: 'Sent', label: 'Enviado', icon: '📤', gradient: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-700' },
+        { status: 'Accepted', label: 'Aceptado', icon: '✅', gradient: 'from-emerald-500 to-green-600', bg: 'bg-emerald-50', border: 'border-emerald-200', badge: 'bg-emerald-100 text-emerald-700' },
+        { status: 'Rejected', label: 'Rechazado', icon: '❌', gradient: 'from-red-500 to-rose-600', bg: 'bg-red-50', border: 'border-red-200', badge: 'bg-red-100 text-red-700' },
+    ];
+
     if (loading) return <div className="p-8 text-center text-gray-500">{t('clients.loading')}</div>;
 
     // --- INSTALLMENT DETAIL VIEW ---
@@ -554,16 +574,166 @@ export default function Quotes() {
                     <h1 className="text-2xl font-bold text-gray-900">{t('quotes.title')}</h1>
                     <p className="text-sm text-gray-500 mt-1">{t('quotes.subtitle')}</p>
                 </div>
-                <button
-                    onClick={openAddModal}
-                    className="h-10 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium text-sm"
-                >
-                    <Plus size={18} />
-                    {t('quotes.newQuote')}
-                </button>
+                <div className="flex items-center gap-3">
+                    {/* View Toggle */}
+                    <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <List size={16} />
+                            Lista
+                        </button>
+                        <button
+                            onClick={() => setViewMode('kanban')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <LayoutGrid size={16} />
+                            Kanban
+                        </button>
+                    </div>
+                    <button
+                        onClick={openAddModal}
+                        className="h-10 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium text-sm"
+                    >
+                        <Plus size={18} />
+                        {t('quotes.newQuote')}
+                    </button>
+                </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full">
+            {/* ══════ KANBAN VIEW ══════ */}
+            {viewMode === 'kanban' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    {kanbanColumns.map(col => {
+                        const columnQuotes = quotes.filter(q => q.status === col.status);
+                        const columnTotal = columnQuotes.reduce((sum, q) => sum + Number(q.total_amount), 0);
+                        return (
+                            <div
+                                key={col.status}
+                                className={`rounded-2xl border-2 ${col.border} ${col.bg} min-h-[400px] flex flex-col transition-all duration-200`}
+                                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-[1.01]'); }}
+                                onDragLeave={(e) => { e.currentTarget.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-[1.01]'); }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-[1.01]');
+                                    if (draggedQuoteId !== null) {
+                                        handleStatusChange(draggedQuoteId, col.status);
+                                        setDraggedQuoteId(null);
+                                    }
+                                }}
+                            >
+                                {/* Column header */}
+                                <div className={`px-4 py-3 bg-gradient-to-r ${col.gradient} rounded-t-xl`}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg">{col.icon}</span>
+                                            <h3 className="font-bold text-white text-sm">{col.label}</h3>
+                                        </div>
+                                        <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                            {columnQuotes.length}
+                                        </span>
+                                    </div>
+                                    <p className="text-white/80 text-xs mt-1 font-medium">
+                                        Total: {columnTotal.toLocaleString('es-AR', { minimumFractionDigits: 0 })}
+                                    </p>
+                                </div>
+
+                                {/* Column body - cards */}
+                                <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-320px)]">
+                                    {columnQuotes.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                                            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+                                                <FileText size={20} className="text-gray-300" />
+                                            </div>
+                                            <p className="text-xs">Sin presupuestos</p>
+                                            <p className="text-[10px] mt-0.5">Arrastrá aquí para mover</p>
+                                        </div>
+                                    )}
+                                    {columnQuotes.map(quote => (
+                                        <div
+                                            key={quote.id}
+                                            draggable
+                                            onDragStart={() => setDraggedQuoteId(quote.id)}
+                                            onDragEnd={() => setDraggedQuoteId(null)}
+                                            className={`bg-white rounded-xl border border-gray-100 shadow-sm p-4 cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 group ${draggedQuoteId === quote.id ? 'opacity-50 scale-95 rotate-1' : ''
+                                                }`}
+                                        >
+                                            {/* Drag handle + number */}
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <GripVertical size={14} className="text-gray-300 group-hover:text-gray-400 flex-shrink-0" />
+                                                    <span className="font-bold text-gray-900 text-sm">{quote.quote_number}</span>
+                                                </div>
+                                                {quote.file_url && (
+                                                    <a href={quote.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700" onClick={e => e.stopPropagation()}>
+                                                        <FileText size={14} />
+                                                    </a>
+                                                )}
+                                            </div>
+
+                                            {/* Entity name */}
+                                            <div className="mb-3">
+                                                <p className="text-sm font-medium text-gray-800 leading-tight">{getEntityName(quote)}</p>
+                                                <p className="text-[10px] text-gray-400 mt-0.5">
+                                                    {quote.client_id ? 'Cliente' : quote.lead_id ? 'Lead' : ''}
+                                                </p>
+                                            </div>
+
+                                            {/* Amount */}
+                                            <div className="bg-gray-50 rounded-lg px-3 py-2 mb-3">
+                                                <p className="text-lg font-bold text-gray-900">
+                                                    {Number(quote.total_amount).toLocaleString('es-AR', { minimumFractionDigits: 0 })}
+                                                    <span className="text-xs font-medium text-gray-500 ml-1">{quote.currency}</span>
+                                                </p>
+                                            </div>
+
+                                            {/* Footer: dates + actions */}
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-[10px] text-gray-400 space-y-0.5">
+                                                    <p>Emitido: {new Date(quote.issue_date).toLocaleDateString('es-AR')}</p>
+                                                    <p>Vence: {new Date(quote.expiry_date).toLocaleDateString('es-AR')}</p>
+                                                </div>
+                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={(e) => { e.stopPropagation(); openQuoteDetail(quote); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Cuotas">
+                                                        <CreditCard size={14} />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleCreateProject(quote); }} className="p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg" title="Crear Proyecto">
+                                                        <FolderKanban size={14} />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); openEditModal(quote); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Editar">
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(quote.id); }} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Eliminar">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Seller badge */}
+                                            {quote.seller_id && (
+                                                <div className="mt-2 pt-2 border-t border-gray-50">
+                                                    <p className="text-[10px] text-gray-400">
+                                                        🧑‍💼 {sellers.find(s => s.id === quote.seller_id)?.full_name || '—'}
+                                                        {(quote.commission_pct ?? 0) > 0 && (
+                                                            <span className="text-green-600 font-semibold ml-1">
+                                                                ({quote.commission_pct}%)
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* ══════ LIST VIEW ══════ */}
+            {viewMode === 'list' && <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full">
                 {/* Desktop Table View */}
                 <div className="hidden md:block overflow-x-auto w-full">
                     <table className="w-full text-sm text-left min-w-[800px]">
@@ -751,7 +921,7 @@ export default function Quotes() {
                         </div>
                     )}
                 </div>
-            </div>
+            </div>}
 
             {/* Quote Modal */}
             {isModalOpen && (

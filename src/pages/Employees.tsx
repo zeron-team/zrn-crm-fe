@@ -19,6 +19,13 @@ interface Employee {
     bank_name: string | null; bank_cbu: string | null; salary: number | null;
     salary_currency: string | null; notes: string | null; is_active: boolean;
     data_complete?: boolean; _is_stub?: boolean; user_id?: number;
+    created_at?: string | null; updated_at?: string | null;
+}
+
+function fmtDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 const DEPARTMENTS = ['IT', 'Administración', 'Ventas', 'RRHH', 'Operaciones', 'Marketing', 'Dirección', 'Soporte', 'Logística', 'Finanzas'];
@@ -264,6 +271,8 @@ export default function Employees() {
                             <th className="text-left px-4 py-3 font-bold text-gray-600 text-xs uppercase">Puesto</th>
                             <th className="text-left px-4 py-3 font-bold text-gray-600 text-xs uppercase">Contrato</th>
                             <th className="text-left px-4 py-3 font-bold text-gray-600 text-xs uppercase">Estado</th>
+                            <th className="text-left px-4 py-3 font-bold text-gray-600 text-xs uppercase">Alta</th>
+                            <th className="text-left px-4 py-3 font-bold text-gray-600 text-xs uppercase">Últ. Modif.</th>
                             <th className="text-right px-4 py-3 font-bold text-gray-600 text-xs uppercase">Acciones</th>
                         </tr>
                     </thead>
@@ -271,7 +280,7 @@ export default function Employees() {
                         {loading ? (
                             <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">Cargando...</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No hay empleados</td></tr>
+                            <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-400">No hay empleados</td></tr>
                         ) : filtered.map(emp => (
                             <tr key={emp.id || `stub-${emp.user_id}`} className={`hover:bg-gray-50 transition-colors ${emp._is_stub ? 'bg-amber-50/50' : ''}`}>
                                 <td className="px-4 py-3 font-mono text-xs font-bold text-teal-600">{emp.legajo || <span className="text-amber-500 italic">—</span>}</td>
@@ -300,6 +309,8 @@ export default function Employees() {
                                         {emp.is_active ? 'Activo' : 'Inactivo'}
                                     </span>
                                 </td>
+                                <td className="px-4 py-3 text-xs text-gray-500">{fmtDate(emp.created_at)}</td>
+                                <td className="px-4 py-3 text-xs text-gray-500">{fmtDate(emp.updated_at)}</td>
                                 <td className="px-4 py-3 text-right">
                                     {!emp._is_stub && (
                                         <div className="flex items-center justify-end gap-1">
@@ -355,6 +366,10 @@ export default function Employees() {
                             <span className={`px-2 py-0.5 rounded-full font-bold ${emp.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
                                 {emp.is_active ? 'Activo' : 'Inactivo'}
                             </span>
+                        </div>
+                        <div className="flex gap-3 mt-1 text-[10px] text-gray-400">
+                            <span className="flex items-center gap-1"><Clock size={10} /> Alta: {fmtDate(emp.created_at)}</span>
+                            <span className="flex items-center gap-1"><Clock size={10} /> Modif: {fmtDate(emp.updated_at)}</span>
                         </div>
                         {(emp.phone || emp.email) && (
                             <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">

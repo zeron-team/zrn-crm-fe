@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     FolderKanban, Plus, Search, Trash2, Edit3, X, Users, ChevronRight,
-    LayoutGrid, Columns3, Building2, FileText
+    LayoutGrid, Columns3, Building2, FileText, UserCircle
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -17,6 +17,8 @@ interface Project {
     client_name: string | null;
     quote_id: number | null;
     quote_number: string | null;
+    created_by: number | null;
+    created_by_name: string | null;
     task_count: number;
     done_count: number;
     member_count: number;
@@ -216,6 +218,13 @@ export default function Projects() {
                                                     <div className="flex items-center gap-1 mt-0.5">
                                                         <FileText size={11} className="text-violet-400" />
                                                         <span className="text-[10px] text-violet-500 font-medium">Presupuesto {p.quote_number}</span>
+                                                    </div>
+                                                )}
+                                                {/* Creator badge */}
+                                                {p.created_by_name && (
+                                                    <div className="flex items-center gap-1 mt-0.5">
+                                                        <UserCircle size={11} className="text-blue-400" />
+                                                        <span className="text-[10px] text-blue-500 font-medium">Creado por {p.created_by_name}</span>
                                                     </div>
                                                 )}
                                             </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Clock, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface User {
@@ -10,6 +10,30 @@ interface User {
     is_active: boolean;
     role: string;
     commission_pct: number;
+    created_at: string | null;
+    updated_at: string | null;
+    last_login: string | null;
+}
+
+function formatDate(iso: string | null): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function timeAgo(iso: string | null): string {
+    if (!iso) return 'Nunca';
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'Ahora';
+    if (mins < 60) return `hace ${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `hace ${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `hace ${days}d`;
+    return formatDate(iso);
 }
 
 const ALL_ROLES = [
@@ -126,6 +150,9 @@ export default function Users() {
                                         <th className="p-4 font-semibold text-gray-600 text-sm">{t('users.table.email')}</th>
                                         <th className="p-4 font-semibold text-gray-600 text-sm">{t('users.table.role')}</th>
                                         <th className="p-4 font-semibold text-gray-600 text-sm">{t('common.status')}</th>
+                                        <th className="p-4 font-semibold text-gray-600 text-sm">Última Conexión</th>
+                                        <th className="p-4 font-semibold text-gray-600 text-sm">Creado</th>
+                                        <th className="p-4 font-semibold text-gray-600 text-sm">Modificado</th>
                                         <th className="p-4 font-semibold text-gray-600 text-sm text-right">{t('common.actions')}</th>
                                     </tr>
                                 </thead>
@@ -154,6 +181,16 @@ export default function Users() {
                                                     </span>
                                                 )}
                                             </td>
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Clock size={12} className={user.last_login ? 'text-green-500' : 'text-gray-300'} />
+                                                    <span className={`text-xs font-medium ${user.last_login ? 'text-gray-700' : 'text-gray-400'}`}>
+                                                        {timeAgo(user.last_login)}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-xs text-gray-500">{formatDate(user.created_at)}</td>
+                                            <td className="p-4 text-xs text-gray-500">{formatDate(user.updated_at)}</td>
                                             <td className="p-4 flex justify-end space-x-2">
                                                 <button
                                                     onClick={() => openEditModal(user)}
@@ -174,7 +211,7 @@ export default function Users() {
                                     ))}
                                     {users.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="p-8 text-center text-gray-500">
+                                            <td colSpan={8} className="p-8 text-center text-gray-500">
                                                 {t('users.empty')}
                                             </td>
                                         </tr>
@@ -191,6 +228,10 @@ export default function Users() {
                                         <div>
                                             <h3 className="font-bold text-gray-900 text-lg leading-tight">{user.full_name}</h3>
                                             <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+                                            <div className="flex gap-3 mt-1 text-[10px] text-gray-400">
+                                                <span className="flex items-center gap-1"><Clock size={10} /> {timeAgo(user.last_login)}</span>
+                                                <span className="flex items-center gap-1"><CalendarDays size={10} /> {formatDate(user.created_at)}</span>
+                                            </div>
                                         </div>
                                         <div className="flex flex-wrap gap-1 ml-2 shrink-0">
                                             {parseRoles(user.role).map(r => (

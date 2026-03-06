@@ -13,6 +13,7 @@ import HelpManual from "./HelpManual";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import HeaderClock from "./HeaderClock";
+import OnlineUsers from "./OnlineUsers";
 
 interface SidebarSectionProps {
     title: string;
@@ -191,8 +192,8 @@ export default function Layout() {
                     {/* ═══ SISTEMA ═══ */}
                     <SidebarSection title="Sistema" icon={<Cog size={12} />} defaultOpen={false}>
                         <div onClick={closeMobile}>
-                            {canAccess('/users') && <SidebarItem to="/users" icon={<Users size={18} />} label="Usuarios y Roles" />}
-                            {canAccess('/role-permissions') && <SidebarItem to="/role-permissions" icon={<Shield size={18} />} label="Permisos" />}
+                            {canAccess('/users') && <SidebarItem to="/users" icon={<Users size={18} />} label="Usuarios" />}
+                            {canAccess('/role-permissions') && <SidebarItem to="/role-permissions" icon={<Shield size={18} />} label="Roles y Permisos" />}
                             {canAccess('/settings') && <SidebarItem to="/settings" icon={<Settings size={18} />} label={t('layout.settings')} />}
                         </div>
                     </SidebarSection>
@@ -233,6 +234,9 @@ export default function Layout() {
                     </div>
 
                     <div className="flex items-center space-x-3 md:space-x-4">
+
+                        {/* Online Users Indicator */}
+                        <OnlineUsers />
 
                         {/* Language Switcher */}
                         <NotificationBar />

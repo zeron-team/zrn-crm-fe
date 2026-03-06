@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
-import { Plus, Pencil, Trash2, Mail, Phone, Building2, User, Globe, X, ArrowRightLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, Mail, Phone, Building2, User, Globe, X, ArrowRightLeft, List, LayoutGrid, GripVertical, MapPin, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
@@ -25,6 +25,8 @@ export default function Leads() {
     const { t } = useTranslation();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
+    const [draggedLeadId, setDraggedLeadId] = useState<number | null>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLeadId, setEditingLeadId] = useState<number | null>(null);
@@ -122,6 +124,17 @@ export default function Leads() {
         }
     };
 
+    const handleStatusChange = async (leadId: number, newStatus: string) => {
+        try {
+            const lead = leads.find(l => l.id === leadId);
+            if (!lead || lead.status === newStatus) return;
+            await api.put(`/leads/${leadId}`, { ...lead, status: newStatus });
+            setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
+        } catch (error) {
+            console.error('Failed to update lead status', error);
+        }
+    };
+
     const getStatusStyle = (status: string) => {
         switch (status) {
             case 'New': return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -133,6 +146,15 @@ export default function Leads() {
         }
     };
 
+    const kanbanColumns = [
+        { status: 'New', label: 'Nuevo', icon: '🆕', gradient: 'from-blue-500 to-cyan-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+        { status: 'Contacted', label: 'Contactado', icon: '📞', gradient: 'from-amber-500 to-yellow-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+        { status: 'Qualified', label: 'Calificado', icon: '⭐', gradient: 'from-purple-500 to-violet-600', bg: 'bg-purple-50', border: 'border-purple-200' },
+        { status: 'Proposal', label: 'Propuesta', icon: '📝', gradient: 'from-indigo-500 to-blue-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+        { status: 'Converted', label: 'Convertido', icon: '✅', gradient: 'from-emerald-500 to-green-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+        { status: 'Lost', label: 'Perdido', icon: '❌', gradient: 'from-red-500 to-rose-600', bg: 'bg-red-50', border: 'border-red-200' },
+    ];
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
@@ -140,16 +162,173 @@ export default function Leads() {
                     <h2 className="text-2xl font-bold tracking-tight text-gray-900">{t('leads.title')}</h2>
                     <p className="text-sm text-gray-500">{t('leads.description')}</p>
                 </div>
-                <button
-                    onClick={openAddModal}
-                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
-                >
-                    <Plus size={18} />
-                    <span>{t('leads.addBtn')}</span>
-                </button>
+                <div className="flex items-center gap-3">
+                    {/* View Toggle */}
+                    <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <List size={16} />
+                            Lista
+                        </button>
+                        <button
+                            onClick={() => setViewMode('kanban')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${viewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <LayoutGrid size={16} />
+                            Kanban
+                        </button>
+                    </div>
+                    <button
+                        onClick={openAddModal}
+                        className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
+                    >
+                        <Plus size={18} />
+                        <span>{t('leads.addBtn')}</span>
+                    </button>
+                </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* ══════ KANBAN VIEW ══════ */}
+            {viewMode === 'kanban' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                    {kanbanColumns.map(col => {
+                        const columnLeads = leads.filter(l => l.status === col.status);
+                        return (
+                            <div
+                                key={col.status}
+                                className={`rounded-2xl border-2 ${col.border} ${col.bg} min-h-[400px] flex flex-col transition-all duration-200`}
+                                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-[1.01]'); }}
+                                onDragLeave={(e) => { e.currentTarget.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-[1.01]'); }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-[1.01]');
+                                    if (draggedLeadId !== null) {
+                                        handleStatusChange(draggedLeadId, col.status);
+                                        setDraggedLeadId(null);
+                                    }
+                                }}
+                            >
+                                {/* Column header */}
+                                <div className={`px-3 py-2.5 bg-gradient-to-r ${col.gradient} rounded-t-xl`}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-base">{col.icon}</span>
+                                            <h3 className="font-bold text-white text-xs">{col.label}</h3>
+                                        </div>
+                                        <span className="bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                            {columnLeads.length}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Column body - cards */}
+                                <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-300px)]">
+                                    {columnLeads.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-6 text-gray-400">
+                                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-1.5">
+                                                <Building2 size={18} className="text-gray-300" />
+                                            </div>
+                                            <p className="text-[10px]">Sin prospectos</p>
+                                            <p className="text-[9px] mt-0.5">Arrastrá aquí</p>
+                                        </div>
+                                    )}
+                                    {columnLeads.map(lead => (
+                                        <div
+                                            key={lead.id}
+                                            draggable
+                                            onDragStart={() => setDraggedLeadId(lead.id)}
+                                            onDragEnd={() => setDraggedLeadId(null)}
+                                            className={`bg-white rounded-xl border border-gray-100 shadow-sm p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 group ${draggedLeadId === lead.id ? 'opacity-50 scale-95 rotate-1' : ''
+                                                }`}
+                                        >
+                                            {/* Header */}
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <GripVertical size={12} className="text-gray-300 group-hover:text-gray-400 flex-shrink-0" />
+                                                    <Link to={`/leads/${lead.id}`} className="font-bold text-gray-900 text-xs leading-tight truncate hover:text-blue-600">
+                                                        {lead.company_name}
+                                                    </Link>
+                                                </div>
+                                            </div>
+
+                                            {/* Contact info */}
+                                            <div className="space-y-1 mb-2">
+                                                {lead.contact_name && (
+                                                    <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
+                                                        <User size={10} className="text-gray-400 flex-shrink-0" />
+                                                        <span className="truncate font-medium">{lead.contact_name}</span>
+                                                    </div>
+                                                )}
+                                                {lead.email && (
+                                                    <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                                                        <Mail size={10} className="text-gray-400 flex-shrink-0" />
+                                                        <span className="truncate">{lead.email}</span>
+                                                    </div>
+                                                )}
+                                                {lead.phone && (
+                                                    <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                                                        <Phone size={10} className="text-gray-400 flex-shrink-0" />
+                                                        <span>{lead.phone}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Meta tags */}
+                                            <div className="flex flex-wrap gap-1 mb-2">
+                                                {lead.source && (
+                                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-100 text-[9px] text-gray-600 font-medium">
+                                                        📡 {lead.source}
+                                                    </span>
+                                                )}
+                                                {lead.province && (
+                                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-100 text-[9px] text-gray-600 font-medium">
+                                                        <MapPin size={8} /> {lead.province}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Notes preview */}
+                                            {lead.notes && (
+                                                <div className="bg-gray-50 rounded-lg px-2 py-1.5 mb-2">
+                                                    <p className="text-[10px] text-gray-500 line-clamp-2 leading-relaxed">
+                                                        <MessageSquare size={9} className="inline mr-1 text-gray-400" />
+                                                        {lead.notes}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* Actions */}
+                                            <div className="flex items-center justify-between pt-1.5 border-t border-gray-50">
+                                                <span className="text-[9px] text-gray-400">
+                                                    {new Date(lead.created_at).toLocaleDateString('es-AR')}
+                                                </span>
+                                                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {lead.status !== 'Converted' && (
+                                                        <button onClick={(e) => { e.stopPropagation(); handleConvertToClient(lead); }} className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded" title="Convertir">
+                                                            <ArrowRightLeft size={12} />
+                                                        </button>
+                                                    )}
+                                                    <button onClick={(e) => { e.stopPropagation(); openEditModal(lead); }} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="Editar">
+                                                        <Pencil size={12} />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }} className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded" title="Eliminar">
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* ══════ LIST VIEW ══════ */}
+            {viewMode === 'list' && <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 {loading ? (
                     <div className="p-8 text-center text-gray-500">{t('clients.loading')}</div>
                 ) : (
@@ -327,7 +506,7 @@ export default function Leads() {
                         </div>
                     </div>
                 )}
-            </div>
+            </div>}
 
             {/* Modal */}
             {isModalOpen && (

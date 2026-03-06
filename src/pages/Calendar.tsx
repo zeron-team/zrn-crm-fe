@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api/client";
-import { Plus, Pencil, Trash2, Calendar as CalendarIcon, Clock, AlertCircle, Building2, ChevronLeft, ChevronRight, List as ListIcon, Zap, MessageSquare, Send, CornerDownRight, CheckCircle2, XCircle, PauseCircle, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Calendar as CalendarIcon, Clock, AlertCircle, Building2, ChevronLeft, ChevronRight, List as ListIcon, Zap, MessageSquare, Send, CornerDownRight, CheckCircle2, XCircle, PauseCircle, X, LayoutGrid, GripVertical } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, addDays, parseISO, addWeeks, subWeeks } from "date-fns";
 import { es } from "date-fns/locale/es";
@@ -63,7 +63,7 @@ export default function Calendar() {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [viewMode, setViewMode] = useState<"list" | "calendar" | "week">("list");
+    const [viewMode, setViewMode] = useState<"list" | "calendar" | "week" | "kanban">("week");
 
     // Helper: format Date as local "YYYY-MM-DDTHH:MM" for datetime-local inputs
     const toLocalISOString = (d: Date) => {
@@ -106,7 +106,8 @@ export default function Calendar() {
 
     // Drag & Drop state
     const dragEventRef = useRef<CalendarEvent | null>(null);
-    const [dragOverCell, setDragOverCell] = useState<string | null>(null);;
+    const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+    const [draggedKanbanEventId, setDraggedKanbanEventId] = useState<number | null>(null);
 
     // Quick Add Contact State
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -590,7 +591,7 @@ export default function Calendar() {
     const renderWeek = () => {
         const weekStart = startOfWeek(currentWeek, { locale: es });
         const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-        const hours = Array.from({ length: 14 }, (_, i) => i + 7); // 7am - 8pm
+        const hours = Array.from({ length: 24 }, (_, i) => i); // 0:00 - 23:00
 
         return (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -604,7 +605,7 @@ export default function Calendar() {
                         <button onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 border border-gray-200 shadow-sm"><ChevronRight size={20} /></button>
                     </div>
                 </div>
-                <div className="overflow-auto max-h-[70vh]">
+                <div className="overflow-auto max-h-[70vh]" ref={(el) => { if (el && !el.dataset.scrolled) { el.scrollTop = 8 * 48; el.dataset.scrolled = '1'; } }}>
                     <div className="grid grid-cols-8 border-b border-gray-200 sticky top-0 bg-gray-50 z-10">
                         <div className="p-2 text-center text-[10px] font-bold text-gray-400 border-r border-gray-200">Hora</div>
                         {days.map((d, i) => (
@@ -663,11 +664,11 @@ export default function Calendar() {
                 <div className="flex items-center w-full sm:w-auto space-x-3">
                     <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
                         <button
-                            onClick={() => setViewMode("list")}
-                            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            onClick={() => setViewMode("week")}
+                            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'week' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <ListIcon size={16} className="mr-1.5" />
-                            Lista
+                            <Clock size={16} className="mr-1.5" />
+                            Semana
                         </button>
                         <button
                             onClick={() => setViewMode("calendar")}
@@ -677,11 +678,18 @@ export default function Calendar() {
                             Mes
                         </button>
                         <button
-                            onClick={() => setViewMode("week")}
-                            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'week' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            onClick={() => setViewMode("list")}
+                            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
-                            <Clock size={16} className="mr-1.5" />
-                            Semana
+                            <ListIcon size={16} className="mr-1.5" />
+                            Lista
+                        </button>
+                        <button
+                            onClick={() => setViewMode("kanban")}
+                            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <LayoutGrid size={16} className="mr-1.5" />
+                            Kanban
                         </button>
                     </div>
                     <button
@@ -992,6 +1000,143 @@ export default function Calendar() {
                 </div>
             ) : viewMode === "calendar" ? (
                 renderCalendar()
+            ) : viewMode === "kanban" ? (
+                /* ══════ KANBAN VIEW ══════ */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    {[
+                        { status: 'pending', label: 'Pendiente', icon: '⏳', gradient: 'from-blue-500 to-cyan-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+                        { status: 'completed', label: 'Completada', icon: '✅', gradient: 'from-emerald-500 to-green-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+                        { status: 'postponed', label: 'Pospuesta', icon: '⏸️', gradient: 'from-amber-500 to-yellow-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+                        { status: 'cancelled', label: 'Cancelada', icon: '❌', gradient: 'from-red-500 to-rose-600', bg: 'bg-red-50', border: 'border-red-200' },
+                    ].map(col => {
+                        const columnEvents = filteredEvents.filter(e => (e.status || 'pending') === col.status);
+                        return (
+                            <div
+                                key={col.status}
+                                className={`rounded-2xl border-2 ${col.border} ${col.bg} min-h-[400px] flex flex-col transition-all duration-200`}
+                                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-[1.01]'); }}
+                                onDragLeave={(e) => { e.currentTarget.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-[1.01]'); }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-400', 'scale-[1.01]');
+                                    if (draggedKanbanEventId !== null) {
+                                        handleStatusChange(draggedKanbanEventId, col.status, '');
+                                        setDraggedKanbanEventId(null);
+                                    }
+                                }}
+                            >
+                                {/* Column header */}
+                                <div className={`px-4 py-3 bg-gradient-to-r ${col.gradient} rounded-t-xl`}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg">{col.icon}</span>
+                                            <h3 className="font-bold text-white text-sm">{col.label}</h3>
+                                        </div>
+                                        <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                            {columnEvents.length}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Column body */}
+                                <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-320px)]">
+                                    {columnEvents.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                                            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+                                                <CalendarIcon size={20} className="text-gray-300" />
+                                            </div>
+                                            <p className="text-xs">Sin actividades</p>
+                                            <p className="text-[10px] mt-0.5">Arrastrá aquí para mover</p>
+                                        </div>
+                                    )}
+                                    {columnEvents.map(event => {
+                                        const isPastDue = new Date(event.end_date) < new Date() && (event.status || 'pending') === 'pending';
+                                        return (
+                                            <div
+                                                key={event.id}
+                                                draggable
+                                                onDragStart={() => setDraggedKanbanEventId(event.id)}
+                                                onDragEnd={() => setDraggedKanbanEventId(null)}
+                                                className={`bg-white rounded-xl border shadow-sm p-4 cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 group ${draggedKanbanEventId === event.id ? 'opacity-50 scale-95 rotate-1' : ''
+                                                    } ${isPastDue ? 'border-red-200' : 'border-gray-100'}`}
+                                            >
+                                                {/* Color bar + title */}
+                                                <div className="flex items-start gap-2 mb-2">
+                                                    <div className="w-1 h-8 rounded-full flex-shrink-0 mt-0.5" style={{ backgroundColor: event.color || '#3788d8' }} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <GripVertical size={12} className="text-gray-300 group-hover:text-gray-400 flex-shrink-0" />
+                                                            <h4 className="font-bold text-gray-900 text-sm truncate">{event.title}</h4>
+                                                        </div>
+                                                        {event.related_to && (
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-[9px] text-gray-600 font-medium mt-1">
+                                                                {event.related_to}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {isPastDue && (
+                                                        <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-medium flex-shrink-0">Vencida</span>
+                                                    )}
+                                                </div>
+
+                                                {/* Description */}
+                                                {event.description && (
+                                                    <p className="text-[10px] text-gray-500 mb-2 line-clamp-2 leading-relaxed pl-3">{event.description}</p>
+                                                )}
+
+                                                {/* Date/time */}
+                                                <div className="bg-gray-50 rounded-lg px-3 py-2 mb-2">
+                                                    <div className="flex items-center gap-2 text-[10px] text-gray-600">
+                                                        <CalendarIcon size={10} className="text-gray-400" />
+                                                        <span>{new Date(event.start_date).toLocaleDateString('es-AR')}</span>
+                                                        <Clock size={10} className="text-gray-400 ml-1" />
+                                                        <span>
+                                                            {new Date(event.start_date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                                                            {' - '}
+                                                            {new Date(event.end_date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Entity info */}
+                                                {(event.client_id || event.lead_id) && (
+                                                    <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mb-2">
+                                                        <Building2 size={10} className="text-gray-400" />
+                                                        <span className="truncate">
+                                                            {event.client_id ? clients.find(c => c.id === event.client_id)?.name || '' : ''}
+                                                            {event.lead_id ? leads.find(l => l.id === event.lead_id)?.company_name || '' : ''}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {/* Notes count */}
+                                                {event.notes && event.notes.length > 0 && (
+                                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-2">
+                                                        <MessageSquare size={10} />
+                                                        <span>{event.notes.length} nota{event.notes.length !== 1 ? 's' : ''}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Actions */}
+                                                <div className="flex items-center justify-end gap-1 pt-2 border-t border-gray-50 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleCreateFollowUp(event); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Seguimiento">
+                                                        <CornerDownRight size={14} />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); openEditModal(event); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Editar">
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(event.id); }} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Eliminar">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             ) : (
                 renderWeek()
             )}
