@@ -1,0 +1,912 @@
+{
+    "layout": {
+        "dashboard": "Panel de Control",
+        "leads": "Prospectos",
+        "quotes": "Presupuestos",
+        "clients": "Cuentas",
+        "contacts": "Contactos",
+        "billing": "Facturación",
+        "activities": "Actividades",
+        "finances": "Finanzas",
+        "products": "Productos y Servicios",
+        "providers": "Proveedores",
+        "settings": "Ajustes",
+        "search": "Buscar...",
+        "users": "Usuarios y Roles",
+        "categories": "Categorías",
+        "sectionCore": "Principal",
+        "sectionCatalog": "Catálogo",
+        "sectionSystem": "Sistema"
+    },
+    "dashboard": {
+        "loading": "Cargando panel...",
+        "welcome": "Bienvenido de nuevo.",
+        "snapshot": "Aquí tienes la última instantánea de tus operaciones en Zeron CRM.",
+        "kpis": {
+            "clients": "Cuentas Totales",
+            "providers": "Proveedores Totales",
+            "products": "Productos",
+            "users": "Usuarios Activos"
+        },
+        "invoices": {
+            "title": "Facturas Emitidas Recientes",
+            "viewAll": "Ver Todas",
+            "empty": "No se encontraron facturas recientes.",
+            "issuedPrefix": "Emitida: "
+        },
+        "activities": {
+            "title": "Actividades Próximas",
+            "viewCalendar": "Ver Calendario",
+            "empty": "No hay eventos próximos programados.",
+            "duePrefix": "Vence: ",
+            "manage": "Gestionar"
+        },
+        "widgets": {
+            "kpi_clients": "Cuentas Totales",
+            "kpi_providers": "Proveedores Totales",
+            "kpi_products": "Productos",
+            "kpi_users": "Usuarios Activos",
+            "kpi_invoices_issued": "Facturas Emitidas",
+            "kpi_invoices_received": "Facturas Recibidas",
+            "kpi_leads": "Prospectos Activos",
+            "kpi_quotes": "Presupuestos Abiertos",
+            "table_recent_invoices": "Facturas Recientes",
+            "table_upcoming_events": "Actividades Próximas",
+            "table_recent_leads": "Prospectos Recientes",
+            "table_recent_quotes": "Presupuestos Recientes",
+            "chart_income_vs_expenses": "Ingresos vs Gastos (6 Meses)",
+            "chart_cashflow_distribution": "Distribución del Flujo de Caja",
+            "kpi_active_services": "Servicios Activos",
+            "kpi_contacts": "Contactos",
+            "kpi_categories": "Categorías",
+            "kpi_monthly_cost": "Costo Mensual",
+            "table_service_payments": "Pagos de Servicios Recientes",
+            "table_top_providers": "Principales Proveedores por Costo",
+            "chart_service_costs": "Costos de Servicios por Proveedor",
+            "chart_invoice_status": "Distribución de Estados de Facturas"
+        },
+        "customize": {
+            "button": "Personalizar",
+            "title": "Personalizar Panel",
+            "subtitle": "Selecciona y ordena los widgets que deseas ver.",
+            "kpiSection": "Tarjetas KPI",
+            "tableSection": "Tablas de Datos",
+            "save": "Guardar Cambios",
+            "cancel": "Cancelar",
+            "saving": "Guardando...",
+            "chartSection": "Gráficos y Charts"
+        },
+        "dragToReorder": "Arrastra para reordenar",
+        "noData": "Sin datos disponibles",
+        "services": "servicios"
+    },
+    "common": {
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "cancel": "Cancelar",
+        "actions": "Acciones",
+        "email": "Correo Electrónico",
+        "phone": "Teléfono",
+        "status": "Estado",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "none": "-- Ninguno --",
+        "name": "Nombre",
+        "description": "Descripción",
+        "price": "Precio",
+        "cuitDni": "CUIT / DNI",
+        "address": "Dirección",
+        "loading": "Cargando...",
+        "downloadAttachment": "Descargar Adjunto",
+        "amountCalculated": "El monto se calcula de los ítems",
+        "notifications": "Notificaciones",
+        "markCompleted": "Marcar como completado",
+        "expiringTomorrow": "Vence Mañana",
+        "expiringToday": "Vence Hoy",
+        "updateStatus": "Actualizar Estado",
+        "addStatus": "Agregar Estado",
+        "editStatus": "Editar Estado",
+        "deleteStatus": "Eliminar Estado",
+        "selectContact": "-- Seleccionar Contacto --",
+        "selectClientFirst": "Seleccioná un Cliente primero",
+        "save": "Guardar",
+        "income": "Ingresos",
+        "expense": "Gastos",
+        "overdue": "Vencido",
+        "allCaughtUp": "¡Estás al día!",
+        "website": "Sitio Web"
+    },
+    "clients": {
+        "title": "Cuentas",
+        "description": "Gestionar empresas y personas con las que haces negocios.",
+        "addBtn": "Añadir Cuenta",
+        "loading": "Cargando cuentas...",
+        "table": {
+            "companyName": "Razón Social",
+            "contactInfo": "Info. de Contacto",
+            "cuitDni": "CUIT / DNI"
+        },
+        "viewProfile": "Ver Perfil",
+        "empty": "No se encontraron cuentas.",
+        "profile": {
+            "loading": "Cargando vista 360 del cliente...",
+            "notFound": "Cliente no encontrado.",
+            "details": "Detalles del Cliente",
+            "sectionContact": "Contacto",
+            "sectionLocation": "Ubicación",
+            "labelEmail": "EMAIL",
+            "labelPhone": "TELÉFONO",
+            "labelAddress": "DIRECCIÓN",
+            "labelCityProvince": "LOCALIDAD / PROVINCIA",
+            "labelCountry": "PAÍS",
+            "na": "N/A",
+            "contacts": "Contactos Asociados",
+            "manageContacts": "Gestionar",
+            "noContacts": "Sin contactos asignados. Ve a la pestaña Contactos para agregar.",
+            "activities": "Actividades Asociadas",
+            "viewCalendar": "Ver Calendario",
+            "noActivities": "No hay actividades registradas para este cliente.",
+            "eventTitle": "Título del Evento",
+            "dateTime": "Fecha y Hora",
+            "type": "Tipo",
+            "general": "General",
+            "inventory": "Inventario y Servicios Activos",
+            "openInventory": "Abrir Gestor de Inventario",
+            "noInventory": "No hay productos o servicios asignados actualmente.",
+            "serviceProduct": "Servicio / Producto",
+            "characteristics": "Características",
+            "cycle": "Ciclo",
+            "since": "Desde",
+            "invoices": "Facturas Emitidas",
+            "viewBilling": "Ver Facturación",
+            "noInvoices": "No se generaron facturas para este cliente aún.",
+            "invoiceNum": "Factura Nº",
+            "issueDate": "Fecha de Emisión",
+            "amount": "Monto",
+            "unknownService": "Servicio Desconocido"
+        },
+        "modal": {
+            "editTitle": "Editar Cuenta",
+            "addTitle": "Añadir Nueva Cuenta",
+            "legalName": "Razón Social",
+            "legalNamePlaceholder": "Ej: Empresa S.A.",
+            "tradeName": "Nombre Comercial",
+            "tradeNamePlaceholder": "Ej: MiMarca",
+            "cuitDni": "CUIT / DNI",
+            "taxCondition": "Condición de IVA",
+            "taxConditionPlaceholder": "Seleccioná una condición...",
+            "address": "Dirección",
+            "addressPlaceholder": "Ej: Av. Corrientes 1234, Piso 5",
+            "city": "Localidad",
+            "cityPlaceholder": "Ej: CABA",
+            "province": "Provincia",
+            "provincePlaceholder": "Ej: Buenos Aires",
+            "country": "País",
+            "countryPlaceholder": "Ej: Argentina",
+            "sectionCompany": "Datos de la Empresa",
+            "sectionTaxContact": "Fiscal y Contacto",
+            "sectionAddress": "Ubicación",
+            "saveBtn": "Guardar Cuenta"
+        }
+    },
+    "contacts": {
+        "title": "Contactos",
+        "description": "Gestionar personas asociadas a Clientes o Proveedores.",
+        "addBtn": "Añadir Contacto",
+        "loading": "Cargando contactos...",
+        "table": {
+            "name": "Nombre",
+            "contactDetails": "Detalles de Contacto",
+            "associatedClient": "Cuenta Asociada",
+            "associatedProvider": "Proveedor Asociado",
+            "type": "Tipo",
+            "company": "Empresa"
+        },
+        "empty": "No se encontraron contactos.",
+        "modal": {
+            "editTitle": "Editar Contacto",
+            "addTitle": "Añadir Nuevo Contacto",
+            "fullName": "Nombre Completo",
+            "position": "Puesto / Cargo",
+            "assocClient": "Cuenta Asociada",
+            "assocProvider": "Proveedor Asociado",
+            "saveBtn": "Guardar Contacto"
+        }
+    },
+    "products": {
+        "title": "Productos y Servicios",
+        "description": "Gestionar conceptos facturables.",
+        "addBtn": "Añadir Ítem",
+        "loading": "Cargando productos...",
+        "table": {
+            "itemName": "Nombre del Ítem",
+            "type": "Tipo",
+            "category": "Categoría",
+            "family": "Familia",
+            "subcategory": "Subcategoría",
+            "price": "Precio"
+        },
+        "empty": "No se encontraron productos o servicios.",
+        "searchPlaceholder": "Buscar por nombre, descripción, categoría...",
+        "filterBy": "Filtrar:",
+        "allFamilies": "Todas las Familias",
+        "allCategories": "Todas las Categorías",
+        "allSubcategories": "Todas las Subcategorías",
+        "clearFilters": "Limpiar",
+        "itemsCount": "items",
+        "noResults": "No hay productos que coincidan con tu búsqueda o filtros.",
+        "modal": {
+            "editTitle": "Editar Ítem",
+            "addTitle": "Añadir Nuevo Ítem",
+            "itemType": "Tipo de Ítem",
+            "product": "Producto",
+            "service": "Servicio",
+            "manpower": "Personal / Mano de Obra",
+            "category": "Categoría",
+            "categoryPlaceholder": "ej. Software, Hardware",
+            "family": "Familia",
+            "familyPlaceholder": "ej. Desarrollo, Infraestructura",
+            "subcategory": "Subcategoría",
+            "subcategoryPlaceholder": "ej. Frontend, Backend, DevOps",
+            "currency": "Moneda",
+            "saveBtn": "Guardar Ítem"
+        },
+        "types": {
+            "product": "Producto",
+            "service": "Servicio",
+            "manpower": "Personal / Mano de Obra"
+        }
+    },
+    "providers": {
+        "title": "Proveedores",
+        "description": "Gestionar tus suministradores y proveedores de servicios.",
+        "addBtn": "Añadir Proveedor",
+        "loading": "Cargando proveedores...",
+        "rates": {
+            "usd": "USD a AR$:",
+            "eur": "EUR a AR$:"
+        },
+        "stats": {
+            "active": "Total Servicios Activos",
+            "dueThisMonth": "Total a Pagar Este Mes",
+            "dueNextMonth": "Total a Pagar Próximo Mes",
+            "dueThisMonthArs": "Total a Pagar Este Mes (en ARS)",
+            "dueNextMonthArs": "Total a Pagar Próximo Mes (en ARS)",
+            "basedOn": "Basado en USD=$",
+            "eurRs": "EUR=$"
+        },
+        "empty": "No se encontraron proveedores.",
+        "card": {
+            "cuit": "CUIT/DNI:",
+            "dueThis": "Vence este mes",
+            "dueNext": "Vence próximo mes",
+            "manageServices": "Gestionar {{count}} Servicios Contratados"
+        },
+        "modal": {
+            "editTitle": "Editar Proveedor",
+            "addTitle": "Agregar Nuevo Proveedor",
+            "companyName": "Nombre de Empresa",
+            "saveBtn": "Guardar Proveedor"
+        }
+    },
+    "billing": {
+        "title": "Facturación y Cobros",
+        "description": "Gestionar facturas emitidas y registrar facturas de proveedores.",
+        "manageStatusBtn": "Gestionar Estados",
+        "newBtn": "Nueva Factura",
+        "kpis": {
+            "balance": "Balance Real",
+            "collected": "Cobrado (Clientes)",
+            "pendingClient": "Pendiente Cobro",
+            "paidProvider": "Pagado (Prov.)",
+            "pendingProvider": "Pendiente Pago"
+        },
+        "tabs": {
+            "issued": "Emitido a Clientes",
+            "received": "Recibido de Proveedores"
+        },
+        "loading": "Cargando datos de facturación...",
+        "table": {
+            "invoiceNum": "Factura #",
+            "client": "Cliente",
+            "provider": "Proveedor",
+            "dates": "Fechas",
+            "amount": "Monto",
+            "status": "Estado",
+            "issuedAt": "Emitida: ",
+            "dueAt": "Venc.: ",
+            "noInvoices": "No se encontraron facturas del tipo {{type}}."
+        },
+        "download": "Descargar Adjunto",
+        "noAttachment": "Sin Adjunto",
+        "modal": {
+            "editTitle": "Editar Factura",
+            "newTitle": "Nueva Factura {{type}}",
+            "issued": "Emitida",
+            "received": "Recibida",
+            "invoiceNum": "Número de Factura",
+            "issueDate": "Fecha de Emisión",
+            "dueDate": "Fecha de Vencimiento",
+            "amount": "Monto",
+            "calculatedAmount": "El monto se calcula según los ítems",
+            "selectClient": "Seleccionar Cliente",
+            "selectProvider": "Seleccionar Proveedor",
+            "noStatus": "-- Sin Estado --",
+            "paymentDate": "Fecha de Cobro",
+            "notes": "Notas",
+            "lineItems": "Ítems (Servicios/Productos)",
+            "addItem": "Agregar Ítem",
+            "itemLabel": "Ítem",
+            "selectItem": "Seleccione un Ítem...",
+            "qty": "Cant",
+            "price": "Precio",
+            "total": "Total",
+            "noItems": "No se agregaron ítems. Puede introducir el monto total arriba o agregar productos.",
+            "attachment": "Adjunto (Documento)",
+            "viewAttachment": "Ver Adjunto Actual",
+            "saveBtn": "Guardar Factura",
+            "linkedQuote": "Presupuesto Asociado",
+            "noQuote": "-- Sin Presupuesto --",
+            "quoteLinked": "Ítems importados del presupuesto"
+        },
+        "dropdown": {
+            "manualTitle": "Crear Factura Manual",
+            "manualDesc": "Completar datos manualmente para luego emitir desde ARCA.",
+            "arcaTitle": "Generar desde ARCA",
+            "arcaDesc": "Emitir directamente con número correlativo automático."
+        },
+        "statusModal": {
+            "title": "Gestionar Estados de Facturas",
+            "existing": "Estados Existentes",
+            "none": "No hay estados configurados aún.",
+            "editTitle": "Editar Estado",
+            "addTitle": "Agregar Nuevo Estado",
+            "cancel": "Cancelar Edición",
+            "name": "Nombre de Estado",
+            "color": "Color del Estado",
+            "saveBtn": "Guardar Estado"
+        },
+        "validation": {
+            "paymentDateRequired": "La fecha de cobro es obligatoria cuando el estado es Pagado/Cobrado."
+        },
+        "chart": {
+            "title": "Línea de Tiempo de Facturación por Cliente",
+            "months": "Meses",
+            "allClients": "Todos los Clientes",
+            "noData": "Sin datos de facturación para mostrar."
+        }
+    },
+    "finances": {
+        "title": "Análisis Financiero",
+        "description": "Rendimiento histórico y cashflow proyectado.",
+        "loading": "Cargando datos financieros...",
+        "kpis": {
+            "historicalIncome": "Ingreso Histórico (YTD)",
+            "historicalIncomeDesc": "Total facturado y cobrado este año",
+            "totalExpenses": "Gastos Totales (YTD)",
+            "totalExpensesDesc": "Facturas y suscripciones activas",
+            "pendingIncome": "Ingreso Pendiente",
+            "pendingIncomeDesc": "Facturas emitidas pendientes de cobro",
+            "projectedExpense": "Gasto Fijo Proyectado",
+            "projectedExpenseDesc": "Suscripciones recurrentes este mes"
+        },
+        "charts": {
+            "incomeVsExpenses": "Ingresos vs Gastos (Últ. 6 Meses)",
+            "cashflowDistribution": "Distribución del Flujo de Caja",
+            "profitMargin": "Margen de Beneficio (YTD)",
+            "futureSummary": "Resumen Futuro",
+            "incomingCash": "Efectivo Entrante",
+            "pendingPayables": "Cuentas por Pagar",
+            "recurringSubscriptions": "Suscripciones Recurrentes",
+            "netProjection": "Proyección Neta",
+            "income": "Ingresos (Cobrados)",
+            "expense": "Gastos (Pagados)",
+            "pendingIncome": "Ingresos Pendientes",
+            "pendingExpense": "Gastos Pendientes"
+        },
+        "monthlyBreakdown": {
+            "title": "Detalle Mensual por Moneda",
+            "month": "Mes",
+            "income": "Ingresos",
+            "expense": "Gastos"
+        },
+        "servicePayments": {
+            "title": "Pagos de Servicios",
+            "description": "Navegue entre meses para registrar pagos pasados o futuros.",
+            "paid": "Pagado",
+            "pending": "Pendiente",
+            "expires": "Vto"
+        }
+    },
+    "calendar": {
+        "title": "Actividades / Calendario",
+        "description": "Control de reuniones, plazos de entrega y vencimientos.",
+        "loading": "Cargando eventos...",
+        "empty": "No se encontraron actividades ni eventos próximos.",
+        "filters": {
+            "all": "Todos",
+            "type": "Tipo",
+            "status": "Estado"
+        },
+        "status": {
+            "pending": "Pendiente",
+            "completed": "Realizada",
+            "postponed": "Postergada",
+            "cancelled": "Cancelada",
+            "reason": "Motivo",
+            "reasonLabel": "Indique el motivo del cambio de estado.",
+            "reasonPlaceholder": "Escriba el motivo..."
+        },
+        "notes": {
+            "title": "Notas",
+            "placeholder": "Agregar nota o minuta...",
+            "empty": "Sin notas aún.",
+            "hint": "Shift+Enter para nueva línea"
+        },
+        "followUp": "Seguimiento",
+        "tabs": {
+            "list": "Lista",
+            "month": "Mes"
+        },
+        "newBtn": "Nuevo Evento",
+        "overdue": "Vencido",
+        "unknownClient": "Cuenta Desconocida",
+        "today": "Hoy",
+        "modal": {
+            "editTitle": "Editar Evento",
+            "newTitle": "Agregar Nuevo Evento",
+            "titleLabel": "Título",
+            "startDateTime": "Fecha y Hora de Inicio",
+            "endDateTime": "Fecha y Hora de Fin",
+            "clientAssoc": "Asociación a Cuenta",
+            "noClient": "-- Sin Cuenta --",
+            "contactAssoc": "Asociación al Contacto",
+            "leadAssoc": "Prospecto Asociado",
+            "noLead": "-- Sin Prospecto --",
+            "entityType": "Asociar A",
+            "entityAccount": "Cuenta",
+            "entityLead": "Prospecto",
+            "selectContact": "-- Seleccionar Contacto --",
+            "selectClientFirst": "Seleccione una cuenta primero",
+            "relatedTo": "Relacionado Con",
+            "none": "-- Ninguno --",
+            "meeting": "Reunión / Llamada",
+            "billing": "Facturación / Cobros",
+            "expiration": "Vencimiento (Servicio/Proveedor)",
+            "other": "Otro",
+            "color": "Color del Evento",
+            "autoGenerate": "Autogenerar Factura",
+            "invoiceType": "Tipo de Factura",
+            "issued": "Emitida (Para Cliente)",
+            "received": "Recibida (De Proveedor)",
+            "selectProvider": "Seleccionar Proveedor",
+            "amount": "Monto",
+            "autoGenerateNote": "* Un estado 'Por Facturar' será asignado o creado automáticamente.",
+            "description": "Descripción / Notas",
+            "saveBtn": "Guardar Evento"
+        },
+        "quickContact": {
+            "title": "Añadir Contacto Rápido",
+            "fullName": "Nombre Completo *",
+            "email": "Email",
+            "phone": "Teléfono",
+            "position": "Cargo / Puesto",
+            "saveBtn": "Crear Contacto"
+        }
+    },
+    "settings": {
+        "title": "Configuración del Sistema",
+        "description": "Gestionar preferencias y monitorizar salud del sistema.",
+        "tabs": {
+            "general": "Configuración General",
+            "health": "Salud del Sistema"
+        },
+        "general": {
+            "title": "Configuración General",
+            "desc": "Las opciones de configuración aparecerán en futuras actualizaciones."
+        },
+        "health": {
+            "title": "Diagnóstico y Salud",
+            "lastChecked": "Última vez comprobado: ",
+            "never": "Nunca",
+            "verifying": "Verificando...",
+            "runCheck": "Correr Chequeo",
+            "api": "Backend de API",
+            "apiDesc": "Servidor FastAPI",
+            "db": "Base de Datos",
+            "dbDesc": "PostgreSQL Relacional",
+            "apiOk": "El servidor backend está en línea y respondiendo peticiones normalmente.",
+            "apiError": "Fallo en conexión. La API está inalcanzable temporalmente.",
+            "apiChecking": "Chequeando conexión con el servidor API...",
+            "dbOk": "La conexión de DB está activa y responden los queries del ORM.",
+            "dbError": "Falló consulta de DB. El backend no puede comunicar con Postgres.",
+            "dbChecking": "Chequeando comunicación vía ORM del backend..."
+        }
+    },
+    "quotes": {
+        "title": "Presupuestos",
+        "subtitle": "Administrar estimaciones para cuentas y prospectos",
+        "newQuote": "Nuevo Presupuesto",
+        "editQuote": "Editar Presupuesto",
+        "noQuotes": "No se encontraron presupuestos. Crea uno para comenzar.",
+        "quoteNumber": "Nº Presupuesto",
+        "entity": "Entidad",
+        "date": "Fecha",
+        "status": "Estado",
+        "amount": "Monto",
+        "actions": "Acciones",
+        "validUntil": "Válido hasta",
+        "linkToAccount": "Vincular a Cuenta",
+        "linkToLead": "Vincular a Prospecto",
+        "selectAccount": "Seleccionar una Cuenta...",
+        "selectLead": "Seleccionar un Prospecto...",
+        "entityType": "Tipo de Entidad",
+        "account": "Cuenta",
+        "lead": "Prospecto",
+        "issueDate": "Fecha de Emisión",
+        "expiryDate": "Fecha de Vencimiento",
+        "currency": "Moneda",
+        "lineItems": "Ítems",
+        "addItem": "Agregar Ítem",
+        "customItem": "Ítem Personalizado / Producto",
+        "description": "Descripción",
+        "qty": "Cant",
+        "price": "Precio",
+        "noItems": "Aún no se han agregado ítems.",
+        "subtotal": "Subtotal",
+        "total": "Total",
+        "notes": "Notas",
+        "notesPlaceholder": "Añade información adicional o términos aquí...",
+        "attachment": "Adjunto (PDF, Word)",
+        "uploadFile": "Subir archivo",
+        "customAmount": "Monto Manual / Extra",
+        "customAmountPlaceholder": "Ej. 500.00"
+    },
+    "users": {
+        "title": "Usuarios y Roles",
+        "description": "Administrar cuentas de usuario y asignación de roles.",
+        "addBtn": "Agregar Usuario",
+        "loading": "Cargando usuarios...",
+        "empty": "No se encontraron usuarios.",
+        "table": {
+            "name": "Nombre",
+            "email": "Email",
+            "role": "Rol",
+            "status": "Estado"
+        },
+        "modal": {
+            "editTitle": "Editar Usuario",
+            "addTitle": "Agregar Nuevo Usuario",
+            "name": "Nombre Completo",
+            "email": "Correo Electrónico",
+            "password": "Contraseña",
+            "passwordHint": "Contraseña (dejar en blanco para mantener la actual)",
+            "role": "Rol",
+            "roleUser": "Usuario",
+            "roleAdmin": "Administrador",
+            "saveBtn": "Guardar Usuario"
+        }
+    },
+    "leads": {
+        "title": "Prospectos",
+        "description": "Seguimiento de clientes potenciales desde el primer contacto.",
+        "addBtn": "Agregar Prospecto",
+        "loading": "Cargando prospectos...",
+        "empty": "No se encontraron prospectos.",
+        "table": {
+            "company": "Empresa",
+            "contact": "Contacto",
+            "source": "Origen",
+            "status": "Estado",
+            "notes": "Notas"
+        },
+        "status": {
+            "new": "Nuevo",
+            "contacted": "Contactado",
+            "qualified": "Calificado",
+            "converted": "Convertido",
+            "lost": "Perdido"
+        },
+        "modal": {
+            "editTitle": "Editar Prospecto",
+            "addTitle": "Agregar Nuevo Prospecto",
+            "company": "Nombre de Empresa *",
+            "contact": "Nombre de Contacto",
+            "source": "Origen",
+            "sourcePlaceholder": "ej. Web, Referido",
+            "notes": "Notas",
+            "status": "Estado",
+            "saveBtn": "Guardar Prospecto"
+        },
+        "profile": {
+            "loading": "Cargando perfil del prospecto...",
+            "notFound": "Prospecto no encontrado.",
+            "backToLeads": "Volver a Prospectos",
+            "subtitle": "Perfil del prospecto — vista 360°",
+            "details": "Detalles del Prospecto",
+            "createdAt": "Creado",
+            "associatedContacts": "Contactos Asociados",
+            "noContacts": "No hay contactos vinculados a este prospecto.",
+            "associatedQuotes": "Presupuestos Asociados",
+            "noQuotes": "Aún no hay presupuestos vinculados a este prospecto.",
+            "viewAll": "Ver Todos",
+            "associatedActivities": "Actividades Asociadas",
+            "noActivities": "Aún no hay actividades vinculadas a este prospecto.",
+            "viewCalendar": "Ver Calendario"
+        }
+    },
+    "serviceModal": {
+        "addNew": "Agregar Nuevo",
+        "addService": "Agregar Servicio",
+        "clientInventory": "Inventario del Cliente: {{name}}",
+        "clientInventoryDesc": "Gestionar productos y servicios asignados a este cliente.",
+        "providerServices": "Servicios Contratados: {{name}}",
+        "providerServicesDesc": "Gestionar infraestructura y suscripciones para nunca perder un pago de renovación.",
+        "activeServices": "Servicios Activos",
+        "activeSubscriptions": "Suscripciones Activas",
+        "loadingInventory": "Cargando inventario...",
+        "loadingServices": "Cargando servicios...",
+        "noClientServices": "No se encontraron servicios para este cliente.",
+        "noClientServicesHint": "Hacé clic en \"Agregar Nuevo\" para asignar un producto o servicio.",
+        "noProviderServices": "No se encontraron servicios contratados para este proveedor.",
+        "noProviderServicesHint": "Hacé clic en \"Agregar Servicio\" para registrar un VPS, API o suscripción.",
+        "started": "Inicio:",
+        "editService": "Editar Servicio",
+        "addNewService": "Agregar Nuevo Servicio",
+        "editContracted": "Editar Servicio Contratado",
+        "registerCost": "Registrar Costo",
+        "baseProduct": "Producto/Servicio Base",
+        "customRefName": "Nombre de Referencia Personalizado",
+        "serviceName": "Nombre / Descripción del Servicio",
+        "billingCycle": "Ciclo de Facturación",
+        "currency": "Moneda",
+        "costPrice": "Precio de Costo",
+        "startDate": "Fecha de Inicio",
+        "endDate": "Fecha de Fin (Opcional)",
+        "contractDate": "Fecha de Contrato / Inicio",
+        "characteristics": "Características del Servicio",
+        "addField": "+ Agregar Campo",
+        "noCustomFields": "Sin campos personalizados definidos. Hacé clic en \"+ Agregar Campo\" para especificar IPs, URLs u otros metadatos.",
+        "cancel": "Cancelar",
+        "save": "Guardar Servicio",
+        "confirmDeleteClient": "¿Seguro que querés eliminar este servicio del cliente?",
+        "confirmDeleteProvider": "¿Seguro que querés eliminar este servicio contratado?",
+        "saveError": "Ocurrió un error al guardar el elemento del inventario.",
+        "saveErrorProvider": "Ocurrió un error al guardar el servicio.",
+        "unknownProduct": "Producto Desconocido",
+        "monthly": "Mensual",
+        "quarterly": "Trimestral",
+        "annually": "Anual",
+        "oneTime": "Única Vez",
+        "hourly": "Por Hora",
+        "bimonthly": "Bimensual",
+        "yearly": "Anual",
+        "smartNotification": "Sistema de Notificación Inteligente",
+        "smartNotificationDesc": "Zeron CRM inyectará una alerta inteligente directamente en tu Calendario global y Campana de Notificaciones para que pagues esta renovación a tiempo.",
+        "alertMe": "Avisarme",
+        "daysBeforeExpiration": "días antes del vencimiento.",
+        "alertDays": "Avisarme {{days}} días antes del vencimiento",
+        "renews": "Renueva:",
+        "cost": "costo",
+        "statusActive": "Activo",
+        "statusSuspended": "Suspendido",
+        "statusCancelled": "Cancelado",
+        "registerPayment": "Registrar Pago",
+        "payments": "pagos",
+        "receipt": "Comprobante",
+        "savePayment": "Guardar Pago",
+        "confirmDeletePayment": "¿Eliminar este registro de pago?",
+        "paymentMonth": "Mes",
+        "paymentYear": "Año",
+        "paymentDate": "Fecha de Pago",
+        "paymentAmount": "Monto",
+        "invoiceNumber": "Nº Factura (Proveedor)",
+        "receiptFile": "Comprobante / Documento",
+        "chooseFile": "Elegir archivo...",
+        "productPath": "Ruta de Producto",
+        "selectFamily": "Familia",
+        "selectCategory": "Categoría",
+        "selectSubcategory": "Subcategoría",
+        "allFamilies": "-- Todas las Familias --",
+        "allCategories": "-- Todas las Categorías --",
+        "allSubcategories": "-- Todas --",
+        "selectProduct": "Producto / Servicio",
+        "selectProductPlaceholder": "-- Seleccionar un producto o servicio --",
+        "noProductsMatch": "No hay productos que coincidan con los filtros.",
+        "selectFamilyFirst": "Seleccioná una familia primero",
+        "selectCategoryFirst": "Seleccioná una categoría primero",
+        "customAlias": "Alias / Descripción Personalizada",
+        "customAliasPlaceholder": "ej. Vultr VPS 4GB, Adobe CC, Dominio .com"
+    },
+    "login": {
+        "subtitle": "Inicia sesión en tu espacio de trabajo",
+        "email": "Correo Electrónico",
+        "password": "Contraseña",
+        "submit": "Iniciar Sesión",
+        "logout": "Cerrar Sesión",
+        "footer": "Acceso Seguro",
+        "error": {
+            "generic": "Ocurrió un error inesperado. Intente nuevamente.",
+            "network": "No se puede conectar con el servidor. Verifique su conexión."
+        }
+    },
+    "help": {
+        "title": "Manual de Usuario",
+        "subtitle": "Guía de todos los módulos",
+        "featuresLabel": "Funciones Principales",
+        "organizationLabel": "Cómo se Organiza",
+        "footer": "Hecho con ❤️ por el equipo Zeron",
+        "modules": {
+            "dashboard": {
+                "title": "Dashboard",
+                "desc": "Tu panel de control central. Obtené una vista rápida de todo tu negocio a través de tarjetas KPI personalizables, tablas de datos y gráficos analíticos.",
+                "features": [
+                    "8 tarjetas KPI: Cuentas, Proveedores, Productos, Usuarios, Facturas (Emitidas/Recibidas), Prospectos, Presupuestos",
+                    "4 tablas de datos: Facturas Recientes, Actividades Próximas, Prospectos Recientes, Presupuestos Recientes",
+                    "2 gráficos analíticos: Ingresos vs Gastos, Distribución de Flujo de Caja",
+                    "Personalización de widgets por usuario guardada en base de datos",
+                    "Activar/desactivar widgets desde el modal Personalizar"
+                ],
+                "organization": "El dashboard se divide en 3 secciones: KPIs (arriba), Tablas (medio) y Gráficos (abajo). Hacé clic en 'Personalizar' para elegir qué widgets mostrar. Tu configuración se guarda por usuario."
+            },
+            "leads": {
+                "title": "Prospectos",
+                "desc": "Seguí clientes potenciales desde el primer contacto hasta la conversión. Gestioná tu pipeline de ventas con seguimiento de estados y conversión rápida a cuentas.",
+                "features": [
+                    "Seguimiento de leads: empresa, contacto, email, teléfono, notas",
+                    "Pipeline de estados: Nuevo → Contactado → Calificado → Propuesta → Ganado / Perdido",
+                    "Seguimiento de origen (web, referido, llamada fría, etc.)",
+                    "Conversión rápida a cuenta de Cliente",
+                    "Lista filtrable y con búsqueda"
+                ],
+                "organization": "Los prospectos se organizan por estado. Los nuevos aparecen primero. Usá el badge de estado para seguir el progreso. Cuando un prospecto se gana, convertilo en Cliente desde el módulo de Cuentas."
+            },
+            "quotes": {
+                "title": "Presupuestos",
+                "desc": "Creá y gestioná cotizaciones detalladas para tus clientes. Vinculá productos de tu catálogo y seguí el estado de aprobación.",
+                "features": [
+                    "Números de presupuesto auto-generados (QT-XXXXXXXX)",
+                    "Items vinculados al catálogo de Productos y Servicios",
+                    "Seguimiento de estados: Borrador → Enviado → Aceptado → Rechazado",
+                    "Soporte multi-moneda (ARS, USD, EUR)",
+                    "Vincular presupuestos a Prospectos o Clientes"
+                ],
+                "organization": "Los presupuestos se listan por fecha. Cada presupuesto contiene items de tu catálogo de Productos. Los badges de estado muestran la etapa actual. Creá nuevos presupuestos con el botón 'Añadir'."
+            },
+            "clients": {
+                "title": "Cuentas",
+                "desc": "Gestioná tu base de datos de clientes. Almacená información de la empresa, CUIT/DNI y mantené contratos de servicio.",
+                "features": [
+                    "Perfil de empresa: nombre, CUIT/DNI, dirección, teléfono, email",
+                    "Asignación de servicios por cliente",
+                    "Vista de perfil detallado",
+                    "Vinculación de contactos",
+                    "Estado activo/inactivo"
+                ],
+                "organization": "Las cuentas se listan alfabéticamente. Hacé clic en una cuenta para ver su perfil con servicios asignados. Usá la pestaña Servicios para vincular productos/servicios que este cliente ha contratado."
+            },
+            "contacts": {
+                "title": "Contactos",
+                "desc": "Mantené un directorio de contactos individuales vinculados a tus cuentas de cliente.",
+                "features": [
+                    "Datos de contacto: nombre, email, teléfono, puesto",
+                    "Vinculados a cuentas de cliente",
+                    "Directorio con búsqueda",
+                    "Crear y editar desde la página de contactos"
+                ],
+                "organization": "Los contactos se organizan por cliente. Cada contacto pertenece a una cuenta de cliente. Usá la página de contactos para buscar en todos los contactos o filtrar por cliente."
+            },
+            "billing": {
+                "title": "Facturación",
+                "desc": "Gestioná facturas emitidas (ventas) y recibidas (compras). Seguí el estado de pago con estados personalizados con código de color.",
+                "features": [
+                    "Dos tipos: Facturas emitidas (ventas) y recibidas (compras)",
+                    "Estados personalizados con código de color",
+                    "Items con cantidad, precio unitario e impuestos",
+                    "Multi-moneda (ARS, USD, EUR)",
+                    "Filtrado y gestión de estados"
+                ],
+                "organization": "Las facturas se separan en pestañas Emitidas y Recibidas. Cada factura tiene número, fecha, cliente/proveedor y estado. Hacé clic para expandir y ver los items."
+            },
+            "finances": {
+                "title": "Análisis Financiero",
+                "desc": "Visualizá tu salud financiera con gráficos y resúmenes. Compará ingresos y gastos a lo largo del tiempo.",
+                "features": [
+                    "Gráfico de barras Ingresos vs Gastos (tendencia 6 meses)",
+                    "Distribución de flujo de caja con margen de ganancia %",
+                    "Resumen de proyección futura",
+                    "Seguimiento de presupuestos/suscripciones"
+                ],
+                "organization": "La vista financiera muestra gráficos arriba y tarjetas resumen abajo. Los datos se calculan automáticamente de tus facturas emitidas (ingresos) y recibidas (gastos)."
+            },
+            "products": {
+                "title": "Productos y Servicios",
+                "desc": "Gestioná tu catálogo de items facturables. Organizá por tipo, categoría, familia y subcategoría.",
+                "features": [
+                    "Tres tipos de item: Producto, Servicio, Mano de Obra",
+                    "Clasificación: Categoría, Familia y Subcategoría",
+                    "Precio por unidad con multi-moneda",
+                    "Usados como items en Presupuestos y Facturas",
+                    "Estado activo/inactivo"
+                ],
+                "organization": "Los items se listan en una tabla con columnas para tipo, categoría, familia, subcategoría y precio. Usá el modal de agregar/editar para configurar todos los campos. Categorías, familias y subcategorías son texto libre para máxima flexibilidad."
+            },
+            "providers": {
+                "title": "Proveedores",
+                "desc": "Gestioná tus proveedores externos y proveedores de servicios. Seguí qué servicios ofrece cada proveedor.",
+                "features": [
+                    "Perfil de proveedor: nombre, CUIT/DNI, dirección, datos de contacto",
+                    "Asignación de servicios por proveedor",
+                    "Visualización de tipo de cambio (USD/EUR a ARS)",
+                    "Lista con búsqueda"
+                ],
+                "organization": "Los proveedores se listan con su info clave. Hacé clic para ver el perfil completo. Usá la pestaña Servicios para vincular qué servicios te ofrece este proveedor."
+            },
+            "calendar": {
+                "title": "Calendario",
+                "desc": "Seguí actividades, tareas y eventos con fechas de inicio/fin. Conectado al widget de actividades próximas del dashboard.",
+                "features": [
+                    "Seguimiento de eventos con título, descripción, fechas",
+                    "Fecha y hora de inicio y fin",
+                    "Interfaz visual de calendario",
+                    "Vinculado al widget de actividades próximas del Dashboard"
+                ],
+                "organization": "Los eventos aparecen en una vista de calendario. Creá nuevos eventos con el selector de fechas. Los eventos próximos se muestran automáticamente en la tabla de actividades del Dashboard."
+            },
+            "users": {
+                "title": "Usuarios y Roles",
+                "desc": "Gestioná cuentas de usuario y asignación de roles. Controlá quién puede acceder al sistema.",
+                "features": [
+                    "CRUD de usuarios: crear, editar, desactivar",
+                    "Dos roles: Admin y Usuario",
+                    "Gestión de contraseñas",
+                    "Estado activo/inactivo"
+                ],
+                "organization": "Los usuarios se listan en una tabla. Los admins pueden crear nuevos usuarios y asignar roles. Cada usuario tiene su propia configuración de dashboard y credenciales de acceso."
+            },
+            "settings": {
+                "title": "Configuración",
+                "desc": "Configuración del sistema y monitoreo de salud. Verificá el estado de todos los componentes del sistema.",
+                "features": [
+                    "Chequeo de salud del sistema (Base de datos, API, Frontend)",
+                    "Configuración de la aplicación",
+                    "Monitoreo de estado de componentes"
+                ],
+                "organization": "La página de configuración muestra indicadores de salud del sistema. Verde = saludable, Rojo = problema detectado. Usá esta página para verificar que todos los componentes están funcionando correctamente."
+            }
+        }
+    },
+    "categories": {
+        "title": "Gestión de Categorías",
+        "description": "Administrá familias, categorías y subcategorías de productos en una estructura jerárquica.",
+        "categoriesTitle": "Categorías",
+        "familiesTitle": "Familias",
+        "subcategoriesTitle": "Subcategorías",
+        "selectCategory": "Seleccioná una categoría",
+        "selectFamily": "Seleccioná una familia",
+        "selectCategoryFirst": "Seleccioná una categoría primero",
+        "selectFamilyFirst": "Seleccioná una familia primero",
+        "emptyFamilies": "No hay familias aún. ¡Creá la primera!",
+        "emptyCategories": "No hay categorías en esta familia.",
+        "emptySubcategories": "No hay subcategorías en esta categoría.",
+        "confirmDelete": "¿Estás seguro de que querés eliminar este elemento? Todos los hijos también serán eliminados.",
+        "searchPlaceholder": "Buscar por nombre, código...",
+        "sortBy": "Ordenar:",
+        "noResults": "No hay resultados para tu búsqueda.",
+        "modal": {
+            "addTitle": "Agregar",
+            "editTitle": "Editar",
+            "type_category": "Categoría",
+            "type_family": "Familia",
+            "type_subcategory": "Subcategoría",
+            "name": "Nombre",
+            "namePlaceholder": "Ingresá un nombre...",
+            "code": "Código",
+            "codePlaceholder": "ej. SW, HW, INF...",
+            "description": "Descripción",
+            "descPlaceholder": "Descripción opcional...",
+            "cancel": "Cancelar",
+            "save": "Guardar"
+        }
+    }
+}

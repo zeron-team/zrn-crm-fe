@@ -1,0 +1,912 @@
+{
+    "layout": {
+        "dashboard": "Dashboard",
+        "leads": "Leads",
+        "quotes": "Quotes",
+        "clients": "Accounts",
+        "contacts": "Contacts",
+        "billing": "Billing",
+        "activities": "Activities",
+        "finances": "Finances",
+        "products": "Products & Services",
+        "providers": "Providers",
+        "settings": "Settings",
+        "search": "Search...",
+        "users": "Users & Roles",
+        "categories": "Categories",
+        "sectionCore": "Core",
+        "sectionCatalog": "Catalog",
+        "sectionSystem": "System"
+    },
+    "dashboard": {
+        "loading": "Loading dashboard...",
+        "welcome": "Welcome back.",
+        "snapshot": "Here is the latest snapshot of your Zeron CRM operations.",
+        "kpis": {
+            "clients": "Total Accounts",
+            "providers": "Total Providers",
+            "products": "Products",
+            "users": "Active Users"
+        },
+        "invoices": {
+            "title": "Recent Issued Invoices",
+            "viewAll": "View All",
+            "empty": "No recent invoices found.",
+            "issuedPrefix": "Issued: "
+        },
+        "activities": {
+            "title": "Upcoming Activities",
+            "viewCalendar": "View Calendar",
+            "empty": "No upcoming events scheduled.",
+            "duePrefix": "Due: ",
+            "manage": "Manage"
+        },
+        "widgets": {
+            "kpi_clients": "Total Accounts",
+            "kpi_providers": "Total Providers",
+            "kpi_products": "Products",
+            "kpi_users": "Active Users",
+            "kpi_invoices_issued": "Issued Invoices",
+            "kpi_invoices_received": "Received Invoices",
+            "kpi_leads": "Active Leads",
+            "kpi_quotes": "Open Quotes",
+            "table_recent_invoices": "Recent Invoices",
+            "table_upcoming_events": "Upcoming Activities",
+            "table_recent_leads": "Recent Leads",
+            "table_recent_quotes": "Recent Quotes",
+            "chart_income_vs_expenses": "Income vs Expenses (6 Months)",
+            "chart_cashflow_distribution": "Cashflow Distribution",
+            "kpi_active_services": "Active Services",
+            "kpi_contacts": "Contacts",
+            "kpi_categories": "Categories",
+            "kpi_monthly_cost": "Monthly Cost",
+            "table_service_payments": "Recent Service Payments",
+            "table_top_providers": "Top Providers by Cost",
+            "chart_service_costs": "Service Costs by Provider",
+            "chart_invoice_status": "Invoice Status Distribution"
+        },
+        "customize": {
+            "button": "Customize",
+            "title": "Customize Dashboard",
+            "subtitle": "Select and order the widgets you want to see.",
+            "kpiSection": "KPI Cards",
+            "tableSection": "Data Tables",
+            "save": "Save Changes",
+            "cancel": "Cancel",
+            "saving": "Saving...",
+            "chartSection": "Charts & Graphs"
+        },
+        "dragToReorder": "Drag to reorder",
+        "noData": "No data available",
+        "services": "services"
+    },
+    "common": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "actions": "Actions",
+        "email": "Email",
+        "phone": "Phone",
+        "status": "Status",
+        "active": "Active",
+        "inactive": "Inactive",
+        "none": "-- None --",
+        "name": "Name",
+        "description": "Description",
+        "price": "Price",
+        "cuitDni": "CUIT / DNI",
+        "address": "Address",
+        "loading": "Loading...",
+        "downloadAttachment": "Download Attachment",
+        "amountCalculated": "Amount is calculated from items",
+        "notifications": "Notifications",
+        "markCompleted": "Mark as completed",
+        "expiringTomorrow": "Expiring Tomorrow",
+        "expiringToday": "Expiring Today",
+        "updateStatus": "Update Status",
+        "addStatus": "Add Status",
+        "editStatus": "Edit Status",
+        "deleteStatus": "Delete Status",
+        "selectContact": "-- Select Contact --",
+        "selectClientFirst": "Select a Client first",
+        "save": "Save",
+        "income": "Income",
+        "expense": "Expense",
+        "overdue": "Overdue",
+        "allCaughtUp": "You're all caught up!",
+        "website": "Website"
+    },
+    "clients": {
+        "title": "Accounts",
+        "description": "Manage companies and individuals you do business with.",
+        "addBtn": "Add Account",
+        "loading": "Loading accounts...",
+        "table": {
+            "companyName": "Legal Name",
+            "contactInfo": "Contact Info",
+            "cuitDni": "CUIT / DNI"
+        },
+        "viewProfile": "View Profile",
+        "empty": "No accounts found.",
+        "profile": {
+            "loading": "Loading Client 360 View...",
+            "notFound": "Client not found.",
+            "details": "Client Details",
+            "sectionContact": "Contact",
+            "sectionLocation": "Location",
+            "labelEmail": "EMAIL",
+            "labelPhone": "PHONE",
+            "labelAddress": "ADDRESS",
+            "labelCityProvince": "CITY / PROVINCE",
+            "labelCountry": "COUNTRY",
+            "na": "N/A",
+            "contacts": "Associated Contacts",
+            "manageContacts": "Manage",
+            "noContacts": "No contacts assigned. Go to the Contacts tab to add staff.",
+            "activities": "Associated Activities",
+            "viewCalendar": "View Calendar",
+            "noActivities": "No activities logged for this client yet.",
+            "eventTitle": "Event Title",
+            "dateTime": "Date & Time",
+            "type": "Type",
+            "general": "General",
+            "inventory": "Active Inventory & Services",
+            "openInventory": "Open Inventory Manager",
+            "noInventory": "No products or services currently assigned.",
+            "serviceProduct": "Service / Product",
+            "characteristics": "Characteristics",
+            "cycle": "Cycle",
+            "since": "Since",
+            "invoices": "Issued Invoices",
+            "viewBilling": "View All Billing",
+            "noInvoices": "No invoices generated for this client yet.",
+            "invoiceNum": "Invoice #",
+            "issueDate": "Issue Date",
+            "amount": "Amount",
+            "unknownService": "Unknown Service"
+        },
+        "modal": {
+            "editTitle": "Edit Account",
+            "addTitle": "Add New Account",
+            "legalName": "Legal Name",
+            "legalNamePlaceholder": "e.g. Company Inc.",
+            "tradeName": "Trade Name",
+            "tradeNamePlaceholder": "e.g. MyBrand",
+            "cuitDni": "CUIT / DNI",
+            "taxCondition": "Tax Condition",
+            "taxConditionPlaceholder": "Select a condition...",
+            "address": "Address",
+            "addressPlaceholder": "e.g. 123 Main St, Suite 5",
+            "city": "City",
+            "cityPlaceholder": "e.g. New York",
+            "province": "State / Province",
+            "provincePlaceholder": "e.g. NY",
+            "country": "Country",
+            "countryPlaceholder": "e.g. Argentina",
+            "sectionCompany": "Company Info",
+            "sectionTaxContact": "Tax & Contact",
+            "sectionAddress": "Location",
+            "saveBtn": "Save Account"
+        }
+    },
+    "contacts": {
+        "title": "Contacts",
+        "description": "Manage individuals associated with Clients or Providers.",
+        "addBtn": "Add Contact",
+        "loading": "Loading contacts...",
+        "table": {
+            "name": "Name",
+            "contactDetails": "Contact Details",
+            "associatedClient": "Associated Account",
+            "associatedProvider": "Associated Provider",
+            "type": "Type",
+            "company": "Company"
+        },
+        "empty": "No contacts found.",
+        "modal": {
+            "editTitle": "Edit Contact",
+            "addTitle": "Add New Contact",
+            "fullName": "Full Name",
+            "position": "Position / Job Title",
+            "assocClient": "Associated Account",
+            "assocProvider": "Associated Provider",
+            "saveBtn": "Save Contact"
+        }
+    },
+    "products": {
+        "title": "Products & Services",
+        "description": "Manage billable items for invoices.",
+        "addBtn": "Add Item",
+        "loading": "Loading products...",
+        "table": {
+            "itemName": "Item Name",
+            "type": "Type",
+            "category": "Category",
+            "family": "Family",
+            "subcategory": "Subcategory",
+            "price": "Price"
+        },
+        "empty": "No products or services found.",
+        "searchPlaceholder": "Search by name, description, category...",
+        "filterBy": "Filter:",
+        "allFamilies": "All Families",
+        "allCategories": "All Categories",
+        "allSubcategories": "All Subcategories",
+        "clearFilters": "Clear",
+        "itemsCount": "items",
+        "noResults": "No products match your search or filters.",
+        "modal": {
+            "editTitle": "Edit Item",
+            "addTitle": "Add New Item",
+            "itemType": "Item Type",
+            "product": "Product",
+            "service": "Service",
+            "manpower": "Manpower",
+            "category": "Category",
+            "categoryPlaceholder": "e.g. Software, Hardware",
+            "family": "Family",
+            "familyPlaceholder": "e.g. Development, Infrastructure",
+            "subcategory": "Subcategory",
+            "subcategoryPlaceholder": "e.g. Frontend, Backend, DevOps",
+            "currency": "Currency",
+            "saveBtn": "Save Item"
+        },
+        "types": {
+            "product": "Product",
+            "service": "Service",
+            "manpower": "Manpower"
+        }
+    },
+    "providers": {
+        "title": "Providers",
+        "description": "Manage your suppliers and service providers.",
+        "addBtn": "Add Provider",
+        "loading": "Loading providers...",
+        "rates": {
+            "usd": "USD to AR$:",
+            "eur": "EUR to AR$:"
+        },
+        "stats": {
+            "active": "Total Active Services",
+            "dueThisMonth": "Total Due This Month",
+            "dueNextMonth": "Total Due Next Month",
+            "dueThisMonthArs": "Total Due This Month (in ARS)",
+            "dueNextMonthArs": "Total Due Next Month (in ARS)",
+            "basedOn": "Based on USD=$",
+            "eurRs": "EUR=$"
+        },
+        "empty": "No providers found.",
+        "card": {
+            "cuit": "CUIT/DNI:",
+            "dueThis": "Due this month",
+            "dueNext": "Due next month",
+            "manageServices": "Manage {{count}} Contracted Services"
+        },
+        "modal": {
+            "editTitle": "Edit Provider",
+            "addTitle": "Add New Provider",
+            "companyName": "Company Name",
+            "saveBtn": "Save Provider"
+        }
+    },
+    "billing": {
+        "title": "Billing & Invoices",
+        "description": "Manage issued invoices and track provider bills.",
+        "manageStatusBtn": "Manage Statuses",
+        "newBtn": "New Invoice",
+        "kpis": {
+            "balance": "Real Balance",
+            "collected": "Collected (Clients)",
+            "pendingClient": "Pending Collection",
+            "paidProvider": "Paid (Prov.)",
+            "pendingProvider": "Pending Payment"
+        },
+        "tabs": {
+            "issued": "Issued to Clients",
+            "received": "Received from Providers"
+        },
+        "loading": "Loading billing data...",
+        "table": {
+            "invoiceNum": "Invoice #",
+            "client": "Client",
+            "provider": "Provider",
+            "dates": "Dates",
+            "amount": "Amount",
+            "status": "Status",
+            "issuedAt": "Issued: ",
+            "dueAt": "Due: ",
+            "noInvoices": "No {{type}} invoices found."
+        },
+        "download": "Download Attachment",
+        "noAttachment": "No Attachment",
+        "modal": {
+            "editTitle": "Edit Invoice",
+            "newTitle": "New {{type}} Invoice",
+            "issued": "Issued",
+            "received": "Received",
+            "invoiceNum": "Invoice Number",
+            "issueDate": "Issue Date",
+            "dueDate": "Due Date",
+            "amount": "Amount",
+            "calculatedAmount": "Amount is calculated from items",
+            "selectClient": "Select Client",
+            "selectProvider": "Select Provider",
+            "noStatus": "-- No Status --",
+            "paymentDate": "Payment Date",
+            "notes": "Notes",
+            "lineItems": "Line Items (Services/Products)",
+            "addItem": "Add Item",
+            "itemLabel": "Item",
+            "selectItem": "Select an Item...",
+            "qty": "Qty",
+            "price": "Price",
+            "total": "Total",
+            "noItems": "No items added. You can manually set the total amount above or add products.",
+            "attachment": "Attachment (Document)",
+            "viewAttachment": "View Current Attachment",
+            "saveBtn": "Save Invoice",
+            "linkedQuote": "Linked Quote",
+            "noQuote": "-- No Quote --",
+            "quoteLinked": "Items imported from quote"
+        },
+        "dropdown": {
+            "manualTitle": "Create Manual Invoice",
+            "manualDesc": "Fill in details manually, then emit via ARCA later.",
+            "arcaTitle": "Generate from ARCA",
+            "arcaDesc": "Emit directly with automatic correlative number."
+        },
+        "statusModal": {
+            "title": "Manage Invoice Statuses",
+            "existing": "Existing Statuses",
+            "none": "No statuses configured yet.",
+            "editTitle": "Edit Status",
+            "addTitle": "Add New Status",
+            "cancel": "Cancel Edit",
+            "name": "Status Name",
+            "color": "Status Color",
+            "saveBtn": "Save Status"
+        },
+        "validation": {
+            "paymentDateRequired": "Payment date is required when the status is set to Paid."
+        },
+        "chart": {
+            "title": "Revenue Timeline by Client",
+            "months": "Months",
+            "allClients": "All Clients",
+            "noData": "No invoiced data to display."
+        }
+    },
+    "finances": {
+        "title": "Financial Analysis",
+        "description": "Historical performance and projected cashflow.",
+        "loading": "Loading financial data...",
+        "kpis": {
+            "historicalIncome": "Historical Income (YTD)",
+            "historicalIncomeDesc": "Total invoiced and paid this year",
+            "totalExpenses": "Total Expenses (YTD)",
+            "totalExpensesDesc": "Invoices & active subscriptions",
+            "pendingIncome": "Pending Income",
+            "pendingIncomeDesc": "Issued invoices awaiting payment",
+            "projectedExpense": "Projected Fixed Expense",
+            "projectedExpenseDesc": "Recurring subscriptions this month"
+        },
+        "charts": {
+            "incomeVsExpenses": "Income vs Expenses (Last 6 Months)",
+            "cashflowDistribution": "Cashflow Distribution",
+            "profitMargin": "Profit Margin (YTD)",
+            "futureSummary": "Future Summary",
+            "incomingCash": "Incoming Cash",
+            "pendingPayables": "Pending Payables",
+            "recurringSubscriptions": "Recurring Subscriptions",
+            "netProjection": "Net Projection",
+            "income": "Income (Collected)",
+            "expense": "Expenses (Paid)",
+            "pendingIncome": "Pending Income",
+            "pendingExpense": "Pending Expenses"
+        },
+        "monthlyBreakdown": {
+            "title": "Monthly Detail by Currency (Raw)",
+            "month": "Month",
+            "income": "Income",
+            "expense": "Expense"
+        },
+        "servicePayments": {
+            "title": "Service Payments",
+            "description": "Navigate months to register past or future payments.",
+            "paid": "Paid",
+            "pending": "Pending",
+            "expires": "Exp"
+        }
+    },
+    "calendar": {
+        "title": "Activities / Calendar",
+        "description": "Track important deadlines, meetings, and upcoming expirations.",
+        "loading": "Loading events...",
+        "empty": "No upcoming activities or events found.",
+        "filters": {
+            "all": "All",
+            "type": "Type",
+            "status": "Status"
+        },
+        "status": {
+            "pending": "Pending",
+            "completed": "Completed",
+            "postponed": "Postponed",
+            "cancelled": "Cancelled",
+            "reason": "Reason",
+            "reasonLabel": "Please provide a reason for the status change.",
+            "reasonPlaceholder": "Enter reason..."
+        },
+        "notes": {
+            "title": "Notes",
+            "placeholder": "Add a note or minutes...",
+            "empty": "No notes yet.",
+            "hint": "Shift+Enter for new line"
+        },
+        "followUp": "Follow-up",
+        "tabs": {
+            "list": "List",
+            "month": "Month"
+        },
+        "newBtn": "New Event",
+        "overdue": "Overdue",
+        "unknownClient": "Unknown Client",
+        "today": "Today",
+        "modal": {
+            "editTitle": "Edit Event",
+            "newTitle": "Add New Event",
+            "titleLabel": "Title",
+            "startDateTime": "Start Date & Time",
+            "endDateTime": "End Date & Time",
+            "clientAssoc": "Client Association",
+            "noClient": "-- No Client --",
+            "contactAssoc": "Contact Association",
+            "leadAssoc": "Lead Association",
+            "noLead": "-- No Lead --",
+            "entityType": "Associate To",
+            "entityAccount": "Account",
+            "entityLead": "Lead",
+            "selectContact": "-- Select Contact --",
+            "selectClientFirst": "Select a Client first",
+            "relatedTo": "Related To",
+            "none": "-- None --",
+            "meeting": "Meeting / Call",
+            "billing": "Billing / Invoicing",
+            "expiration": "Service / Provider Expiration",
+            "other": "Other",
+            "color": "Event Color",
+            "autoGenerate": "Auto-Generate Invoice",
+            "invoiceType": "Invoice Type",
+            "issued": "Issued (To Client)",
+            "received": "Received (From Provider)",
+            "selectProvider": "Select Provider",
+            "amount": "Amount",
+            "autoGenerateNote": "* A 'Por Facturar' (Pending) status will be assigned or created automatically.",
+            "description": "Description / Notes",
+            "saveBtn": "Save Event"
+        },
+        "quickContact": {
+            "title": "Add Quick Contact",
+            "fullName": "Full Name *",
+            "email": "Email",
+            "phone": "Phone",
+            "position": "Position / Role",
+            "saveBtn": "Create Contact"
+        }
+    },
+    "settings": {
+        "title": "System Settings",
+        "description": "Manage application preferences and monitor system health.",
+        "tabs": {
+            "general": "General Settings",
+            "health": "System Health"
+        },
+        "general": {
+            "title": "General Settings",
+            "desc": "Configuration options will appear here in future updates."
+        },
+        "health": {
+            "title": "Diagnostics & Health",
+            "lastChecked": "Last checked: ",
+            "never": "Never",
+            "verifying": "Verifying...",
+            "runCheck": "Run Check",
+            "api": "API Backend",
+            "apiDesc": "FastAPI Server",
+            "db": "Database",
+            "dbDesc": "PostgreSQL Relational DB",
+            "apiOk": "The backend server is online and responding to requests normally.",
+            "apiError": "Connection failed. The backend API is currently unreachable.",
+            "apiChecking": "Checking connection to the API server...",
+            "dbOk": "Database connection is active and responding to ORM queries.",
+            "dbError": "Database query failed. The backend cannot communicate with Postgres.",
+            "dbChecking": "Checking connection through backend ORM..."
+        }
+    },
+    "quotes": {
+        "title": "Quotes",
+        "subtitle": "Manage estimations for accounts and leads",
+        "newQuote": "New Quote",
+        "editQuote": "Edit Quote",
+        "noQuotes": "No quotes found. Create one to get started.",
+        "quoteNumber": "Quote #",
+        "entity": "Entity",
+        "date": "Date",
+        "status": "Status",
+        "amount": "Amount",
+        "actions": "Actions",
+        "validUntil": "Valid until",
+        "linkToAccount": "Link to Account",
+        "linkToLead": "Link to Lead",
+        "selectAccount": "Select an Account...",
+        "selectLead": "Select a Lead...",
+        "entityType": "Entity Type",
+        "account": "Account",
+        "lead": "Lead",
+        "issueDate": "Issue Date",
+        "expiryDate": "Expiry Date",
+        "currency": "Currency",
+        "lineItems": "Line Items",
+        "addItem": "Add Item",
+        "customItem": "Custom Item / Product",
+        "description": "Description",
+        "qty": "Qty",
+        "price": "Price",
+        "noItems": "No items added yet.",
+        "subtotal": "Subtotal",
+        "total": "Total",
+        "notes": "Notes",
+        "notesPlaceholder": "Add any extra information or terms here...",
+        "attachment": "Attachment (PDF, Word)",
+        "uploadFile": "Upload a file",
+        "customAmount": "Custom / Extra Amount",
+        "customAmountPlaceholder": "E.g. 500.00"
+    },
+    "users": {
+        "title": "Users & Roles",
+        "description": "Manage user accounts and role assignments.",
+        "addBtn": "Add User",
+        "loading": "Loading users...",
+        "empty": "No users found.",
+        "table": {
+            "name": "Name",
+            "email": "Email",
+            "role": "Role",
+            "status": "Status"
+        },
+        "modal": {
+            "editTitle": "Edit User",
+            "addTitle": "Add New User",
+            "name": "Full Name",
+            "email": "Email",
+            "password": "Password",
+            "passwordHint": "Password (leave blank to keep current)",
+            "role": "Role",
+            "roleUser": "User",
+            "roleAdmin": "Admin",
+            "saveBtn": "Save User"
+        }
+    },
+    "leads": {
+        "title": "Leads",
+        "description": "Track potential customers from first contact to conversion.",
+        "addBtn": "Add Lead",
+        "loading": "Loading leads...",
+        "empty": "No leads found.",
+        "table": {
+            "company": "Company",
+            "contact": "Contact",
+            "source": "Source",
+            "status": "Status",
+            "notes": "Notes"
+        },
+        "status": {
+            "new": "New",
+            "contacted": "Contacted",
+            "qualified": "Qualified",
+            "converted": "Converted",
+            "lost": "Lost"
+        },
+        "modal": {
+            "editTitle": "Edit Lead",
+            "addTitle": "Add New Lead",
+            "company": "Company Name *",
+            "contact": "Contact Name",
+            "source": "Source",
+            "sourcePlaceholder": "e.g. Website, Referral",
+            "notes": "Notes",
+            "status": "Status",
+            "saveBtn": "Save Lead"
+        },
+        "profile": {
+            "loading": "Loading lead profile...",
+            "notFound": "Lead not found.",
+            "backToLeads": "Back to Leads",
+            "subtitle": "Lead profile — 360° view",
+            "details": "Lead Details",
+            "createdAt": "Created",
+            "associatedContacts": "Associated Contacts",
+            "noContacts": "No contacts linked to this lead.",
+            "associatedQuotes": "Associated Quotes",
+            "noQuotes": "No quotes linked to this lead yet.",
+            "viewAll": "View All",
+            "associatedActivities": "Associated Activities",
+            "noActivities": "No activities linked to this lead yet.",
+            "viewCalendar": "View Calendar"
+        }
+    },
+    "serviceModal": {
+        "addNew": "Add New",
+        "addService": "Add Service",
+        "clientInventory": "Client Inventory: {{name}}",
+        "clientInventoryDesc": "Manage products and services assigned to this client.",
+        "providerServices": "Contracted Services: {{name}}",
+        "providerServicesDesc": "Manage infrastructure & subscriptions to never miss a renewal payment.",
+        "activeServices": "Active Services",
+        "activeSubscriptions": "Active Subscriptions",
+        "loadingInventory": "Loading inventory...",
+        "loadingServices": "Loading services...",
+        "noClientServices": "No services found for this client.",
+        "noClientServicesHint": "Click \"Add New\" to assign a product or service.",
+        "noProviderServices": "No contracted services found for this provider.",
+        "noProviderServicesHint": "Click \"Add Service\" to register a VPS, API, or subscription.",
+        "started": "Started:",
+        "editService": "Edit Service",
+        "addNewService": "Add New Service",
+        "editContracted": "Edit Contracted Service",
+        "registerCost": "Register Cost",
+        "baseProduct": "Base Product/Service",
+        "customRefName": "Custom Reference Name",
+        "serviceName": "Service Name / Description",
+        "billingCycle": "Billing Cycle",
+        "currency": "Currency",
+        "costPrice": "Cost Price",
+        "startDate": "Start Date",
+        "endDate": "End Date (Optional)",
+        "contractDate": "Contract / Start Date",
+        "characteristics": "Service Characteristics",
+        "addField": "+ Add Field",
+        "noCustomFields": "No custom fields defined. Click \"+ Add Field\" to specify IPs, URLs, or other metadata.",
+        "cancel": "Cancel",
+        "save": "Save Service",
+        "confirmDeleteClient": "Are you sure you want to remove this service from the client?",
+        "confirmDeleteProvider": "Are you sure you want to remove this contracted service?",
+        "saveError": "An error occurred while saving the inventory item.",
+        "saveErrorProvider": "An error occurred while saving the service.",
+        "unknownProduct": "Unknown Product",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "annually": "Annually",
+        "oneTime": "One-Time",
+        "hourly": "Hourly",
+        "bimonthly": "Bimonthly",
+        "yearly": "Yearly",
+        "smartNotification": "Smart Notification System",
+        "smartNotificationDesc": "Zeron CRM will inject an intelligent alert directly into your global Calendar and Notification Bell to ensure you pay this renewal on time.",
+        "alertMe": "Alert me",
+        "daysBeforeExpiration": "days before expiration.",
+        "alertDays": "Alert me {{days}} days before expiration",
+        "renews": "Renews:",
+        "cost": "cost",
+        "statusActive": "Active",
+        "statusSuspended": "Suspended",
+        "statusCancelled": "Cancelled",
+        "registerPayment": "Register Payment",
+        "payments": "payments",
+        "receipt": "Receipt",
+        "savePayment": "Save Payment",
+        "confirmDeletePayment": "Delete this payment record?",
+        "paymentMonth": "Month",
+        "paymentYear": "Year",
+        "paymentDate": "Payment Date",
+        "paymentAmount": "Amount",
+        "invoiceNumber": "Invoice # (Provider)",
+        "receiptFile": "Receipt / Document",
+        "chooseFile": "Choose file...",
+        "productPath": "Product Path",
+        "selectFamily": "Family",
+        "selectCategory": "Category",
+        "selectSubcategory": "Subcategory",
+        "allFamilies": "-- All Families --",
+        "allCategories": "-- All Categories --",
+        "allSubcategories": "-- All --",
+        "selectProduct": "Product / Service",
+        "selectProductPlaceholder": "-- Select a product or service --",
+        "noProductsMatch": "No products match the selected filters.",
+        "selectFamilyFirst": "Select a family first",
+        "selectCategoryFirst": "Select a category first",
+        "customAlias": "Custom Alias / Description",
+        "customAliasPlaceholder": "e.g. Vultr VPS 4GB, Adobe CC, Domain .com"
+    },
+    "login": {
+        "subtitle": "Sign in to your workspace",
+        "email": "Email Address",
+        "password": "Password",
+        "submit": "Sign In",
+        "logout": "Logout",
+        "footer": "Secure Access",
+        "error": {
+            "generic": "An unexpected error occurred. Please try again.",
+            "network": "Cannot connect to the server. Check your network connection."
+        }
+    },
+    "help": {
+        "title": "User Manual",
+        "subtitle": "Guide to all modules",
+        "featuresLabel": "Key Features",
+        "organizationLabel": "How It's Organized",
+        "footer": "Built with ❤️ by Zeron Team",
+        "modules": {
+            "dashboard": {
+                "title": "Dashboard",
+                "desc": "Your central command panel. Get a quick overview of your entire business through customizable KPI cards, data tables, and analytical charts.",
+                "features": [
+                    "8 KPI cards: Accounts, Providers, Products, Users, Invoices (Issued/Received), Leads, Quotes",
+                    "4 data tables: Recent Invoices, Upcoming Activities, Recent Leads, Recent Quotes",
+                    "2 analytical charts: Revenue vs Expenses, Cash Flow Distribution",
+                    "Per-user widget customization saved to database",
+                    "Toggle widgets on/off from the Customize modal"
+                ],
+                "organization": "The dashboard is divided into 3 sections: KPIs (top), Tables (middle), and Charts (bottom). Click 'Customize' to choose which widgets appear. Your configuration is saved per user."
+            },
+            "leads": {
+                "title": "Leads",
+                "desc": "Track potential customers from first contact to conversion. Manage your sales pipeline with status tracking and quick conversion to accounts.",
+                "features": [
+                    "Lead tracking: company, contact, email, phone, notes",
+                    "Status pipeline: New → Contacted → Qualified → Proposal → Won / Lost",
+                    "Source tracking (web, referral, cold call, etc.)",
+                    "Quick conversion to Client account",
+                    "Filterable and searchable list"
+                ],
+                "organization": "Leads are organized by status. New leads appear first. Use the status badge to track progress. When a lead is won, convert it to a Client from the Accounts module."
+            },
+            "quotes": {
+                "title": "Quotes",
+                "desc": "Create and manage detailed quotations for your customers. Link products from your catalog and track approval status.",
+                "features": [
+                    "Auto-generated quote numbers (QT-XXXXXXXX)",
+                    "Line items linked to Products & Services catalog",
+                    "Status tracking: Draft → Sent → Accepted → Rejected",
+                    "Multi-currency support (ARS, USD, EUR)",
+                    "Link quotes to Leads or Clients"
+                ],
+                "organization": "Quotes are listed by date. Each quote contains line items pulled from your Products catalog. Status badges show the current stage. Create new quotes with the 'Add Quote' button."
+            },
+            "clients": {
+                "title": "Accounts",
+                "desc": "Manage your customer database. Store company information, tax IDs, and maintain service contracts.",
+                "features": [
+                    "Company profile: name, CUIT/DNI, address, phone, email",
+                    "Service assignment per client",
+                    "Detailed profile view",
+                    "Contact linking",
+                    "Active/inactive status"
+                ],
+                "organization": "Accounts are listed alphabetically. Click an account to see its profile with assigned services. Use the Services tab to link products/services that this client has contracted."
+            },
+            "contacts": {
+                "title": "Contacts",
+                "desc": "Maintain a directory of individual contacts linked to your client accounts.",
+                "features": [
+                    "Contact details: name, email, phone, position",
+                    "Linked to client accounts",
+                    "Searchable directory",
+                    "Create and edit from the contacts page"
+                ],
+                "organization": "Contacts are organized by client. Each contact belongs to one client account. Use the contacts page to search across all contacts or filter by client."
+            },
+            "billing": {
+                "title": "Invoicing",
+                "desc": "Manage both issued (sales) and received (purchase) invoices. Track payment status with custom color-coded statuses.",
+                "features": [
+                    "Two types: Issued invoices (sales) and Received invoices (purchases)",
+                    "Custom statuses with color codes",
+                    "Line items with quantity, unit price, and tax",
+                    "Multi-currency (ARS, USD, EUR)",
+                    "Status filtering and management"
+                ],
+                "organization": "Invoices are separated into Issued and Received tabs. Each invoice has a number, date, client/provider, and status. Click to expand and see line items."
+            },
+            "finances": {
+                "title": "Financial Analysis",
+                "desc": "Visualize your financial health with charts and summaries. Compare revenues and expenses over time.",
+                "features": [
+                    "Revenue vs Expenses bar chart (6-month trend)",
+                    "Cash flow distribution with profit margin %",
+                    "Future projection summary",
+                    "Budget and subscription tracking"
+                ],
+                "organization": "The finance view shows charts at the top and summary cards below. Data is automatically calculated from your issued (revenue) and received (expense) invoices."
+            },
+            "products": {
+                "title": "Products & Services",
+                "desc": "Manage your catalog of billable items. Organize by type, category, family, and subcategory.",
+                "features": [
+                    "Three item types: Product, Service, Manpower",
+                    "Classification: Category, Family, and Subcategory",
+                    "Price per unit with multi-currency",
+                    "Used as line items in Quotes and Invoices",
+                    "Active/inactive status"
+                ],
+                "organization": "Items are listed in a table with columns for type, category, family, subcategory, and price. Use the add/edit modal to set all fields. Categories, families, and subcategories are free-text for maximum flexibility."
+            },
+            "providers": {
+                "title": "Providers",
+                "desc": "Manage your external suppliers and service providers. Track what services each provider offers.",
+                "features": [
+                    "Provider profile: name, CUIT/DNI, address, contact info",
+                    "Service assignment per provider",
+                    "Exchange rate display (USD/EUR to ARS)",
+                    "Searchable list"
+                ],
+                "organization": "Providers are listed with their key info. Click to see the full profile. Use the Services tab to link what services this provider offers to you."
+            },
+            "calendar": {
+                "title": "Calendar",
+                "desc": "Track activities, tasks, and events with start/end dates. Connected to the dashboard widgets for upcoming deadlines.",
+                "features": [
+                    "Event tracking with title, description, dates",
+                    "Start and end date/time",
+                    "Visual calendar interface",
+                    "Linked to Dashboard upcoming activities widget"
+                ],
+                "organization": "Events appear in a calendar view. Create new events with the date picker. Upcoming events automatically show in the Dashboard activities table."
+            },
+            "users": {
+                "title": "Users & Roles",
+                "desc": "Manage user accounts and role assignments. Control who can access the system.",
+                "features": [
+                    "User CRUD: create, edit, deactivate",
+                    "Two roles: Admin and User",
+                    "Password management",
+                    "Active/inactive status"
+                ],
+                "organization": "Users are listed in a table. Admins can create new users and assign roles. Each user has their own dashboard configuration and login credentials."
+            },
+            "settings": {
+                "title": "Settings",
+                "desc": "System configuration and health monitoring. Check the status of all system components.",
+                "features": [
+                    "System health check (Database, API, Frontend)",
+                    "Application configuration",
+                    "Component status monitoring"
+                ],
+                "organization": "The settings page displays system health indicators. Green = healthy, Red = issue detected. Use this page to verify all components are running correctly."
+            }
+        }
+    },
+    "categories": {
+        "title": "Category Management",
+        "description": "Manage product families, categories, and subcategories in a hierarchical structure.",
+        "categoriesTitle": "Categories",
+        "familiesTitle": "Families",
+        "subcategoriesTitle": "Subcategories",
+        "selectCategory": "Select a category",
+        "selectFamily": "Select a family",
+        "selectCategoryFirst": "Select a category first",
+        "selectFamilyFirst": "Select a family first",
+        "emptyFamilies": "No families yet. Create the first one!",
+        "emptyCategories": "No categories in this family.",
+        "emptySubcategories": "No subcategories in this category.",
+        "confirmDelete": "Are you sure you want to delete this item? All children will also be deleted.",
+        "searchPlaceholder": "Search by name, code...",
+        "sortBy": "Sort:",
+        "noResults": "No results match your search.",
+        "modal": {
+            "addTitle": "Add",
+            "editTitle": "Edit",
+            "type_category": "Category",
+            "type_family": "Family",
+            "type_subcategory": "Subcategory",
+            "name": "Name",
+            "namePlaceholder": "Enter a name...",
+            "code": "Code",
+            "codePlaceholder": "e.g. SW, HW, INF...",
+            "description": "Description",
+            "descPlaceholder": "Optional description...",
+            "cancel": "Cancel",
+            "save": "Save"
+        }
+    }
+}

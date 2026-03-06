@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#1a56db"/>
+  <!-- Z top horizontal -->
+  <path d="M14 16 L50 16 L50 22 L14 22 Z" fill="white" rx="2"/>
+  <!-- Z diagonal -->
+  <path d="M38 16 L50 16 L26 48 L14 48 Z" fill="white"/>
+  <!-- Two accent diagonal lines -->
+  <line x1="36" y1="22" x2="42" y2="46" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <line x1="44" y1="22" x2="48" y2="40" stroke="white" stroke-width="4" stroke-linecap="round"/>
+</svg>
