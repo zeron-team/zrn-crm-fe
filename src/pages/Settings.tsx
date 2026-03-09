@@ -877,8 +877,8 @@ function CompanySettingsPanel() {
     const inputCls = "w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400 bg-white";
     const labelCls = "text-xs font-bold text-gray-500 uppercase block mb-1";
 
-    const Section = ({ id, title, icon, children }: { id: string; title: string; icon: string; children: React.ReactNode }) => (
-        <div className="border border-gray-200 rounded-xl overflow-hidden">
+    const renderSection = (id: string, title: string, icon: string, children: React.ReactNode) => (
+        <div key={id} className="border border-gray-200 rounded-xl overflow-hidden">
             <button onClick={() => toggleSection(id)}
                 className="w-full flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150 transition-colors">
                 <span className="flex items-center gap-2 text-sm font-bold text-gray-700">{icon} {title}</span>
@@ -927,7 +927,7 @@ function CompanySettingsPanel() {
                 </div>
             </div>
 
-            <Section id="identity" title="Identidad de la Empresa" icon="🏢">
+            {renderSection("identity", "Identidad de la Empresa", "🏢",
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className={labelCls}>Nombre de la Empresa *</label>
                         <input value={settings.company_name || ''} onChange={e => set('company_name', e.target.value)} className={inputCls} placeholder="Ej: ZRN360 SRL" /></div>
@@ -942,9 +942,9 @@ function CompanySettingsPanel() {
                     <div><label className={labelCls}>Slogan</label>
                         <input value={settings.slogan || ''} onChange={e => set('slogan', e.target.value)} className={inputCls} placeholder="Tu frase corporativa" /></div>
                 </div>
-            </Section>
+            )}
 
-            <Section id="contact" title="Contacto" icon="📞">
+            {renderSection("contact", "Contacto", "📞",
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div><label className={labelCls}>Teléfono</label>
                         <input value={settings.phone || ''} onChange={e => set('phone', e.target.value)} className={inputCls} placeholder="+54 11 1234-5678" /></div>
@@ -953,9 +953,9 @@ function CompanySettingsPanel() {
                     <div><label className={labelCls}>Sitio Web</label>
                         <input value={settings.website || ''} onChange={e => set('website', e.target.value)} className={inputCls} placeholder="https://www.empresa.com" /></div>
                 </div>
-            </Section>
+            )}
 
-            <Section id="address" title="Dirección" icon="📍">
+            {renderSection("address", "Dirección", "📍",
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="sm:col-span-2"><label className={labelCls}>Dirección</label>
                         <input value={settings.address || ''} onChange={e => set('address', e.target.value)} className={inputCls} placeholder="Calle y número" /></div>
@@ -968,9 +968,9 @@ function CompanySettingsPanel() {
                     <div><label className={labelCls}>País</label>
                         <input value={settings.country || 'Argentina'} onChange={e => set('country', e.target.value)} className={inputCls} /></div>
                 </div>
-            </Section>
+            )}
 
-            <Section id="hours" title="Horarios" icon="🕐">
+            {renderSection("hours", "Horarios", "🕐",
                 <div className="space-y-5">
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                         <h5 className="text-xs font-bold text-blue-700 uppercase mb-3">🏢 Horario de Trabajo</h5>
@@ -1001,9 +1001,9 @@ function CompanySettingsPanel() {
                         <p className="text-[10px] text-purple-500 mt-2">Define el rango de horas visibles en la vista semanal del calendario.</p>
                     </div>
                 </div>
-            </Section>
+            )}
 
-            <Section id="timezone" title="Zona Horaria y Monedas" icon="🌍">
+            {renderSection("timezone", "Zona Horaria y Monedas", "🌍",
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="sm:col-span-2">
                         <label className={labelCls}>Huso Horario</label>
@@ -1064,9 +1064,9 @@ function CompanySettingsPanel() {
                         </select>
                     </div>
                 </div>
-            </Section>
+            )}
 
-            <Section id="fiscal" title="Datos Fiscales" icon="📋">
+            {renderSection("fiscal", "Datos Fiscales", "📋",
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div><label className={labelCls}>Condición IVA</label>
                         <select value={settings.iva_condition || ''} onChange={e => set('iva_condition', e.target.value)} className={inputCls}>
@@ -1085,12 +1085,12 @@ function CompanySettingsPanel() {
                             ))}
                         </select></div>
                 </div>
-            </Section>
+            )}
 
-            <Section id="notes" title="Observaciones" icon="📝">
+            {renderSection("notes", "Observaciones", "📝",
                 <textarea value={settings.notes || ''} onChange={e => set('notes', e.target.value)}
                     rows={4} className={inputCls + " resize-none"} placeholder="Notas internas sobre la empresa..." />
-            </Section>
+            )}
 
             <div className="flex justify-end">
                 <button onClick={handleSave} disabled={saving}
