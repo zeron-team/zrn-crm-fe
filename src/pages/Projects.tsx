@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     FolderKanban, Plus, Search, Trash2, Edit3, X, Users, ChevronRight,
-    LayoutGrid, Columns3, Building2, FileText, UserCircle, Shield
+    LayoutGrid, Columns3, Building2, FileText, UserCircle, Shield, UserPlus
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -49,6 +49,10 @@ export default function Projects() {
     const [showModal, setShowModal] = useState(false);
     const [editProject, setEditProject] = useState<Project | null>(null);
     const [form, setForm] = useState({ name: '', description: '', key: '', methodology: 'kanban', client_id: '', quote_id: '', pm_id: '' });
+    // Members management in edit modal
+    const [projectMembers, setProjectMembers] = useState<{ id: number; user_id: number; role: string; full_name: string; email: string }[]>([]);
+    const [addUserId, setAddUserId] = useState('');
+    const [addRole, setAddRole] = useState('member');
 
     const load = async () => {
         try {
@@ -91,13 +95,19 @@ export default function Projects() {
         setShowModal(true);
     };
 
-    const openEdit = (p: Project) => {
+    const openEdit = async (p: Project) => {
         setEditProject(p);
         setForm({
             name: p.name, description: p.description || '', key: p.key, methodology: p.methodology,
             client_id: p.client_id ? String(p.client_id) : '', quote_id: p.quote_id ? String(p.quote_id) : '',
             pm_id: p.pm_id ? String(p.pm_id) : '',
         });
+        // Load members
+        try {
+            const { data } = await api.get(`/projects/${p.id}/members`);
+            setProjectMembers(data);
+        } catch { setProjectMembers([]); }
+        setAddUserId(''); setAddRole('member');
         setShowModal(true);
     };
 
@@ -387,6 +397,88 @@ export default function Projects() {
                                     ))}
                                 </div>
                             </div>
+
+                            {/* ═══ Members section (edit only) ═══ */}
+                            {editProject && (
+                                <div className="border border-violet-100 rounded-xl p-4 bg-violet-50/30 space-y-3">
+                                    <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
+                                        <Users size={14} className="text-violet-500" /> 👥 Equipo del Proyecto
+                                    </label>
+
+                                    {/* Add member row */}
+                                    <div className="flex gap-2">
+                                        <select value={addUserId} onChange={e => setAddUserId(e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-violet-400">
+                                            <option value="">Seleccionar usuario...</option>
+                                            {users.filter(u => !projectMembers.some(m => m.user_id === u.id)).map(u => (
+                                                <option key={u.id} value={u.id}>{u.full_name}</option>
+                                            ))}
+                                        </select>
+                                        <select value={addRole} onChange={e => setAddRole(e.target.value)}
+                                            className="px-2 py-2 border border-gray-200 rounded-lg text-xs bg-white outline-none focus:ring-2 focus:ring-violet-400 w-32">
+                                            <option value="owner">👑 Dueño</option>
+                                            <option value="admin">⚡ Admin</option>
+                                            <option value="member">✏️ Editor</option>
+                                            <option value="viewer">👁️ Viewer</option>
+                                        </select>
+                                        <button onClick={async () => {
+                                            if (!addUserId || !editProject) return;
+                                            await api.post(`/projects/${editProject.id}/members`, { user_id: parseInt(addUserId), role: addRole });
+                                            const { data } = await api.get(`/projects/${editProject.id}/members`);
+                                            setProjectMembers(data);
+                                            setAddUserId(''); setAddRole('member');
+                                        }} disabled={!addUserId}
+                                            className="px-3 py-2 bg-violet-500 text-white rounded-lg text-xs font-bold hover:bg-violet-600 disabled:opacity-40 transition-all">
+                                            <UserPlus size={14} />
+                                        </button>
+                                    </div>
+
+                                    {/* Member list */}
+                                    {projectMembers.length > 0 ? (
+                                        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                                            {projectMembers.map(m => {
+                                                const colors: Record<string, string> = {
+                                                    owner: 'bg-amber-100 text-amber-800',
+                                                    admin: 'bg-purple-100 text-purple-800',
+                                                    member: 'bg-blue-100 text-blue-800',
+                                                    viewer: 'bg-gray-100 text-gray-600',
+                                                };
+                                                return (
+                                                    <div key={m.id} className="flex items-center gap-2 bg-white border border-gray-100 rounded-lg px-3 py-2 group">
+                                                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                                            {m.full_name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-gray-700 truncate">{m.full_name}</p>
+                                                            <p className="text-[10px] text-gray-400 truncate">{m.email}</p>
+                                                        </div>
+                                                        <select value={m.role} onChange={async (e) => {
+                                                            if (!editProject) return;
+                                                            await api.post(`/projects/${editProject.id}/members`, { user_id: m.user_id, role: e.target.value });
+                                                            const { data } = await api.get(`/projects/${editProject.id}/members`);
+                                                            setProjectMembers(data);
+                                                        }} className={`px-2 py-1 rounded text-[10px] font-bold outline-none cursor-pointer border-0 ${colors[m.role] || colors.member}`}>
+                                                            <option value="owner">👑 Dueño</option>
+                                                            <option value="admin">⚡ Admin</option>
+                                                            <option value="member">✏️ Editor</option>
+                                                            <option value="viewer">👁️ Viewer</option>
+                                                        </select>
+                                                        <button onClick={async () => {
+                                                            if (!editProject) return;
+                                                            await api.delete(`/projects/${editProject.id}/members/${m.id}`);
+                                                            setProjectMembers(prev => prev.filter(x => x.id !== m.id));
+                                                        }} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-all">
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-gray-400 text-center py-3">Sin miembros. Agregá usuarios para que vean este proyecto.</p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
                             <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 rounded-lg">
