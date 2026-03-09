@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-    MessageCircle, Send, Search, RefreshCw, Phone, Video, MoreVertical,
-    QrCode, Wifi, WifiOff, LogOut, Plus, ArrowLeft, Check, CheckCheck, User
+    MessageCircle, Send, Search, RefreshCw,
+    QrCode, LogOut, Plus, ArrowLeft, CheckCheck, User
 } from 'lucide-react';
 
 interface WAConversation {
@@ -32,7 +32,7 @@ export default function WhatsApp() {
     const [newPhone, setNewPhone] = useState('');
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const wsRef = useRef<WebSocket | null>(null);
+    // wsRef removed — polling is used instead of WebSocket
 
     // Polling for status/QR and new messages (replaces WebSocket)
     useEffect(() => {

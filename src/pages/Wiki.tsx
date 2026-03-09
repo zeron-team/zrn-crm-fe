@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -182,7 +182,7 @@ export default function Wiki() {
     // Render simple markdown: headers, bold, code blocks, lists
     const renderContent = (content: string) => {
         const lines = content.split("\n");
-        const result: JSX.Element[] = [];
+        const result: React.JSX.Element[] = [];
         let i = 0;
         while (i < lines.length) {
             const line = lines[i];

@@ -200,8 +200,8 @@ export default function TimeTracking() {
                             <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} unit="h" />
                             <Tooltip
                                 contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontSize: '12px' }}
-                                labelFormatter={(v: string) => { const d = new Date(v + 'T12:00:00'); return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); }}
-                                formatter={(value: number, name: string) => [`${value}h`, name]}
+                                labelFormatter={((v: string) => { const d = new Date(v + 'T12:00:00'); return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); }) as any}
+                                formatter={((value: number, name: string) => [`${value}h`, name]) as any}
                             />
                             <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                             {overviewMeta.map((emp, i) => (
