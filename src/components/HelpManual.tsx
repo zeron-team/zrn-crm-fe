@@ -139,7 +139,7 @@ export default function HelpManual() {
                         {/* Footer */}
                         <div className="p-4 border-t border-gray-100 bg-gray-50">
                             <p className="text-xs text-gray-500 text-center">
-                                Zeron CRM v4.2.0 · {t('help.footer')}
+                                Zeron CRM v5.0.0 · {t('help.footer')}
                             </p>
                         </div>
                     </div>

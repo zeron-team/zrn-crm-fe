@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const VERSION = "4.2.0";
+const VERSION = "5.0.0";
 
 interface ModuleCard {
     title: string;
@@ -220,7 +220,7 @@ export default function Home() {
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
                                     </span>
-                                    <span className="text-xs font-bold text-white/90 uppercase tracking-wider">Nuevo en v4.2.0</span>
+                                    <span className="text-xs font-bold text-white/90 uppercase tracking-wider">Nuevo en v5.0.0</span>
                                 </div>
                                 <h3 className="text-2xl lg:text-3xl font-black text-white mb-2">
                                     Presentamos <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-amber-200">ZeRoN IA</span>

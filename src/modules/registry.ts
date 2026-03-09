@@ -86,7 +86,7 @@ const RolePermissions = lazy(() => import("../pages/RolePermissions"));
 const coreModule: ModuleManifest = {
     name: "Principal",
     slug: "core",
-    version: "1.0.0",
+    version: "5.0.0",
     description: "Módulo base: inicio, dashboard, notas, calendario",
     icon: "LayoutDashboard",
     category: "core",
@@ -115,7 +115,7 @@ const coreModule: ModuleManifest = {
 const crmModule: ModuleManifest = {
     name: "CRM",
     slug: "crm",
-    version: "1.0.0",
+    version: "5.0.0",
     description: "Gestión comercial: leads, cuentas, contactos, presupuestos",
     icon: "Briefcase",
     category: "business",
@@ -151,7 +151,7 @@ const crmModule: ModuleManifest = {
 const projectsModule: ModuleManifest = {
     name: "Proyectos",
     slug: "projects",
-    version: "1.0.0",
+    version: "5.0.0",
     description: "Gestión de proyectos con tablero Kanban y Wiki",
     icon: "FolderKanban",
     category: "business",
@@ -176,7 +176,7 @@ const projectsModule: ModuleManifest = {
 const hrModule: ModuleManifest = {
     name: "RRHH",
     slug: "hr",
-    version: "1.0.0",
+    version: "5.0.0",
     description: "Recursos Humanos: empleados, fichadas, liquidación",
     icon: "UserCheck",
     category: "business",
@@ -204,7 +204,7 @@ const hrModule: ModuleManifest = {
 const communicationsModule: ModuleManifest = {
     name: "Comunicaciones",
     slug: "communications",
-    version: "1.0.0",
+    version: "5.0.0",
     description: "Email corporativo, WhatsApp integrado",
     icon: "Mail",
     category: "business",
@@ -228,7 +228,7 @@ const communicationsModule: ModuleManifest = {
 const erpModule: ModuleManifest = {
     name: "ERP",
     slug: "erp",
-    version: "1.0.0",
+    version: "5.0.0",
     description: "Facturación, ARCA/AFIP, remitos, inventario, depósitos",
     icon: "Receipt",
     category: "business",
@@ -266,7 +266,7 @@ const erpModule: ModuleManifest = {
 const catalogModule: ModuleManifest = {
     name: "Catálogo",
     slug: "catalog",
-    version: "1.0.0",
+    version: "5.0.0",
     description: "Productos, servicios y categorías",
     icon: "Package",
     category: "business",
@@ -290,7 +290,7 @@ const catalogModule: ModuleManifest = {
 const systemModule: ModuleManifest = {
     name: "Sistema",
     slug: "system",
-    version: "1.0.0",
+    version: "5.0.0",
     description: "Configuración, seguridad, auditoría, roles",
     icon: "Cog",
     category: "core",
