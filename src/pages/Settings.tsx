@@ -537,8 +537,8 @@ export default function Settings() {
                                                             const daysLeft = Math.ceil((new Date(mod.license_expires_at).getTime() - Date.now()) / 86400000);
                                                             return (
                                                                 <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${daysLeft > 30 ? 'bg-emerald-100 text-emerald-700' :
-                                                                        daysLeft > 7 ? 'bg-amber-100 text-amber-700' :
-                                                                            daysLeft > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
+                                                                    daysLeft > 7 ? 'bg-amber-100 text-amber-700' :
+                                                                        daysLeft > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
                                                                     }`}>
                                                                     {daysLeft > 0 ? `${daysLeft} días restantes` : 'Expirado'}
                                                                 </span>
@@ -819,7 +819,7 @@ function CompanySettingsPanel() {
     const [toast, setToast] = useState<string | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-        identity: true, contact: true, address: true, hours: true, fiscal: false, notes: false,
+        identity: true, contact: true, address: true, hours: true, timezone: true, fiscal: false, notes: false,
     });
 
     const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -1003,6 +1003,69 @@ function CompanySettingsPanel() {
                 </div>
             </Section>
 
+            <Section id="timezone" title="Zona Horaria y Monedas" icon="🌍">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                        <label className={labelCls}>Huso Horario</label>
+                        <select value={settings.timezone || 'America/Argentina/Buenos_Aires'} onChange={e => set('timezone', e.target.value)} className={inputCls}>
+                            <option value="America/Argentina/Buenos_Aires">Argentina (GMT-3)</option>
+                            <option value="America/Montevideo">Uruguay (GMT-3)</option>
+                            <option value="America/Santiago">Chile (GMT-4)</option>
+                            <option value="America/Sao_Paulo">Brasil (GMT-3)</option>
+                            <option value="America/Bogota">Colombia (GMT-5)</option>
+                            <option value="America/Lima">Perú (GMT-5)</option>
+                            <option value="America/Mexico_City">México (GMT-6)</option>
+                            <option value="America/New_York">EEUU Este (GMT-5)</option>
+                            <option value="Europe/Madrid">España (GMT+1)</option>
+                            <option value="UTC">UTC (GMT+0)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className={labelCls}>Moneda por Defecto</label>
+                        <select value={settings.default_currency || 'ARS'} onChange={e => set('default_currency', e.target.value)} className={inputCls}>
+                            <option value="ARS">🇦🇷 ARS - Peso Argentino</option>
+                            <option value="USD">🇺🇸 USD - Dólar Estadounidense</option>
+                            <option value="EUR">🇪🇺 EUR - Euro</option>
+                            <option value="BRL">🇧🇷 BRL - Real Brasileño</option>
+                            <option value="UYU">🇺🇾 UYU - Peso Uruguayo</option>
+                            <option value="CLP">🇨🇱 CLP - Peso Chileno</option>
+                            <option value="MXN">🇲🇽 MXN - Peso Mexicano</option>
+                            <option value="COP">🇨🇴 COP - Peso Colombiano</option>
+                            <option value="PEN">🇵🇪 PEN - Sol Peruano</option>
+                            <option value="GBP">🇬🇧 GBP - Libra Esterlina</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className={labelCls}>Moneda Secundaria</label>
+                        <select value={settings.secondary_currency || 'USD'} onChange={e => set('secondary_currency', e.target.value)} className={inputCls}>
+                            <option value="">Sin moneda secundaria</option>
+                            <option value="ARS">🇦🇷 ARS - Peso Argentino</option>
+                            <option value="USD">🇺🇸 USD - Dólar Estadounidense</option>
+                            <option value="EUR">🇪🇺 EUR - Euro</option>
+                            <option value="BRL">🇧🇷 BRL - Real Brasileño</option>
+                            <option value="UYU">🇺🇾 UYU - Peso Uruguayo</option>
+                            <option value="CLP">🇨🇱 CLP - Peso Chileno</option>
+                            <option value="MXN">🇲🇽 MXN - Peso Mexicano</option>
+                            <option value="GBP">🇬🇧 GBP - Libra Esterlina</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className={labelCls}>Moneda Terciaria</label>
+                        <select value={settings.tertiary_currency || ''} onChange={e => set('tertiary_currency', e.target.value)} className={inputCls}>
+                            <option value="">Sin moneda terciaria</option>
+                            <option value="ARS">🇦🇷 ARS - Peso Argentino</option>
+                            <option value="USD">🇺🇸 USD - Dólar Estadounidense</option>
+                            <option value="EUR">🇪🇺 EUR - Euro</option>
+                            <option value="BRL">🇧🇷 BRL - Real Brasileño</option>
+                            <option value="UYU">🇺🇾 UYU - Peso Uruguayo</option>
+                            <option value="CLP">🇨🇱 CLP - Peso Chileno</option>
+                            <option value="MXN">🇲🇽 MXN - Peso Mexicano</option>
+                            <option value="GBP">🇬🇧 GBP - Libra Esterlina</option>
+                        </select>
+                    </div>
+                </div>
+            </Section>
+
             <Section id="fiscal" title="Datos Fiscales" icon="📋">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div><label className={labelCls}>Condición IVA</label>
@@ -1037,12 +1100,14 @@ function CompanySettingsPanel() {
                 </button>
             </div>
 
-            {toast && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-gray-900 text-white rounded-xl shadow-2xl text-sm font-bold">
-                    {toast}
-                </div>
-            )}
-        </div>
+            {
+                toast && (
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-gray-900 text-white rounded-xl shadow-2xl text-sm font-bold">
+                        {toast}
+                    </div>
+                )
+            }
+        </div >
     );
 }
 
