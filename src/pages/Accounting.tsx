@@ -5,7 +5,7 @@ import {
     Calculator, Plus, Trash2, Edit3, ChevronDown, ChevronUp,
     FileText, AlertTriangle, CheckCircle, Clock, DollarSign,
     TrendingUp, TrendingDown, Search, Filter, Calendar, X,
-    ExternalLink, RefreshCw
+    ExternalLink, RefreshCw, Building2, Receipt, ShoppingCart
 } from "lucide-react";
 
 interface Client { id: number; name: string; }
@@ -84,6 +84,7 @@ export default function Accounting() {
     const [periods, setPeriods] = useState<Period[]>([]);
     const [obligations, setObligations] = useState<Obligation[]>([]);
     const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+    const [companyCtx, setCompanyCtx] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     // Filters
@@ -111,16 +112,18 @@ export default function Accounting() {
     const fetchAll = async () => {
         setLoading(true);
         try {
-            const [cRes, pRes, oRes, dRes] = await Promise.all([
+            const [cRes, pRes, oRes, dRes, ctxRes] = await Promise.all([
                 api.get("/clients/"),
                 api.get("/accounting/periods", { params: { client_id: filterClient || undefined, year: filterYear || undefined, status: filterStatus || undefined } }),
                 api.get("/accounting/obligations", { params: { client_id: filterClient || undefined, year: filterYear || undefined, status: filterStatus || undefined } }),
                 api.get("/accounting/dashboard"),
+                api.get("/accounting/company-context"),
             ]);
             setClients(cRes.data);
             setPeriods(pRes.data);
             setObligations(oRes.data);
             setDashboard(dRes.data);
+            setCompanyCtx(ctxRes.data);
         } catch (e) { console.error(e); }
         setLoading(false);
     };
@@ -273,7 +276,81 @@ export default function Accounting() {
                     {/* ═══ DASHBOARD TAB ═══ */}
                     {activeTab === "dashboard" && dashboard && (
                         <div className="space-y-6">
-                            {/* KPI Cards */}
+                            {/* Company Identity Banner */}
+                            {companyCtx?.company?.company_name && (
+                                <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-5 shadow-lg">
+                                    {companyCtx.company.logo_url ? (
+                                        <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                                            <img src={companyCtx.company.logo_url} alt="Logo" className="w-full h-full object-contain p-1.5" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                                            <Building2 size={28} className="text-white/40" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1 text-center sm:text-left">
+                                        <h3 className="text-white font-bold text-lg">{companyCtx.company.company_name}</h3>
+                                        {companyCtx.company.fantasy_name && companyCtx.company.fantasy_name !== companyCtx.company.company_name && (
+                                            <p className="text-white/50 text-sm">{companyCtx.company.fantasy_name}</p>
+                                        )}
+                                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2">
+                                            {companyCtx.company.cuit && (
+                                                <span className="px-2.5 py-1 bg-white/10 rounded-lg text-xs font-bold text-white/80">CUIT: {companyCtx.company.cuit}</span>
+                                            )}
+                                            {companyCtx.company.iva_condition && (
+                                                <span className="px-2.5 py-1 bg-violet-500/30 rounded-lg text-xs font-bold text-violet-200">{companyCtx.company.iva_condition}</span>
+                                            )}
+                                            {companyCtx.company.default_currency && (
+                                                <span className="px-2.5 py-1 bg-emerald-500/30 rounded-lg text-xs font-bold text-emerald-200">💰 {companyCtx.company.default_currency}</span>
+                                            )}
+                                            {companyCtx.company.address && (
+                                                <span className="text-xs text-white/40">
+                                                    📍 {[companyCtx.company.address, companyCtx.company.city, companyCtx.company.province].filter(Boolean).join(", ")}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="text-center shrink-0">
+                                        <p className="text-white/40 text-[10px] uppercase font-bold">Ejercicio</p>
+                                        <p className="text-white text-2xl font-black">{companyCtx.year}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Billing / Purchase Summary */}
+                            {companyCtx && (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-xs font-bold text-gray-500 uppercase">Facturación (Ventas)</span>
+                                            <div className="p-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600"><Receipt size={14} className="text-white" /></div>
+                                        </div>
+                                        <p className="text-2xl font-black text-gray-800">{fmt(companyCtx.ventas?.total || 0)}</p>
+                                        <div className="flex items-center gap-3 mt-2">
+                                            <span className="text-[10px] text-gray-400">{companyCtx.ventas?.count || 0} facturas</span>
+                                            <span className="text-[10px] text-emerald-600 font-bold">Neto: {fmt(companyCtx.ventas?.neto || 0)}</span>
+                                            <span className="text-[10px] text-violet-600 font-bold">IVA: {fmt(companyCtx.ventas?.iva || 0)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-xs font-bold text-gray-500 uppercase">Órdenes de Compra</span>
+                                            <div className="p-1.5 rounded-lg bg-gradient-to-r from-red-500 to-rose-600"><ShoppingCart size={14} className="text-white" /></div>
+                                        </div>
+                                        <p className="text-2xl font-black text-gray-800">{fmt(companyCtx.compras?.total || 0)}</p>
+                                        <span className="text-[10px] text-gray-400">{companyCtx.compras?.count || 0} órdenes</span>
+                                    </div>
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-xs font-bold text-gray-500 uppercase">Comprobantes Recibidos</span>
+                                            <div className="p-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600"><FileText size={14} className="text-white" /></div>
+                                        </div>
+                                        <p className="text-2xl font-black text-gray-800">{fmt(companyCtx.recibidas?.total || 0)}</p>
+                                        <span className="text-[10px] text-gray-400">{companyCtx.recibidas?.count || 0} comprobantes</span>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {[
                                     { label: "Total Períodos", value: dashboard.total_periods, icon: FileText, color: "from-violet-500 to-purple-600" },
