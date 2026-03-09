@@ -627,7 +627,26 @@ export default function Calendar() {
     const renderWeek = () => {
         const weekStart = startOfWeek(currentWeek, { locale: es });
         const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-        const hours = Array.from({ length: 24 }, (_, i) => i); // 0:00 - 23:00
+        const hours = Array.from({ length: 24 }, (_, i) => i);
+        const HOUR_H = 60; // px per hour row
+
+        // Helper to get client/contact name
+        const getEventMeta = (ev: CalendarEvent) => {
+            const parts: string[] = [];
+            if (ev.client_id) {
+                const cl = clients.find(c => c.id === ev.client_id);
+                if (cl) parts.push(cl.name);
+            }
+            if (ev.contact_id) {
+                const ct = contacts.find(c => c.id === ev.contact_id);
+                if (ct) parts.push(ct.name);
+            }
+            if (ev.lead_id) {
+                const ld = leads.find(l => l.id === ev.lead_id);
+                if (ld) parts.push(ld.company_name);
+            }
+            return parts.join(' · ');
+        };
 
         return (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -641,8 +660,9 @@ export default function Calendar() {
                         <button onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 border border-gray-200 shadow-sm"><ChevronRight size={20} /></button>
                     </div>
                 </div>
-                <div className="overflow-auto max-h-[70vh]" ref={(el) => { if (el && !el.dataset.scrolled) { el.scrollTop = 8 * 48; el.dataset.scrolled = '1'; } }}>
-                    <div className="grid grid-cols-8 border-b border-gray-200 sticky top-0 bg-gray-50 z-10">
+                <div className="overflow-auto max-h-[75vh]" ref={(el) => { if (el && !el.dataset.scrolled) { el.scrollTop = 8 * HOUR_H; el.dataset.scrolled = '1'; } }}>
+                    {/* Header row */}
+                    <div className="grid grid-cols-8 border-b border-gray-200 sticky top-0 bg-gray-50 z-20">
                         <div className="p-2 text-center text-[10px] font-bold text-gray-400 border-r border-gray-200">Hora</div>
                         {days.map((d, i) => (
                             <div key={i} className={`p-2 text-center border-r border-gray-200 ${isSameDay(d, new Date()) ? 'bg-blue-50' : ''}`}>
@@ -651,40 +671,81 @@ export default function Calendar() {
                             </div>
                         ))}
                     </div>
-                    {hours.map(h => (
-                        <div key={h} className="grid grid-cols-8 border-b border-gray-50">
-                            <div className="p-1 text-[10px] text-gray-400 text-right pr-2 border-r border-gray-100 bg-gray-50/50">{h}:00</div>
-                            {days.map((d, di) => {
-                                const dayEvts = events.filter(ev => {
-                                    const sd = parseISO(ev.start_date);
-                                    return isSameDay(sd, d) && sd.getHours() === h;
-                                });
-                                return (
-                                    <div key={di} className={`min-h-[48px] border-r border-gray-50 p-0.5 cursor-pointer hover:bg-blue-50/30 ${isSameDay(d, new Date()) ? 'bg-blue-50/20' : ''} ${dragOverCell === `week-${di}-${h}` ? 'ring-2 ring-blue-400 ring-inset bg-blue-50' : ''}`}
-                                        onClick={() => {
-                                            const dt = new Date(d); dt.setHours(h, 0, 0, 0);
-                                            openAddModal(dt);
-                                        }}
-                                        onDragOver={(e) => { e.preventDefault(); setDragOverCell(`week-${di}-${h}`); }}
-                                        onDragLeave={() => setDragOverCell(null)}
-                                        onDrop={(e) => handleDropOnHourCell(e, d, h)}
-                                    >
-                                        {dayEvts.map(ev => (
+                    {/* Time grid + events */}
+                    <div className="grid grid-cols-8" style={{ position: 'relative' }}>
+                        {/* Hour labels column */}
+                        <div className="border-r border-gray-100">
+                            {hours.map(h => (
+                                <div key={h} className="text-[10px] text-gray-400 text-right pr-2 border-b border-gray-50 bg-gray-50/50"
+                                    style={{ height: `${HOUR_H}px`, lineHeight: `${HOUR_H}px` }}>
+                                    {h.toString().padStart(2, '0')}:00
+                                </div>
+                            ))}
+                        </div>
+                        {/* Day columns */}
+                        {days.map((d, di) => {
+                            const dayEvents = events.filter(ev => isSameDay(parseISO(ev.start_date), d));
+                            return (
+                                <div key={di} className={`border-r border-gray-50 ${isSameDay(d, new Date()) ? 'bg-blue-50/10' : ''}`}
+                                    style={{ position: 'relative' }}>
+                                    {/* Hour grid cells */}
+                                    {hours.map(h => (
+                                        <div key={h}
+                                            className={`border-b border-gray-50 cursor-pointer hover:bg-blue-50/30 ${dragOverCell === `week-${di}-${h}` ? 'ring-2 ring-blue-400 ring-inset bg-blue-50' : ''}`}
+                                            style={{ height: `${HOUR_H}px` }}
+                                            onClick={() => { const dt = new Date(d); dt.setHours(h, 0, 0, 0); openAddModal(dt); }}
+                                            onDragOver={(e) => { e.preventDefault(); setDragOverCell(`week-${di}-${h}`); }}
+                                            onDragLeave={() => setDragOverCell(null)}
+                                            onDrop={(e) => handleDropOnHourCell(e, d, h)}
+                                        />
+                                    ))}
+                                    {/* Events positioned absolutely */}
+                                    {dayEvents.map(ev => {
+                                        const sd = parseISO(ev.start_date);
+                                        const ed = parseISO(ev.end_date);
+                                        const startMin = sd.getHours() * 60 + sd.getMinutes();
+                                        const endMin = ed.getHours() * 60 + ed.getMinutes();
+                                        const durationMin = Math.max(endMin - startMin, 30); // min 30min visual
+                                        const topPx = (startMin / 60) * HOUR_H;
+                                        const heightPx = (durationMin / 60) * HOUR_H;
+                                        const meta = getEventMeta(ev);
+                                        const startStr = `${sd.getHours().toString().padStart(2, '0')}:${sd.getMinutes().toString().padStart(2, '0')}`;
+                                        const endStr = `${ed.getHours().toString().padStart(2, '0')}:${ed.getMinutes().toString().padStart(2, '0')}`;
+
+                                        return (
                                             <div key={ev.id}
                                                 draggable
                                                 onDragStart={(e) => { e.stopPropagation(); handleDragStart(e, ev); }}
                                                 onDragEnd={handleDragEnd}
                                                 onClick={e => { e.stopPropagation(); openEditModal(ev); }}
-                                                className="text-[10px] px-1.5 py-0.5 rounded truncate font-medium text-white shadow-sm hover:opacity-90 mb-0.5 cursor-grab active:cursor-grabbing"
-                                                style={{ backgroundColor: ev.color || '#3788d8' }} title={`${ev.title} (arrastrá para mover)`}>
-                                                {ev.title}
+                                                className="absolute left-0.5 right-0.5 rounded-md text-white shadow-md hover:shadow-lg transition-shadow cursor-grab active:cursor-grabbing overflow-hidden z-10"
+                                                style={{
+                                                    top: `${topPx}px`,
+                                                    height: `${heightPx}px`,
+                                                    backgroundColor: ev.color || '#3788d8',
+                                                    minHeight: '28px',
+                                                }}
+                                                title={`${ev.title}${meta ? ` · ${meta}` : ''} (${startStr} - ${endStr})`}
+                                            >
+                                                <div className="px-1.5 py-0.5 h-full flex flex-col">
+                                                    <span className="text-[10px] font-bold truncate leading-tight">{ev.title}</span>
+                                                    <span className="text-[9px] opacity-80 leading-tight">{startStr} - {endStr}</span>
+                                                    {meta && <span className="text-[9px] opacity-75 truncate leading-tight">{meta}</span>}
+                                                    {ev.call_url && (
+                                                        <a href={ev.call_url} target="_blank" rel="noopener noreferrer"
+                                                            onClick={e => e.stopPropagation()}
+                                                            className="text-[9px] underline opacity-90 truncate leading-tight hover:opacity-100 mt-auto">
+                                                            🔗 Unirse
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ))}
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         );
