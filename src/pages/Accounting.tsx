@@ -8,11 +8,8 @@ import {
     ExternalLink, RefreshCw, Building2, Receipt, ShoppingCart
 } from "lucide-react";
 
-interface Client { id: number; name: string; }
-
 interface Period {
-    id: number; client_id: number; client_name: string;
-    month: number; month_name: string; year: number;
+    id: number; month: number; month_name: string; year: number;
     status: string;
     total_ingresos: number; total_egresos: number;
     total_impuestos: number; total_cargas_sociales: number;
@@ -31,19 +28,29 @@ interface Entry {
 }
 
 interface Obligation {
-    id: number; client_id: number; client_name: string;
-    tax_type: string; period_month: number | null; period_month_name: string | null;
+    id: number; tax_type: string;
+    period_month: number | null; period_month_name: string | null;
     period_year: number; due_date: string; status: string;
     amount: number; filed_date: string | null; payment_date: string | null;
     reference_number: string | null; notes: string | null;
 }
 
 interface DashboardData {
+    company: any;
+    year: number;
     total_periods: number; draft_periods: number;
     confirmed_periods: number; filed_periods: number;
     pending_obligations: number; overdue_obligations: number;
     upcoming_obligations: Obligation[];
-    client_summary: { client_id: number; client_name: string; ingresos: number; egresos: number; impuestos: number }[];
+    monthly_breakdown: { month: number; month_name: string; ingresos: number; egresos: number; impuestos: number }[];
+}
+
+interface CompanyCtx {
+    company: any;
+    year: number;
+    ventas: { count: number; total: number; neto: number; iva: number };
+    compras: { count: number; total: number };
+    recibidas: { count: number; total: number };
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -80,18 +87,15 @@ const TAX_TYPES = ["IVA", "IIBB", "Ganancias", "F931", "Monotributo", "DDJJ_Annu
 export default function Accounting() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<"dashboard" | "periods" | "obligations">("dashboard");
-    const [clients, setClients] = useState<Client[]>([]);
     const [periods, setPeriods] = useState<Period[]>([]);
     const [obligations, setObligations] = useState<Obligation[]>([]);
     const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-    const [companyCtx, setCompanyCtx] = useState<any>(null);
+    const [companyCtx, setCompanyCtx] = useState<CompanyCtx | null>(null);
     const [loading, setLoading] = useState(true);
 
     // Filters
-    const [filterClient, setFilterClient] = useState("");
     const [filterYear, setFilterYear] = useState(new Date().getFullYear());
     const [filterStatus, setFilterStatus] = useState("");
-    const [searchTerm, setSearchTerm] = useState("");
 
     // Modals
     const [showPeriodModal, setShowPeriodModal] = useState(false);
@@ -100,26 +104,22 @@ export default function Accounting() {
     const [expandedPeriod, setExpandedPeriod] = useState<number | null>(null);
     const [periodDetail, setPeriodDetail] = useState<Period | null>(null);
 
-    // Form data
-    const [periodForm, setPeriodForm] = useState({ client_id: "", month: new Date().getMonth() + 1, year: new Date().getFullYear(), notes: "" });
+    // Form data — no client_id needed, company-owned
+    const [periodForm, setPeriodForm] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), notes: "" });
     const [entryForm, setEntryForm] = useState({ concept: "", category: "ingreso", subcategory: "", amount: 0, tax_rate: 0, tax_amount: 0, reference: "", date: "", notes: "" });
-    const [oblForm, setOblForm] = useState({ client_id: "", tax_type: "IVA", period_month: new Date().getMonth() + 1, period_year: new Date().getFullYear(), due_date: "", amount: 0, notes: "" });
-    const [editingEntry, setEditingEntry] = useState<number | null>(null);
-    const [editingObl, setEditingObl] = useState<number | null>(null);
+    const [oblForm, setOblForm] = useState({ tax_type: "IVA", period_month: new Date().getMonth() + 1, period_year: new Date().getFullYear(), due_date: "", amount: 0, notes: "" });
 
-    useEffect(() => { fetchAll(); }, [filterClient, filterYear, filterStatus]);
+    useEffect(() => { fetchAll(); }, [filterYear, filterStatus]);
 
     const fetchAll = async () => {
         setLoading(true);
         try {
-            const [cRes, pRes, oRes, dRes, ctxRes] = await Promise.all([
-                api.get("/clients/"),
-                api.get("/accounting/periods", { params: { client_id: filterClient || undefined, year: filterYear || undefined, status: filterStatus || undefined } }),
-                api.get("/accounting/obligations", { params: { client_id: filterClient || undefined, year: filterYear || undefined, status: filterStatus || undefined } }),
+            const [pRes, oRes, dRes, ctxRes] = await Promise.all([
+                api.get("/accounting/periods", { params: { year: filterYear || undefined, status: filterStatus || undefined } }),
+                api.get("/accounting/obligations", { params: { year: filterYear || undefined, status: filterStatus || undefined } }),
                 api.get("/accounting/dashboard"),
                 api.get("/accounting/company-context"),
             ]);
-            setClients(cRes.data);
             setPeriods(pRes.data);
             setObligations(oRes.data);
             setDashboard(dRes.data);
@@ -130,9 +130,9 @@ export default function Accounting() {
 
     const handleCreatePeriod = async () => {
         try {
-            await api.post("/accounting/periods", { ...periodForm, client_id: Number(periodForm.client_id) });
+            await api.post("/accounting/periods", periodForm);
             setShowPeriodModal(false);
-            setPeriodForm({ client_id: "", month: new Date().getMonth() + 1, year: new Date().getFullYear(), notes: "" });
+            setPeriodForm({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), notes: "" });
             fetchAll();
         } catch (e: any) { alert(e.response?.data?.detail || "Error"); }
     };
@@ -178,11 +178,11 @@ export default function Accounting() {
     const handleCreateObl = async () => {
         try {
             await api.post("/accounting/obligations", {
-                ...oblForm, client_id: Number(oblForm.client_id), amount: Number(oblForm.amount),
+                ...oblForm, amount: Number(oblForm.amount),
                 period_month: Number(oblForm.period_month) || null,
             });
             setShowOblModal(false);
-            setOblForm({ client_id: "", tax_type: "IVA", period_month: new Date().getMonth() + 1, period_year: new Date().getFullYear(), due_date: "", amount: 0, notes: "" });
+            setOblForm({ tax_type: "IVA", period_month: new Date().getMonth() + 1, period_year: new Date().getFullYear(), due_date: "", amount: 0, notes: "" });
             fetchAll();
         } catch (e: any) { alert(e.response?.data?.detail || "Error"); }
     };
@@ -205,6 +205,9 @@ export default function Accounting() {
 
     const fmt = (n: number) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(n);
 
+    const co = companyCtx?.company || dashboard?.company || {};
+    const companyName = co.company_name || "Mi Empresa";
+
     const tabs = [
         { id: "dashboard" as const, label: "Dashboard", icon: TrendingUp },
         { id: "periods" as const, label: "Liquidaciones", icon: FileText },
@@ -224,7 +227,7 @@ export default function Accounting() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold text-gray-800">Contabilidad</h1>
-                        <p className="text-sm text-gray-500">Liquidaciones de empresas y obligaciones fiscales</p>
+                        <p className="text-sm text-gray-500">{companyName} — Ejercicio {filterYear}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -255,10 +258,6 @@ export default function Accounting() {
             {/* Filters */}
             {activeTab !== "dashboard" && (
                 <div className="flex flex-wrap gap-3 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <select value={filterClient} onChange={e => setFilterClient(e.target.value)} className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50">
-                        <option value="">Todas las empresas</option>
-                        {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
                     <select value={filterYear} onChange={e => setFilterYear(Number(e.target.value))} className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50">
                         {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
@@ -277,47 +276,39 @@ export default function Accounting() {
                     {activeTab === "dashboard" && dashboard && (
                         <div className="space-y-6">
                             {/* Company Identity Banner */}
-                            {companyCtx?.company?.company_name && (
-                                <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-5 shadow-lg">
-                                    {companyCtx.company.logo_url ? (
-                                        <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
-                                            <img src={companyCtx.company.logo_url} alt="Logo" className="w-full h-full object-contain p-1.5" />
-                                        </div>
-                                    ) : (
-                                        <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
-                                            <Building2 size={28} className="text-white/40" />
-                                        </div>
-                                    )}
-                                    <div className="flex-1 text-center sm:text-left">
-                                        <h3 className="text-white font-bold text-lg">{companyCtx.company.company_name}</h3>
-                                        {companyCtx.company.fantasy_name && companyCtx.company.fantasy_name !== companyCtx.company.company_name && (
-                                            <p className="text-white/50 text-sm">{companyCtx.company.fantasy_name}</p>
-                                        )}
-                                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2">
-                                            {companyCtx.company.cuit && (
-                                                <span className="px-2.5 py-1 bg-white/10 rounded-lg text-xs font-bold text-white/80">CUIT: {companyCtx.company.cuit}</span>
-                                            )}
-                                            {companyCtx.company.iva_condition && (
-                                                <span className="px-2.5 py-1 bg-violet-500/30 rounded-lg text-xs font-bold text-violet-200">{companyCtx.company.iva_condition}</span>
-                                            )}
-                                            {companyCtx.company.default_currency && (
-                                                <span className="px-2.5 py-1 bg-emerald-500/30 rounded-lg text-xs font-bold text-emerald-200">💰 {companyCtx.company.default_currency}</span>
-                                            )}
-                                            {companyCtx.company.address && (
-                                                <span className="text-xs text-white/40">
-                                                    📍 {[companyCtx.company.address, companyCtx.company.city, companyCtx.company.province].filter(Boolean).join(", ")}
-                                                </span>
-                                            )}
-                                        </div>
+                            <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-5 shadow-lg">
+                                {co.logo_url ? (
+                                    <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                                        <img src={co.logo_url} alt="Logo" className="w-full h-full object-contain p-1.5" />
                                     </div>
-                                    <div className="text-center shrink-0">
-                                        <p className="text-white/40 text-[10px] uppercase font-bold">Ejercicio</p>
-                                        <p className="text-white text-2xl font-black">{companyCtx.year}</p>
+                                ) : (
+                                    <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                                        <Building2 size={28} className="text-white/40" />
+                                    </div>
+                                )}
+                                <div className="flex-1 text-center sm:text-left">
+                                    <h3 className="text-white font-bold text-lg">{companyName}</h3>
+                                    {co.fantasy_name && co.fantasy_name !== companyName && (
+                                        <p className="text-white/50 text-sm">{co.fantasy_name}</p>
+                                    )}
+                                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2">
+                                        {co.cuit && <span className="px-2.5 py-1 bg-white/10 rounded-lg text-xs font-bold text-white/80">CUIT: {co.cuit}</span>}
+                                        {co.iva_condition && <span className="px-2.5 py-1 bg-violet-500/30 rounded-lg text-xs font-bold text-violet-200">{co.iva_condition}</span>}
+                                        {co.default_currency && <span className="px-2.5 py-1 bg-emerald-500/30 rounded-lg text-xs font-bold text-emerald-200">💰 {co.default_currency}</span>}
+                                        {co.address && (
+                                            <span className="text-xs text-white/40">
+                                                📍 {[co.address, co.city, co.province].filter(Boolean).join(", ")}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
-                            )}
+                                <div className="text-center shrink-0">
+                                    <p className="text-white/40 text-[10px] uppercase font-bold">Ejercicio</p>
+                                    <p className="text-white text-2xl font-black">{dashboard.year}</p>
+                                </div>
+                            </div>
 
-                            {/* Billing / Purchase Summary */}
+                            {/* Billing / Purchase KPIs from real data */}
                             {companyCtx && (
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
@@ -325,11 +316,11 @@ export default function Accounting() {
                                             <span className="text-xs font-bold text-gray-500 uppercase">Facturación (Ventas)</span>
                                             <div className="p-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600"><Receipt size={14} className="text-white" /></div>
                                         </div>
-                                        <p className="text-2xl font-black text-gray-800">{fmt(companyCtx.ventas?.total || 0)}</p>
+                                        <p className="text-2xl font-black text-gray-800">{fmt(companyCtx.ventas.total)}</p>
                                         <div className="flex items-center gap-3 mt-2">
-                                            <span className="text-[10px] text-gray-400">{companyCtx.ventas?.count || 0} facturas</span>
-                                            <span className="text-[10px] text-emerald-600 font-bold">Neto: {fmt(companyCtx.ventas?.neto || 0)}</span>
-                                            <span className="text-[10px] text-violet-600 font-bold">IVA: {fmt(companyCtx.ventas?.iva || 0)}</span>
+                                            <span className="text-[10px] text-gray-400">{companyCtx.ventas.count} facturas</span>
+                                            <span className="text-[10px] text-emerald-600 font-bold">Neto: {fmt(companyCtx.ventas.neto)}</span>
+                                            <span className="text-[10px] text-violet-600 font-bold">IVA: {fmt(companyCtx.ventas.iva)}</span>
                                         </div>
                                     </div>
                                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
@@ -337,20 +328,21 @@ export default function Accounting() {
                                             <span className="text-xs font-bold text-gray-500 uppercase">Órdenes de Compra</span>
                                             <div className="p-1.5 rounded-lg bg-gradient-to-r from-red-500 to-rose-600"><ShoppingCart size={14} className="text-white" /></div>
                                         </div>
-                                        <p className="text-2xl font-black text-gray-800">{fmt(companyCtx.compras?.total || 0)}</p>
-                                        <span className="text-[10px] text-gray-400">{companyCtx.compras?.count || 0} órdenes</span>
+                                        <p className="text-2xl font-black text-gray-800">{fmt(companyCtx.compras.total)}</p>
+                                        <span className="text-[10px] text-gray-400">{companyCtx.compras.count} órdenes</span>
                                     </div>
                                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                                         <div className="flex items-center justify-between mb-3">
                                             <span className="text-xs font-bold text-gray-500 uppercase">Comprobantes Recibidos</span>
                                             <div className="p-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600"><FileText size={14} className="text-white" /></div>
                                         </div>
-                                        <p className="text-2xl font-black text-gray-800">{fmt(companyCtx.recibidas?.total || 0)}</p>
-                                        <span className="text-[10px] text-gray-400">{companyCtx.recibidas?.count || 0} comprobantes</span>
+                                        <p className="text-2xl font-black text-gray-800">{fmt(companyCtx.recibidas.total)}</p>
+                                        <span className="text-[10px] text-gray-400">{companyCtx.recibidas.count} comprobantes</span>
                                     </div>
                                 </div>
                             )}
 
+                            {/* Period KPIs */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {[
                                     { label: "Total Períodos", value: dashboard.total_periods, icon: FileText, color: "from-violet-500 to-purple-600" },
@@ -370,7 +362,7 @@ export default function Accounting() {
                                 ))}
                             </div>
 
-                            {/* Obligations Alert */}
+                            {/* Obligations + Monthly Breakdown */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                                     <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
@@ -391,10 +383,7 @@ export default function Accounting() {
                                             <p className="text-xs font-semibold text-gray-500 uppercase">Próximos Vencimientos</p>
                                             {dashboard.upcoming_obligations.map(o => (
                                                 <div key={o.id} className="flex items-center justify-between p-2 rounded-lg bg-amber-50 border border-amber-100">
-                                                    <div>
-                                                        <span className="text-xs font-bold text-gray-800">{o.tax_type}</span>
-                                                        <span className="text-xs text-gray-500 ml-2">— {o.client_name}</span>
-                                                    </div>
+                                                    <span className="text-xs font-bold text-gray-800">{o.tax_type}</span>
                                                     <div className="text-xs font-medium text-amber-700">{o.due_date}</div>
                                                 </div>
                                             ))}
@@ -402,26 +391,26 @@ export default function Accounting() {
                                     )}
                                 </div>
 
-                                {/* Client Summary */}
+                                {/* Monthly Breakdown */}
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                                     <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                                        <DollarSign size={16} className="text-emerald-500" /> Resumen por Empresa ({new Date().getFullYear()})
+                                        <DollarSign size={16} className="text-emerald-500" /> Resumen Mensual ({dashboard.year})
                                     </h3>
-                                    {dashboard.client_summary.length === 0 ? (
-                                        <p className="text-sm text-gray-400 italic py-4">Sin datos para este año</p>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {dashboard.client_summary.map(cs => (
-                                                <div key={cs.client_id} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-                                                    <p className="text-sm font-bold text-gray-800 mb-2">{cs.client_name}</p>
+                                    {dashboard.monthly_breakdown && dashboard.monthly_breakdown.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {dashboard.monthly_breakdown.map(m => (
+                                                <div key={m.month} className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                                                    <p className="text-xs font-bold text-gray-700 mb-1">{m.month_name}</p>
                                                     <div className="grid grid-cols-3 gap-2 text-xs">
-                                                        <div><span className="text-emerald-600 font-medium">Ingresos</span><br />{fmt(cs.ingresos)}</div>
-                                                        <div><span className="text-red-600 font-medium">Egresos</span><br />{fmt(cs.egresos)}</div>
-                                                        <div><span className="text-violet-600 font-medium">Impuestos</span><br />{fmt(cs.impuestos)}</div>
+                                                        <div><span className="text-emerald-600 font-medium">Ingresos</span><br />{fmt(m.ingresos)}</div>
+                                                        <div><span className="text-red-600 font-medium">Egresos</span><br />{fmt(m.egresos)}</div>
+                                                        <div><span className="text-violet-600 font-medium">Impuestos</span><br />{fmt(m.impuestos)}</div>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic py-4">Sin períodos registrados para este año. Creá uno desde la pestaña "Liquidaciones".</p>
                                     )}
                                 </div>
                             </div>
@@ -434,7 +423,8 @@ export default function Accounting() {
                             {periods.length === 0 ? (
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
                                     <FileText size={48} className="mx-auto text-gray-300 mb-4" />
-                                    <p className="text-gray-500">No hay períodos registrados</p>
+                                    <p className="text-gray-500">No hay períodos registrados para {filterYear}</p>
+                                    <p className="text-xs text-gray-400 mt-1">Cada período corresponde a un mes del ejercicio contable de {companyName}</p>
                                     <button onClick={() => setShowPeriodModal(true)} className="mt-4 px-4 py-2 bg-violet-500 text-white rounded-lg text-sm font-medium hover:bg-violet-600">Crear Primer Período</button>
                                 </div>
                             ) : (
@@ -447,7 +437,7 @@ export default function Accounting() {
                                                         <FileText size={20} className="text-violet-600" />
                                                     </div>
                                                     <div>
-                                                        <h3 className="font-bold text-gray-800">{p.client_name} — {p.month_name} {p.year}</h3>
+                                                        <h3 className="font-bold text-gray-800">{p.month_name} {p.year}</h3>
                                                         <p className="text-xs text-gray-500">{p.entry_count} movimientos · Creado por {p.created_by_name}</p>
                                                     </div>
                                                 </div>
@@ -474,7 +464,7 @@ export default function Accounting() {
                                                     <div className="flex gap-2">
                                                         {p.status === "draft" && (
                                                             <>
-                                                                <button onClick={(e) => { e.stopPropagation(); setShowEntryModal(true); setEditingEntry(null); }}
+                                                                <button onClick={(e) => { e.stopPropagation(); setShowEntryModal(true); }}
                                                                     className="flex items-center px-3 py-1.5 bg-violet-500 text-white rounded-lg text-xs font-medium hover:bg-violet-600">
                                                                     <Plus size={14} className="mr-1" /> Agregar
                                                                 </button>
@@ -546,7 +536,8 @@ export default function Accounting() {
                             {obligations.length === 0 ? (
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
                                     <AlertTriangle size={48} className="mx-auto text-gray-300 mb-4" />
-                                    <p className="text-gray-500">No hay obligaciones fiscales registradas</p>
+                                    <p className="text-gray-500">No hay obligaciones fiscales registradas para {filterYear}</p>
+                                    <p className="text-xs text-gray-400 mt-1">Registrá las obligaciones impositivas de {companyName}</p>
                                     <button onClick={() => setShowOblModal(true)} className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600">Crear Primera Obligación</button>
                                 </div>
                             ) : (
@@ -560,7 +551,7 @@ export default function Accounting() {
                                                             <Clock size={20} className="text-amber-600" />}
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-gray-800">{o.tax_type} — {o.client_name}</h3>
+                                                    <h3 className="font-bold text-gray-800">{o.tax_type}</h3>
                                                     <p className="text-xs text-gray-500">
                                                         {o.period_month_name ? `${o.period_month_name} ${o.period_year}` : o.period_year} · Vence: {o.due_date}
                                                     </p>
@@ -576,10 +567,7 @@ export default function Accounting() {
                                                             <button onClick={() => handleUpdateOblStatus(o.id, "paid")} className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 font-medium">Pagar</button>
                                                         </>
                                                     )}
-                                                    {o.status === "filed" && (
-                                                        <button onClick={() => handleUpdateOblStatus(o.id, "paid")} className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 font-medium">Pagar</button>
-                                                    )}
-                                                    {o.status === "overdue" && (
+                                                    {(o.status === "filed" || o.status === "overdue") && (
                                                         <button onClick={() => handleUpdateOblStatus(o.id, "paid")} className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 font-medium">Pagar</button>
                                                     )}
                                                     <button onClick={() => handleDeleteObl(o.id)} className="p-1 text-red-400 hover:text-red-600 rounded"><Trash2 size={14} /></button>
@@ -594,23 +582,18 @@ export default function Accounting() {
                 </>
             )}
 
-            {/* ═══ PERIOD MODAL ═══ */}
+            {/* ═══ PERIOD MODAL — No client selection ═══ */}
             {showPeriodModal && (
                 <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="bg-gradient-to-r from-violet-500 to-purple-600 p-4 flex items-center justify-between">
-                            <h3 className="text-white font-bold flex items-center gap-2"><FileText size={18} /> Nuevo Período</h3>
+                            <h3 className="text-white font-bold flex items-center gap-2"><FileText size={18} /> Nuevo Período — {companyName}</h3>
                             <button onClick={() => setShowPeriodModal(false)} className="text-white/80 hover:text-white"><X size={20} /></button>
                         </div>
                         <div className="p-5 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                                <select value={periodForm.client_id} onChange={e => setPeriodForm({ ...periodForm, client_id: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm">
-                                    <option value="">Seleccionar empresa...</option>
-                                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                            </div>
+                            <p className="text-xs text-gray-500 bg-violet-50 border border-violet-100 rounded-lg p-3">
+                                Este período corresponde al ejercicio contable de <strong>{companyName}</strong>.
+                            </p>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Mes</label>
@@ -634,8 +617,8 @@ export default function Accounting() {
                             </div>
                             <div className="flex justify-end gap-2 pt-2">
                                 <button onClick={() => setShowPeriodModal(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
-                                <button onClick={handleCreatePeriod} disabled={!periodForm.client_id}
-                                    className="px-4 py-2 text-sm bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 disabled:opacity-50">Crear Período</button>
+                                <button onClick={handleCreatePeriod}
+                                    className="px-4 py-2 text-sm bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700">Crear Período</button>
                             </div>
                         </div>
                     </div>
@@ -709,7 +692,7 @@ export default function Accounting() {
                 </div>
             )}
 
-            {/* ═══ OBLIGATION MODAL ═══ */}
+            {/* ═══ OBLIGATION MODAL — No client selection ═══ */}
             {showOblModal && (
                 <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
@@ -718,14 +701,9 @@ export default function Accounting() {
                             <button onClick={() => setShowOblModal(false)} className="text-white/80 hover:text-white"><X size={20} /></button>
                         </div>
                         <div className="p-5 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                                <select value={oblForm.client_id} onChange={e => setOblForm({ ...oblForm, client_id: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm">
-                                    <option value="">Seleccionar empresa...</option>
-                                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                            </div>
+                            <p className="text-xs text-gray-500 bg-amber-50 border border-amber-100 rounded-lg p-3">
+                                Obligación fiscal de <strong>{companyName}</strong> {co.cuit ? `(CUIT: ${co.cuit})` : ""}.
+                            </p>
                             <div className="grid grid-cols-3 gap-3">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
@@ -768,7 +746,7 @@ export default function Accounting() {
                             </div>
                             <div className="flex justify-end gap-2 pt-2">
                                 <button onClick={() => setShowOblModal(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
-                                <button onClick={handleCreateObl} disabled={!oblForm.client_id || !oblForm.due_date}
+                                <button onClick={handleCreateObl} disabled={!oblForm.due_date}
                                     className="px-4 py-2 text-sm bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 disabled:opacity-50">Crear Obligación</button>
                             </div>
                         </div>
