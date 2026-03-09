@@ -125,7 +125,7 @@ export default function ProjectBoard() {
     const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
     const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [newCheckItem, setNewCheckItem] = useState('');
-    const [tab, setTab] = useState<'overview' | 'board' | 'backlog' | 'gantt' | 'notes' | 'wiki'>('overview');
+    const [tab, setTab] = useState<'overview' | 'board' | 'backlog' | 'gantt' | 'notes' | 'wiki' | 'members'>('overview');
     const [filterType, setFilterType] = useState('');
     const [filterAssignee, setFilterAssignee] = useState('');
     const [expandedEpics, setExpandedEpics] = useState<Set<number>>(new Set());
@@ -143,6 +143,10 @@ export default function ProjectBoard() {
     const [showWikiModal, setShowWikiModal] = useState(false);
     const [wikiForm, setWikiForm] = useState({ title: '', content: '', parent_id: '' });
     const [expandedOverviewSprints, setExpandedOverviewSprints] = useState<Record<number, any[]>>({});
+    // Members state
+    const [members, setMembers] = useState<{ id: number; user_id: number; role: string; full_name: string; email: string; is_active: boolean }[]>([]);
+    const [addMemberUserId, setAddMemberUserId] = useState('');
+    const [addMemberRole, setAddMemberRole] = useState('member');
 
     const dragItem = useRef<{ taskId: number; fromCol: string } | null>(null);
     const [dragOverCol, setDragOverCol] = useState<string | null>(null);
@@ -190,6 +194,9 @@ export default function ProjectBoard() {
         }
         if (tab === 'wiki' && projectId) {
             api.get(`/projects/${projectId}/wiki`).then(r => setWikiPages(r.data));
+        }
+        if (tab === 'members' && projectId) {
+            api.get(`/projects/${projectId}/members`).then(r => setMembers(r.data));
         }
     }, [tab, projectId]);
 
@@ -555,10 +562,10 @@ export default function ProjectBoard() {
 
                 {/* Tabs */}
                 <div className="flex bg-gray-100 rounded-lg p-0.5">
-                    {(['overview', 'board', 'backlog', 'gantt', 'notes', 'wiki'] as const).map(t => (
+                    {(['overview', 'board', 'backlog', 'gantt', 'notes', 'wiki', 'members'] as const).map(t => (
                         <button key={t} onClick={() => setTab(t)}
                             className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${tab === t ? 'bg-white shadow-sm text-violet-600' : 'text-gray-400'}`}>
-                            {t === 'overview' ? 'Resumen' : t === 'board' ? 'Board' : t === 'backlog' ? 'Backlog' : t === 'gantt' ? 'Gantt' : t === 'notes' ? 'Notas' : 'Wiki'}
+                            {t === 'overview' ? 'Resumen' : t === 'board' ? 'Board' : t === 'backlog' ? 'Backlog' : t === 'gantt' ? 'Gantt' : t === 'notes' ? 'Notas' : t === 'wiki' ? 'Wiki' : '👥 Equipo'}
                         </button>
                     ))}
                 </div>
@@ -1085,6 +1092,125 @@ export default function ProjectBoard() {
                                 <p className="text-sm">Seleccioná una página o creá una nueva</p>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* ══ Members / Equipo Tab ══ */}
+            {tab === 'members' && (
+                <div className="flex-1 overflow-auto p-6">
+                    <div className="max-w-3xl mx-auto space-y-6">
+                        {/* Add member form */}
+                        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                            <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                                <UserPlus size={16} className="text-violet-500" /> Agregar Miembro al Proyecto
+                            </h3>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <select value={addMemberUserId} onChange={e => setAddMemberUserId(e.target.value)}
+                                    className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:ring-2 focus:ring-violet-400 outline-none">
+                                    <option value="">Seleccionar usuario...</option>
+                                    {users.filter(u => !members.some(m => m.user_id === u.id)).map(u => (
+                                        <option key={u.id} value={u.id}>{u.full_name || u.username}</option>
+                                    ))}
+                                </select>
+                                <select value={addMemberRole} onChange={e => setAddMemberRole(e.target.value)}
+                                    className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:ring-2 focus:ring-violet-400 outline-none w-full sm:w-40">
+                                    <option value="owner">👑 Dueño</option>
+                                    <option value="admin">⚡ Admin</option>
+                                    <option value="member">✏️ Editor</option>
+                                    <option value="viewer">👁️ Viewer</option>
+                                </select>
+                                <button onClick={async () => {
+                                    if (!addMemberUserId) return;
+                                    try {
+                                        await api.post(`/projects/${projectId}/members`, { user_id: parseInt(addMemberUserId), role: addMemberRole });
+                                        const { data } = await api.get(`/projects/${projectId}/members`);
+                                        setMembers(data);
+                                        setAddMemberUserId('');
+                                        setAddMemberRole('member');
+                                    } catch (e: any) { alert(e.response?.data?.detail || 'Error'); }
+                                }} disabled={!addMemberUserId}
+                                    className="px-5 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap">
+                                    <Plus size={16} className="inline mr-1" /> Agregar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Role Legend */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {[
+                                { role: 'owner', icon: '👑', label: 'Dueño', desc: 'Control total', color: 'bg-amber-50 border-amber-200 text-amber-800' },
+                                { role: 'admin', icon: '⚡', label: 'Admin', desc: 'Gestionar todo', color: 'bg-purple-50 border-purple-200 text-purple-800' },
+                                { role: 'member', icon: '✏️', label: 'Editor', desc: 'Crear y editar', color: 'bg-blue-50 border-blue-200 text-blue-800' },
+                                { role: 'viewer', icon: '👁️', label: 'Viewer', desc: 'Solo lectura', color: 'bg-gray-50 border-gray-200 text-gray-600' },
+                            ].map(r => (
+                                <div key={r.role} className={`p-3 rounded-xl border ${r.color} text-center`}>
+                                    <span className="text-lg">{r.icon}</span>
+                                    <p className="text-xs font-bold mt-1">{r.label}</p>
+                                    <p className="text-[10px] opacity-70">{r.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Members list */}
+                        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                    <Users size={16} className="text-violet-500" /> Miembros del Proyecto ({members.length})
+                                </h3>
+                            </div>
+                            {members.length === 0 ? (
+                                <div className="p-12 text-center">
+                                    <Users size={48} className="mx-auto text-gray-300 mb-3" />
+                                    <p className="text-gray-500 text-sm">Sin miembros asignados</p>
+                                    <p className="text-xs text-gray-400 mt-1">Agregá usuarios para que puedan ver y trabajar en este proyecto</p>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-gray-50">
+                                    {members.map(m => {
+                                        const roleInfo: Record<string, { icon: string; label: string; color: string }> = {
+                                            owner: { icon: '👑', label: 'Dueño', color: 'bg-amber-100 text-amber-800' },
+                                            admin: { icon: '⚡', label: 'Admin', color: 'bg-purple-100 text-purple-800' },
+                                            member: { icon: '✏️', label: 'Editor', color: 'bg-blue-100 text-blue-800' },
+                                            viewer: { icon: '👁️', label: 'Viewer', color: 'bg-gray-100 text-gray-600' },
+                                        };
+                                        const ri = roleInfo[m.role] || roleInfo.member;
+                                        return (
+                                            <div key={m.id} className="flex items-center px-5 py-3 hover:bg-gray-50/50 transition-colors group">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm mr-4 shrink-0">
+                                                    {m.full_name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-gray-800 text-sm truncate">{m.full_name}</p>
+                                                    <p className="text-xs text-gray-400 truncate">{m.email}</p>
+                                                </div>
+                                                <div className="flex items-center gap-3 shrink-0">
+                                                    <select value={m.role} onChange={async (e) => {
+                                                        try {
+                                                            await api.post(`/projects/${projectId}/members`, { user_id: m.user_id, role: e.target.value });
+                                                            const { data } = await api.get(`/projects/${projectId}/members`);
+                                                            setMembers(data);
+                                                        } catch (err) { console.error(err); }
+                                                    }} className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border-0 cursor-pointer outline-none ${ri.color}`}>
+                                                        <option value="owner">👑 Dueño</option>
+                                                        <option value="admin">⚡ Admin</option>
+                                                        <option value="member">✏️ Editor</option>
+                                                        <option value="viewer">👁️ Viewer</option>
+                                                    </select>
+                                                    <button onClick={async () => {
+                                                        if (!confirm(`¿Quitar a ${m.full_name} del proyecto?`)) return;
+                                                        await api.delete(`/projects/${projectId}/members/${m.id}`);
+                                                        setMembers(prev => prev.filter(x => x.id !== m.id));
+                                                    }} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
