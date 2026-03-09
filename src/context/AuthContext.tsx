@@ -28,14 +28,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Set up axios interceptor to include token
     useEffect(() => {
-        const interceptor = api.interceptors.request.use((config) => {
+        const reqInterceptor = api.interceptors.request.use((config) => {
             const storedToken = localStorage.getItem("zeron_token");
             if (storedToken) {
                 config.headers.Authorization = `Bearer ${storedToken}`;
             }
             return config;
         });
-        return () => api.interceptors.request.eject(interceptor);
+        // Auto-logout on 401 (expired token)
+        const resInterceptor = api.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
+                    localStorage.removeItem("zeron_token");
+                    setToken(null);
+                    setUser(null);
+                }
+                return Promise.reject(error);
+            }
+        );
+        return () => {
+            api.interceptors.request.eject(reqInterceptor);
+            api.interceptors.response.eject(resInterceptor);
+        };
     }, []);
 
     // Validate token on mount
