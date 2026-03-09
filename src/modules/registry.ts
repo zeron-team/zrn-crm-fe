@@ -77,6 +77,7 @@ const Categories = lazy(() => import("../pages/Categories"));
 const Settings = lazy(() => import("../pages/Settings"));
 const Users = lazy(() => import("../pages/Users"));
 const RolePermissions = lazy(() => import("../pages/RolePermissions"));
+const Accounting = lazy(() => import("../pages/Accounting"));
 
 
 // ═══════════════════════════════════════════════════════════
@@ -263,6 +264,28 @@ const erpModule: ModuleManifest = {
     ],
 };
 
+const accountingModule: ModuleManifest = {
+    name: "Contabilidad",
+    slug: "accounting",
+    version: "5.0.0",
+    description: "Liquidaciones de empresas y obligaciones fiscales",
+    icon: "Calculator",
+    category: "business",
+    dependencies: ["core", "crm"],
+    enabled: true,
+    sidebarSection: {
+        title: "Contabilidad",
+        icon: "Calculator",
+        defaultOpen: true,
+        items: [
+            { to: "/accounting", label: "Contabilidad", icon: "Calculator" },
+        ],
+    },
+    routes: [
+        { path: "accounting", component: Accounting },
+    ],
+};
+
 const catalogModule: ModuleManifest = {
     name: "Catálogo",
     slug: "catalog",
@@ -360,6 +383,7 @@ registry.register(projectsModule);
 registry.register(hrModule);
 registry.register(communicationsModule);
 registry.register(erpModule);
+registry.register(accountingModule);
 registry.register(catalogModule);
 registry.register(systemModule);
 
