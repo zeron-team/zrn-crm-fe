@@ -20,8 +20,14 @@ interface CalendarEvent {
     status?: string;
     status_reason?: string | null;
     parent_event_id?: number | null;
+    call_url?: string | null;
+    is_recurring?: boolean;
+    recurrence_pattern?: string | null;
+    project_id?: number | null;
     notes?: ActivityNote[];
 }
+
+interface ProjectItem { id: number; name: string; key: string; }
 
 interface ActivityNote {
     id: number;
@@ -61,6 +67,7 @@ export default function Calendar() {
     const [providers, setProviders] = useState<Provider[]>([]);
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [leads, setLeads] = useState<Lead[]>([]);
+    const [projects, setProjects] = useState<ProjectItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [viewMode, setViewMode] = useState<"list" | "calendar" | "week" | "kanban">("week");
@@ -95,6 +102,10 @@ export default function Calendar() {
         client_id: "" as number | "",
         contact_id: "" as number | "",
         lead_id: "" as number | "",
+        call_url: "",
+        is_recurring: false,
+        recurrence_pattern: "",
+        project_id: "" as number | "",
     });
 
     // Add Invoice State for Autogeneration
@@ -144,18 +155,20 @@ export default function Calendar() {
 
     const fetchData = async () => {
         try {
-            const [eventsRes, clipRes, provRes, contRes, leadsRes] = await Promise.all([
+            const [eventsRes, clipRes, provRes, contRes, leadsRes, projRes] = await Promise.all([
                 api.get("/calendar/"),
                 api.get("/clients/"),
                 api.get("/providers/"),
                 api.get("/contacts/"),
                 api.get("/leads/"),
+                api.get("/projects/").catch(() => ({ data: [] })),
             ]);
             setEvents(eventsRes.data);
             setClients(clipRes.data);
             setProviders(provRes.data);
             setContacts(contRes.data);
             setLeads(leadsRes.data);
+            setProjects(projRes.data);
         } catch (error) {
             console.error("Failed to fetch data", error);
         } finally {
@@ -178,6 +191,10 @@ export default function Calendar() {
             client_id: "",
             contact_id: "",
             lead_id: "",
+            call_url: "",
+            is_recurring: false,
+            recurrence_pattern: "",
+            project_id: "",
         });
         setEntityType("account");
         setGenerateInvoice(false);
@@ -199,6 +216,10 @@ export default function Calendar() {
             client_id: event.client_id || "",
             contact_id: event.contact_id || "",
             lead_id: event.lead_id || "",
+            call_url: event.call_url || "",
+            is_recurring: event.is_recurring || false,
+            recurrence_pattern: event.recurrence_pattern || "",
+            project_id: event.project_id || "",
         });
         setEntityType(event.lead_id ? "lead" : "account");
         setGenerateInvoice(false);
@@ -229,6 +250,10 @@ export default function Calendar() {
                 client_id: formData.client_id ? Number(formData.client_id) : null,
                 contact_id: formData.contact_id ? Number(formData.contact_id) : null,
                 lead_id: formData.lead_id ? Number(formData.lead_id) : null,
+                call_url: formData.related_to === 'Call' ? formData.call_url || null : null,
+                is_recurring: formData.related_to === 'Call' ? formData.is_recurring : false,
+                recurrence_pattern: formData.related_to === 'Call' && formData.is_recurring ? formData.recurrence_pattern || null : null,
+                project_id: formData.related_to === 'Call' && formData.project_id ? Number(formData.project_id) : null,
             };
 
             if (editingEventId) {
@@ -365,6 +390,10 @@ export default function Calendar() {
             client_id: event.client_id || "",
             contact_id: event.contact_id || "",
             lead_id: event.lead_id || "",
+            call_url: event.call_url || "",
+            is_recurring: event.is_recurring || false,
+            recurrence_pattern: event.recurrence_pattern || "",
+            project_id: event.project_id || "",
         });
         if (event.lead_id) {
             setEntityType("lead");
@@ -396,6 +425,7 @@ export default function Calendar() {
     const filterOptions = [
         { value: "all", label: t('calendar.filters.all') },
         { value: "Meeting", label: t('calendar.modal.meeting') },
+        { value: "Call", label: "Llamada" },
         { value: "Billing", label: t('calendar.modal.billing') },
         { value: "Service Expiration", label: t('calendar.modal.expiration') },
         { value: "Other", label: t('calendar.modal.other') },
@@ -1295,6 +1325,7 @@ export default function Calendar() {
                                         >
                                             <option value="">{t('calendar.modal.none')}</option>
                                             <option value="Meeting">{t('calendar.modal.meeting')}</option>
+                                            <option value="Call">Llamada</option>
                                             <option value="Billing">{t('calendar.modal.billing')}</option>
                                             <option value="Service Expiration">{t('calendar.modal.expiration')}</option>
                                             <option value="Other">{t('calendar.modal.other')}</option>
@@ -1310,6 +1341,68 @@ export default function Calendar() {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Call-specific fields */}
+                                {formData.related_to === "Call" && (
+                                    <div className="p-4 bg-violet-50 rounded-lg border border-violet-100 space-y-4">
+                                        <h4 className="text-sm font-semibold text-violet-900 flex items-center">
+                                            <Zap size={16} className="mr-2" />
+                                            Detalles de Llamada
+                                        </h4>
+                                        <div>
+                                            <label className="block text-xs font-medium text-violet-800 mb-1">URL de la Llamada (Zoom, Meet, Teams, etc.)</label>
+                                            <input
+                                                type="url"
+                                                value={formData.call_url}
+                                                onChange={(e) => setFormData({ ...formData, call_url: e.target.value })}
+                                                placeholder="https://zoom.us/j/... o https://meet.google.com/..."
+                                                className="w-full px-3 py-2 text-sm bg-white border border-violet-200 rounded-md focus:ring-1 focus:ring-violet-500 outline-none"
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-medium text-violet-800">¿Es una llamada recurrente?</span>
+                                            <label className="flex items-center cursor-pointer">
+                                                <div className="relative">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only"
+                                                        checked={formData.is_recurring}
+                                                        onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
+                                                    />
+                                                    <div className={`block w-10 h-6 rounded-full transition-colors ${formData.is_recurring ? 'bg-violet-600' : 'bg-gray-300'}`}></div>
+                                                    <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.is_recurring ? 'transform translate-x-4' : ''}`}></div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        {formData.is_recurring && (
+                                            <div>
+                                                <label className="block text-xs font-medium text-violet-800 mb-1">Frecuencia</label>
+                                                <select
+                                                    value={formData.recurrence_pattern}
+                                                    onChange={(e) => setFormData({ ...formData, recurrence_pattern: e.target.value })}
+                                                    className="w-full px-3 py-2 text-sm bg-white border border-violet-200 rounded-md focus:ring-1 focus:ring-violet-500 outline-none"
+                                                >
+                                                    <option value="">Seleccionar...</option>
+                                                    <option value="daily">Diaria</option>
+                                                    <option value="weekly">Semanal</option>
+                                                    <option value="biweekly">Quincenal</option>
+                                                    <option value="monthly">Mensual</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <label className="block text-xs font-medium text-violet-800 mb-1">Asociar a Proyecto (de un cliente)</label>
+                                            <select
+                                                value={formData.project_id}
+                                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value ? Number(e.target.value) : "" })}
+                                                className="w-full px-3 py-2 text-sm bg-white border border-violet-200 rounded-md focus:ring-1 focus:ring-violet-500 outline-none"
+                                            >
+                                                <option value="">Sin proyecto asociado</option>
+                                                {projects.map(p => <option key={p.id} value={p.id}>[{p.key}] {p.name}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {formData.related_to === "Billing" && (
                                     <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 space-y-4">
