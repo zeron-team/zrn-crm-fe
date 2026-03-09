@@ -15,6 +15,16 @@ import api from "../api/client";
 import HeaderClock from "./HeaderClock";
 import OnlineUsers from "./OnlineUsers";
 import AiChatWidget from "./AiChatWidget";
+import registry from "../modules/registry";
+
+// Icon lookup map for dynamic sidebar rendering from module manifests
+const ICON_MAP: Record<string, any> = {
+    Home, Users, Building2, Contact, Package, Clock, Truck, FileText, Calendar,
+    Settings, LineChart, Globe, UserPlus, Menu, X, LogOut, FolderTree, Ticket,
+    LayoutDashboard, ChevronDown, ChevronRight, Briefcase, HeadphonesIcon, Receipt,
+    BookOpen, Cog, CreditCard, ShoppingCart, Warehouse, Building, BarChart3,
+    Mail, MessageCircle, StickyNote, FolderKanban, UserCheck, Shield, Banknote,
+};
 
 interface SidebarSectionProps {
     title: string;
@@ -117,87 +127,51 @@ export default function Layout() {
                 </div>
 
                 <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto scrollbar-thin">
-                    {/* ═══ PRINCIPAL ═══ */}
-                    <div className="mb-2" onClick={closeMobile}>
-                        <div className="px-3 mb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                            <LayoutDashboard size={12} className="text-gray-300" />
-                            Principal
-                        </div>
-                        {canAccess('/') && <SidebarItem to="/" icon={<Home size={18} />} label="Inicio" />}
-                        {canAccess('/dashboard') && <SidebarItem to="/dashboard" icon={<LayoutDashboard size={18} />} label="Panel de Control" />}
-                        {canAccess('/dashboards') && <SidebarItem to="/dashboards" icon={<BarChart3 size={18} />} label="Dashboards" />}
-                        {canAccess('/notes') && <SidebarItem to="/notes" icon={<StickyNote size={18} />} label="Notas" />}
-                    </div>
+                    {/* ═══ DYNAMIC MODULE SIDEBAR ═══ */}
+                    {registry.getEnabledModules().map(mod => {
+                        if (!mod.sidebarSection) return null;
+                        const section = mod.sidebarSection;
+                        const SectionIcon = ICON_MAP[section.icon] || LayoutDashboard;
 
-                    {/* ═══ CRM ═══ */}
-                    <SidebarSection title="CRM" icon={<Briefcase size={12} />} defaultOpen={true}>
-                        <div onClick={closeMobile}>
-                            {canAccess('/leads') && <SidebarItem to="/leads" icon={<UserPlus size={18} />} label={t('layout.leads')} />}
-                            {canAccess('/quotes') && <SidebarItem to="/quotes" icon={<FileText size={18} />} label="Presupuestos" />}
-                            {canAccess('/clients') && <SidebarItem to="/clients" icon={<Building2 size={18} />} label="Cuentas" />}
-                            {canAccess('/providers') && <SidebarItem to="/providers" icon={<Truck size={18} />} label={t('layout.providers')} />}
-                            {canAccess('/contacts') && <SidebarItem to="/contacts" icon={<Contact size={18} />} label={t('layout.contacts')} />}
-                            {canAccess('/calendar') && <SidebarItem to="/calendar" icon={<Calendar size={18} />} label={t('layout.activities')} />}
-                            {canAccess('/support') && <SidebarItem to="/support" icon={<Ticket size={18} />} label="Soporte" />}
-                            {canAccess('/sellers') && <SidebarItem to="/sellers" icon={<BarChart3 size={18} />} label="Vendedores" />}
-                        </div>
-                    </SidebarSection>
+                        // "Principal" gets a flat header (always visible, no collapse)
+                        if (mod.slug === "core") {
+                            return (
+                                <div key={mod.slug} className="mb-2" onClick={closeMobile}>
+                                    <div className="px-3 mb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                        <SectionIcon size={12} className="text-gray-300" />
+                                        {section.title}
+                                    </div>
+                                    {section.items.map(item => {
+                                        const ItemIcon = ICON_MAP[item.icon] || LayoutDashboard;
+                                        const path = item.permissionPath || item.to;
+                                        return canAccess(path) ? (
+                                            <SidebarItem key={item.to} to={item.to} icon={<ItemIcon size={18} />} label={item.label} />
+                                        ) : null;
+                                    })}
+                                </div>
+                            );
+                        }
 
-                    {/* ═══ PROYECTOS ═══ */}
-                    <SidebarSection title="Proyectos" icon={<FolderKanban size={12} />} defaultOpen={true}>
-                        <div onClick={closeMobile}>
-                            {canAccess('/projects') && <SidebarItem to="/projects" icon={<FolderKanban size={18} />} label="Mis Proyectos" />}
-                            {canAccess('/wiki') && <SidebarItem to="/wiki" icon={<BookOpen size={18} />} label="Wiki" />}
-                        </div>
-                    </SidebarSection>
-
-                    {/* ═══ RRHH ═══ */}
-                    <SidebarSection title="RRHH" icon={<UserCheck size={12} />} defaultOpen={true}>
-                        <div onClick={closeMobile}>
-                            {canAccess('/employees') && <SidebarItem to="/employees" icon={<Users size={18} />} label="Empleados" />}
-                            {canAccess('/time-tracking') && <SidebarItem to="/time-tracking" icon={<Clock size={18} />} label="Fichadas" />}
-                            {canAccess('/payroll') && <SidebarItem to="/payroll" icon={<Banknote size={18} />} label="Liquidación" />}
-                        </div>
-                    </SidebarSection>
-
-                    {/* ═══ COMUNICACIONES ═══ */}
-                    <SidebarSection title="Comunicaciones" icon={<Mail size={12} />} defaultOpen={true}>
-                        <div onClick={closeMobile}>
-                            {canAccess('/email') && <SidebarItem to="/email" icon={<Mail size={18} />} label="Email" />}
-                            {canAccess('/whatsapp') && <SidebarItem to="/whatsapp" icon={<MessageCircle size={18} />} label="WhatsApp" />}
-                        </div>
-                    </SidebarSection>
-
-                    {/* ═══ ERP ═══ */}
-                    <SidebarSection title="ERP" icon={<Receipt size={12} />} defaultOpen={true}>
-                        <div onClick={closeMobile}>
-                            {canAccess('/billing') && <SidebarItem to="/billing" icon={<FileText size={18} />} label={t('layout.billing')} />}
-                            {canAccess('/service-purchases') && <SidebarItem to="/service-purchases" icon={<CreditCard size={18} />} label="Compras de Servicios" />}
-                            {canAccess('/delivery-notes') && <SidebarItem to="/delivery-notes" icon={<Truck size={18} />} label="Remitos" />}
-                            {canAccess('/payment-orders') && <SidebarItem to="/payment-orders" icon={<CreditCard size={18} />} label="Orden de Pago" />}
-                            {canAccess('/purchase-orders') && <SidebarItem to="/purchase-orders" icon={<ShoppingCart size={18} />} label="Orden de Compra" />}
-                            {canAccess('/inventory') && <SidebarItem to="/inventory" icon={<Warehouse size={18} />} label="Inventario" />}
-                            {canAccess('/warehouses') && <SidebarItem to="/warehouses" icon={<Building size={18} />} label="Depósitos" />}
-                            {canAccess('/exchange-rates') && <SidebarItem to="/exchange-rates" icon={<LineChart size={18} />} label="Tipo de Cambio" />}
-                        </div>
-                    </SidebarSection>
-
-                    {/* ═══ CATÁLOGO ═══ */}
-                    <SidebarSection title="Catálogo" icon={<BookOpen size={12} />} defaultOpen={false}>
-                        <div onClick={closeMobile}>
-                            {canAccess('/products') && <SidebarItem to="/products" icon={<Package size={18} />} label={t('layout.products')} />}
-                            {canAccess('/categories') && <SidebarItem to="/categories" icon={<FolderTree size={18} />} label={t('layout.categories')} />}
-                        </div>
-                    </SidebarSection>
-
-                    {/* ═══ SISTEMA ═══ */}
-                    <SidebarSection title="Sistema" icon={<Cog size={12} />} defaultOpen={false}>
-                        <div onClick={closeMobile}>
-                            {canAccess('/users') && <SidebarItem to="/users" icon={<Users size={18} />} label="Usuarios" />}
-                            {canAccess('/role-permissions') && <SidebarItem to="/role-permissions" icon={<Shield size={18} />} label="Roles y Permisos" />}
-                            {canAccess('/settings') && <SidebarItem to="/settings" icon={<Settings size={18} />} label={t('layout.settings')} />}
-                        </div>
-                    </SidebarSection>
+                        // All other modules get collapsible sections
+                        return (
+                            <SidebarSection
+                                key={mod.slug}
+                                title={section.title}
+                                icon={<SectionIcon size={12} />}
+                                defaultOpen={section.defaultOpen}
+                            >
+                                <div onClick={closeMobile}>
+                                    {section.items.map(item => {
+                                        const ItemIcon = ICON_MAP[item.icon] || LayoutDashboard;
+                                        const path = item.permissionPath || item.to;
+                                        return canAccess(path) ? (
+                                            <SidebarItem key={item.to} to={item.to} icon={<ItemIcon size={18} />} label={item.label} />
+                                        ) : null;
+                                    })}
+                                </div>
+                            </SidebarSection>
+                        );
+                    })}
                 </nav>
 
                 {/* User footer */}

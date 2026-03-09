@@ -3,7 +3,8 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import api from "../api/client";
 import {
     ArrowLeft, Building2, Mail, Phone, MapPin,
-    Box, FileText, Contact, Calendar as CalendarIcon, Clock, Globe, Receipt, ShieldCheck, Briefcase, RefreshCw
+    Box, FileText, Contact, Calendar as CalendarIcon, Clock, Globe, Receipt, ShieldCheck, Briefcase, RefreshCw,
+    FolderKanban
 } from "lucide-react";
 import ClientServicesModal from "../components/ClientServicesModal";
 import { useTranslation } from "react-i18next";
@@ -73,6 +74,17 @@ interface CalendarEvent {
     client_id: number | null;
 }
 
+interface ClientProject {
+    id: number;
+    name: string;
+    key: string;
+    status: string;
+    methodology: string;
+    task_count?: number;
+    member_count?: number;
+    created_at: string;
+}
+
 export default function ClientProfile() {
     const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
@@ -84,6 +96,7 @@ export default function ClientProfile() {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [contacts, setContacts] = useState<ContactPerson[]>([]);
     const [activities, setActivities] = useState<CalendarEvent[]>([]);
+    const [projects, setProjects] = useState<ClientProject[]>([]);
     const [loading, setLoading] = useState(true);
     const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
 
@@ -104,12 +117,13 @@ export default function ClientProfile() {
             setClient(clientRes.data);
 
             // Fetch the rest in parallel
-            const [servRes, prodRes, invRes, contRes, actRes] = await Promise.all([
+            const [servRes, prodRes, invRes, contRes, actRes, projRes] = await Promise.all([
                 api.get(`/client-services/client/${clientId}`),
                 api.get('/products/'),
                 api.get('/invoices/'),
                 api.get('/contacts/'),
-                api.get('/calendar/')
+                api.get('/calendar/'),
+                api.get(`/projects/?client_id=${clientId}`),
             ]);
 
             setServices(servRes.data);
@@ -125,6 +139,8 @@ export default function ClientProfile() {
             const clientActivities = actRes.data.filter((a: any) => a.client_id === clientId)
                 .sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
             setActivities(clientActivities);
+
+            setProjects(projRes.data || []);
 
         } catch (error) {
             console.error("Failed to load client profile data", error);
@@ -246,8 +262,8 @@ export default function ClientProfile() {
                     {/* Validation message */}
                     {validationMsg && (
                         <div className={`mt-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${validationMsg.type === 'success'
-                                ? 'bg-green-50 text-green-700 border border-green-200'
-                                : 'bg-red-50 text-red-700 border border-red-200'
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : 'bg-red-50 text-red-700 border border-red-200'
                             }`}>
                             {validationMsg.text}
                         </div>
@@ -471,6 +487,104 @@ export default function ClientProfile() {
                                             <span className="inline-flex px-2 py-0.5 border border-gray-200 rounded-full bg-white font-medium text-[11px] text-gray-600">
                                                 {act.related_to || t('clients.profile.general')}
                                             </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Projects Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 overflow-hidden lg:col-span-3">
+                    <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <div className="flex items-center space-x-2">
+                            <FolderKanban className="text-indigo-500" size={20} />
+                            <h3 className="font-semibold text-gray-900">Proyectos ({projects.length})</h3>
+                        </div>
+                        <Link to="/projects" className="text-xs font-medium text-blue-600 hover:underline">
+                            Ver todos
+                        </Link>
+                    </div>
+
+                    {projects.length === 0 ? (
+                        <div className="p-8 text-center text-sm text-gray-500">
+                            <FolderKanban size={32} className="mx-auto text-gray-300 mb-3" />
+                            No hay proyectos asociados a esta cuenta
+                        </div>
+                    ) : (
+                        <div>
+                            {/* Desktop */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead>
+                                        <tr className="bg-white border-b border-gray-100 text-gray-500">
+                                            <th className="p-4 font-medium">Proyecto</th>
+                                            <th className="p-4 font-medium">Clave</th>
+                                            <th className="p-4 font-medium">Metodología</th>
+                                            <th className="p-4 font-medium">Estado</th>
+                                            <th className="p-4 font-medium">Tareas</th>
+                                            <th className="p-4 font-medium">Creado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {projects.map(p => (
+                                            <tr key={p.id} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => navigate(`/projects/${p.id}/board`)}>
+                                                <td className="p-4">
+                                                    <p className="font-semibold text-gray-900">{p.name}</p>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-mono text-xs font-bold border border-indigo-200">
+                                                        {p.key}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-0.5 rounded text-[11px] font-medium border ${p.methodology === 'scrum' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'
+                                                        }`}>
+                                                        {p.methodology === 'scrum' ? 'Scrum' : 'Kanban'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium border ${p.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                            p.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                                'bg-gray-100 text-gray-600 border-gray-200'
+                                                        }`}>
+                                                        {p.status === 'active' ? '🟢 Activo' : p.status === 'completed' ? '✅ Completado' : '📦 Archivado'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-gray-600 font-medium">
+                                                    {p.task_count ?? '—'}
+                                                </td>
+                                                <td className="p-4 text-gray-500 text-xs">
+                                                    {new Date(p.created_at).toLocaleDateString('es-AR')}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {/* Mobile */}
+                            <div className="md:hidden grid grid-cols-1 gap-3 p-4">
+                                {projects.map(p => (
+                                    <div key={p.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col space-y-2 cursor-pointer hover:bg-gray-100 transition" onClick={() => navigate(`/projects/${p.id}/board`)}>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-semibold text-gray-900">{p.name}</p>
+                                                <span className="text-xs font-mono text-indigo-600">{p.key}</span>
+                                            </div>
+                                            <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium border shrink-0 ${p.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                    p.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                        'bg-gray-100 text-gray-600 border-gray-200'
+                                                }`}>
+                                                {p.status === 'active' ? '🟢 Activo' : p.status === 'completed' ? '✅ Completado' : '📦 Archivado'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-gray-500">
+                                            <span className={`px-2 py-0.5 rounded text-[11px] font-medium border ${p.methodology === 'scrum' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'
+                                                }`}>
+                                                {p.methodology === 'scrum' ? 'Scrum' : 'Kanban'}
+                                            </span>
+                                            <span>{new Date(p.created_at).toLocaleDateString('es-AR')}</span>
                                         </div>
                                     </div>
                                 ))}

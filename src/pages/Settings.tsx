@@ -163,6 +163,13 @@ export default function Settings() {
     const [logsFilter, setLogsFilter] = useState<string>("");
     const [logsDays, setLogsDays] = useState(7);
 
+    // Module management state
+    const [modulesData, setModulesData] = useState<any[]>([]);
+    const [loadingModules, setLoadingModules] = useState(false);
+    const [togglingModule, setTogglingModule] = useState<string | null>(null);
+    const [expandedModule, setExpandedModule] = useState<string | null>(null);
+    const [moduleInfo, setModuleInfo] = useState<Record<string, any>>({});
+
     // Dashboard config state
     const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
     const [loadingWidgets, setLoadingWidgets] = useState(false);
@@ -171,6 +178,7 @@ export default function Settings() {
 
     useEffect(() => {
         if (activeTab === "health") { runHealthCheck(); fetchLogs(); }
+        if (activeTab === "modules") fetchModules();
         if (activeTab === "dashboard" && user?.id) loadWidgetConfig();
     }, [activeTab, user?.id]);
 
@@ -207,6 +215,61 @@ export default function Settings() {
             setTimeout(() => setSavedNotice(false), 3000);
         } catch (e) { console.error(e); }
         finally { setSavingWidgets(false); }
+    };
+
+    const fetchModules = async () => {
+        setLoadingModules(true);
+        try {
+            const res = await api.get("/system/modules");
+            setModulesData(res.data.modules || []);
+        } catch (e) { console.error(e); }
+        finally { setLoadingModules(false); }
+    };
+
+    const toggleModule = async (slug: string) => {
+        setTogglingModule(slug);
+        try {
+            const res = await api.put(`/system/modules/${slug}/toggle`);
+            await fetchModules();
+            alert(res.data.message);
+        } catch (e: any) {
+            alert(e.response?.data?.detail || 'Error');
+        }
+        finally { setTogglingModule(null); }
+    };
+
+    const fetchModuleInfo = async (slug: string) => {
+        if (expandedModule === slug) { setExpandedModule(null); return; }
+        setExpandedModule(slug);
+        if (moduleInfo[slug]) return;
+        try {
+            const res = await api.get(`/system/modules/${slug}/info`);
+            setModuleInfo(prev => ({ ...prev, [slug]: res.data }));
+        } catch (e) { console.error(e); }
+    };
+
+    const generateLicense = async (slug: string, days: number = 365, plan: string = 'professional') => {
+        try {
+            const res = await api.post(`/system/modules/${slug}/generate-license?days=${days}&plan=${plan}&max_users=0`);
+            alert(res.data.message);
+            fetchModules();
+        } catch (e: any) { alert(e.response?.data?.detail || 'Error'); }
+    };
+
+    const activateTrial = async (slug: string, days: number = 30) => {
+        try {
+            const res = await api.post(`/system/modules/${slug}/activate-trial?days=${days}`);
+            alert(res.data.message);
+            fetchModules();
+        } catch (e: any) { alert(e.response?.data?.detail || 'Error'); }
+    };
+
+    const checkExpirations = async () => {
+        try {
+            const res = await api.post('/system/modules/check-expirations');
+            alert(res.data.message);
+            fetchModules();
+        } catch (e: any) { alert(e.response?.data?.detail || 'Error'); }
     };
 
     const fetchLogs = async (filter = logsFilter, days = logsDays) => {
@@ -274,6 +337,13 @@ export default function Settings() {
                     >
                         <Activity size={16} />
                         <span>Integraciones</span>
+                    </button>
+                    <button
+                        className={`flex-1 min-w-[140px] py-4 text-sm font-medium transition-colors flex items-center justify-center space-x-2 ${activeTab === "modules" ? "text-purple-600 border-b-2 border-purple-600" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}`}
+                        onClick={() => setActiveTab("modules")}
+                    >
+                        <Server size={16} />
+                        <span>Módulos</span>
                     </button>
                 </div>
 
@@ -350,6 +420,212 @@ export default function Settings() {
                     )}
 
                     {activeTab === "arca" && <ArcaConfigPanel />}
+
+                    {/* ═══ MÓDULOS ═══ */}
+                    {activeTab === "modules" && (
+                        <div className="space-y-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                        <Server size={20} className="text-purple-600" />
+                                        Gestión de Módulos
+                                    </h3>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Activa, desactiva y gestiona los módulos de la plataforma ZeRoN 360°.
+                                        <span className="ml-2 px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full text-xs font-bold">
+                                            {modulesData.filter(m => m.enabled).length} / {modulesData.length} activos
+                                        </span>
+                                    </p>
+                                </div>
+                                <button onClick={fetchModules} disabled={loadingModules}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl shadow-lg shadow-purple-200 hover:shadow-xl transition-all text-sm font-bold disabled:opacity-50">
+                                    <RefreshCw size={16} className={loadingModules ? "animate-spin" : ""} />
+                                    {loadingModules ? "Cargando..." : "Actualizar"}
+                                </button>
+                            </div>
+
+                            {/* Architecture Info Bar */}
+                            <div className="flex flex-wrap gap-3">
+                                <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-700 to-indigo-800 rounded-xl text-white">
+                                    <Server size={14} />
+                                    <span className="text-xs font-bold">Arquitectura Modular</span>
+                                </div>
+                                <div className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 border border-purple-200 rounded-xl">
+                                    <span className="text-xs font-bold text-purple-700">📦 {modulesData.length} Módulos</span>
+                                </div>
+                                <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                                    <CheckCircle2 size={14} className="text-emerald-600" />
+                                    <span className="text-xs font-bold text-emerald-700">{modulesData.filter(m => m.enabled).length} Activos</span>
+                                </div>
+                                <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+                                    <span className="text-xs font-bold text-amber-700">🔑 {modulesData.filter(m => m.license_status === 'active').length} Licenciados</span>
+                                </div>
+                            </div>
+
+                            {/* Module Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {modulesData.map((mod: any) => {
+                                    const isExpanded = expandedModule === mod.slug;
+                                    const info = moduleInfo[mod.slug];
+                                    const isCore = mod.is_core || mod.slug === "core";
+                                    const licColor = mod.license_status === "active" ? "emerald" : mod.license_status === "expired" ? "red" : "amber";
+
+                                    return (
+                                        <div key={mod.slug}
+                                            className={`rounded-2xl border-2 transition-all duration-300 overflow-hidden ${mod.enabled ? 'border-purple-200 bg-white shadow-sm' : 'border-gray-200 bg-gray-50 opacity-70'
+                                                }`}>
+                                            <div className="p-5">
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold shadow-sm ${mod.enabled
+                                                            ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white'
+                                                            : 'bg-gray-200 text-gray-400'
+                                                            }`}>
+                                                            {mod.name.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                                                                {mod.name}
+                                                                <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">v{mod.version}</span>
+                                                            </h4>
+                                                            <p className="text-xs text-gray-500 mt-0.5">{mod.description}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Toggle Switch */}
+                                                    <button
+                                                        onClick={() => !isCore && toggleModule(mod.slug)}
+                                                        disabled={isCore || togglingModule === mod.slug}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${isCore ? 'bg-purple-600 cursor-not-allowed' :
+                                                            mod.enabled ? 'bg-purple-600 hover:bg-purple-700 cursor-pointer' : 'bg-gray-300 cursor-pointer'
+                                                            }`}
+                                                        title={isCore ? "Módulo base - siempre activo" : mod.enabled ? "Desactivar" : "Activar"}
+                                                    >
+                                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${mod.enabled ? 'translate-x-6' : 'translate-x-1'
+                                                            }`} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Badges */}
+                                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                                    {isCore && (
+                                                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-[10px] font-bold">
+                                                            🔒 BASE
+                                                        </span>
+                                                    )}
+                                                    <span className={`px-2 py-0.5 bg-${licColor}-100 text-${licColor}-700 rounded-full text-[10px] font-bold`}>
+                                                        {mod.license_status === "active" ? "✅ Licenciado" :
+                                                            mod.license_status === "expired" ? "❌ Expirado" : "🔑 Trial"}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold">
+                                                        {mod.routes_count} rutas
+                                                    </span>
+                                                    {mod.dependencies?.length > 0 && (
+                                                        <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold">
+                                                            Deps: {mod.dependencies.join(", ")}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* License Expiration + Days Left */}
+                                                {mod.license_expires_at && (
+                                                    <div className="mt-2 flex items-center gap-2">
+                                                        <span className="text-[11px] text-gray-500">
+                                                            📅 Vence: {new Date(mod.license_expires_at).toLocaleDateString('es-AR')}
+                                                        </span>
+                                                        {(() => {
+                                                            const daysLeft = Math.ceil((new Date(mod.license_expires_at).getTime() - Date.now()) / 86400000);
+                                                            return (
+                                                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${daysLeft > 30 ? 'bg-emerald-100 text-emerald-700' :
+                                                                        daysLeft > 7 ? 'bg-amber-100 text-amber-700' :
+                                                                            daysLeft > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
+                                                                    }`}>
+                                                                    {daysLeft > 0 ? `${daysLeft} días restantes` : 'Expirado'}
+                                                                </span>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                )}
+
+                                                {/* License Action Buttons */}
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                    {!isCore && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => generateLicense(mod.slug, 365, 'professional')}
+                                                                className="px-3 py-1.5 text-[11px] font-bold bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:shadow-md transition-all"
+                                                            >
+                                                                🔑 Licencia 1 Año
+                                                            </button>
+                                                            <button
+                                                                onClick={() => generateLicense(mod.slug, 90, 'starter')}
+                                                                className="px-3 py-1.5 text-[11px] font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:shadow-md transition-all"
+                                                            >
+                                                                📋 Licencia 90d
+                                                            </button>
+                                                            <button
+                                                                onClick={() => activateTrial(mod.slug, 30)}
+                                                                className="px-3 py-1.5 text-[11px] font-bold bg-amber-100 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-200 transition-all"
+                                                            >
+                                                                ⏳ Trial 30d
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+
+                                                {/* Expand for Info */}
+                                                <button
+                                                    onClick={() => fetchModuleInfo(mod.slug)}
+                                                    className="mt-3 text-xs text-purple-600 hover:text-purple-800 font-bold flex items-center gap-1"
+                                                >
+                                                    {isExpanded ? "▲ Cerrar detalle" : "▼ Ver tablas y detalles"}
+                                                </button>
+
+                                                {/* Expanded Info */}
+                                                {isExpanded && info && (
+                                                    <div className="mt-3 p-3 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-xs font-bold text-purple-700">
+                                                                📊 {info.total_records} registros totales
+                                                            </span>
+                                                            <span className="text-[10px] text-gray-500">
+                                                                {Object.keys(info.tables || {}).length} tablas
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-1">
+                                                            {Object.entries(info.tables || {}).map(([table, count]: [string, any]) => (
+                                                                <div key={table} className="flex items-center justify-between px-2 py-1 bg-white rounded-lg text-[11px]">
+                                                                    <span className="text-gray-600 font-mono truncate mr-2">{table}</span>
+                                                                    <span className={`font-bold ${count > 0 ? 'text-purple-600' : count < 0 ? 'text-gray-300' : 'text-gray-400'}`}>
+                                                                        {count < 0 ? '—' : count}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Footer Note */}
+                            <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs text-purple-700 font-medium">
+                                        ⚠️ <strong>Nota</strong>: Al desactivar un módulo, sus rutas de API y menú lateral dejarán de estar disponibles
+                                        tras reiniciar el servidor. Los datos del módulo se conservan intactos en la base de datos.
+                                    </p>
+                                    <button onClick={checkExpirations}
+                                        className="ml-4 px-3 py-1.5 text-[11px] font-bold bg-purple-100 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-200 transition-all whitespace-nowrap flex-shrink-0">
+                                        🔍 Verificar Vencimientos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === "general" && <CompanySettingsPanel />}
 
                     {/* ═══ INTEGRACIONES ═══ */}
@@ -446,8 +722,8 @@ export default function Settings() {
                                     {["", "LOGIN", "LOGIN_FAILED", "CREATE", "UPDATE", "DELETE"].map(f => (
                                         <button key={f} onClick={() => { setLogsFilter(f); fetchLogs(f); }}
                                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${logsFilter === f
-                                                    ? 'bg-slate-800 text-white shadow-md'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                ? 'bg-slate-800 text-white shadow-md'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                 }`}>
                                             {f || "Todos"}
                                         </button>

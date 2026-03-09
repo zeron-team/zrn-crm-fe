@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     FolderKanban, Plus, Search, Trash2, Edit3, X, Users, ChevronRight,
-    LayoutGrid, Columns3, Building2, FileText, UserCircle
+    LayoutGrid, Columns3, Building2, FileText, UserCircle, Shield
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -24,9 +24,12 @@ interface Project {
     member_count: number;
     created_at: string;
     updated_at: string;
+    pm_id: number | null;
+    pm_name: string | null;
 }
-interface ClientInfo { id: number; company_name: string; }
+interface ClientInfo { id: number; name: string; }
 interface QuoteInfo { id: number; quote_number: string; client_id: number | null; total_amount: number; }
+interface UserInfo { id: number; full_name: string; }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
     active: { bg: '#dcfce7', text: '#166534', label: 'Activo' },
@@ -40,11 +43,12 @@ export default function Projects() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [clients, setClients] = useState<ClientInfo[]>([]);
     const [quotes, setQuotes] = useState<QuoteInfo[]>([]);
+    const [users, setUsers] = useState<UserInfo[]>([]);
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editProject, setEditProject] = useState<Project | null>(null);
-    const [form, setForm] = useState({ name: '', description: '', key: '', methodology: 'kanban', client_id: '', quote_id: '' });
+    const [form, setForm] = useState({ name: '', description: '', key: '', methodology: 'kanban', client_id: '', quote_id: '', pm_id: '' });
 
     const load = async () => {
         try {
@@ -57,8 +61,9 @@ export default function Projects() {
 
     useEffect(() => { load(); }, [filterStatus]);
     useEffect(() => {
-        api.get('/clients').then(r => setClients(r.data)).catch(() => { });
-        api.get('/quotes').then(r => setQuotes(r.data)).catch(() => { });
+        api.get('/clients/').then(r => setClients(r.data)).catch(() => { });
+        api.get('/quotes/').then(r => setQuotes(r.data)).catch(() => { });
+        api.get('/users/').then(r => setUsers(r.data)).catch(() => { });
     }, []);
 
     // Auto-open create from quote (via URL param)
@@ -82,7 +87,7 @@ export default function Projects() {
 
     const openCreate = () => {
         setEditProject(null);
-        setForm({ name: '', description: '', key: '', methodology: 'kanban', client_id: '', quote_id: '' });
+        setForm({ name: '', description: '', key: '', methodology: 'kanban', client_id: '', quote_id: '', pm_id: '' });
         setShowModal(true);
     };
 
@@ -91,6 +96,7 @@ export default function Projects() {
         setForm({
             name: p.name, description: p.description || '', key: p.key, methodology: p.methodology,
             client_id: p.client_id ? String(p.client_id) : '', quote_id: p.quote_id ? String(p.quote_id) : '',
+            pm_id: p.pm_id ? String(p.pm_id) : '',
         });
         setShowModal(true);
     };
@@ -103,6 +109,7 @@ export default function Projects() {
                     methodology: form.methodology,
                     client_id: form.client_id ? parseInt(form.client_id) : null,
                     quote_id: form.quote_id ? parseInt(form.quote_id) : null,
+                    pm_id: form.pm_id ? parseInt(form.pm_id) : null,
                 });
             } else {
                 await api.post('/projects', {
@@ -110,6 +117,7 @@ export default function Projects() {
                     key: form.key.toUpperCase(), methodology: form.methodology,
                     client_id: form.client_id ? parseInt(form.client_id) : null,
                     quote_id: form.quote_id ? parseInt(form.quote_id) : null,
+                    pm_id: form.pm_id ? parseInt(form.pm_id) : null,
                 });
             }
             setShowModal(false);
@@ -227,6 +235,13 @@ export default function Projects() {
                                                         <span className="text-[10px] text-blue-500 font-medium">Creado por {p.created_by_name}</span>
                                                     </div>
                                                 )}
+                                                {/* PM badge */}
+                                                {p.pm_name && (
+                                                    <div className="flex items-center gap-1 mt-0.5">
+                                                        <Shield size={11} className="text-amber-500" />
+                                                        <span className="text-[10px] text-amber-600 font-medium">PM: {p.pm_name}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                                                 <button onClick={(e) => { e.stopPropagation(); openEdit(p); }}
@@ -336,10 +351,20 @@ export default function Projects() {
                                         <select value={form.client_id} onChange={e => setForm({ ...form, client_id: e.target.value })}
                                             className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400 bg-white">
                                             <option value="">Sin cuenta</option>
-                                            {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+                                            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* PM section */}
+                            <div className="border border-amber-100 rounded-xl p-4 bg-amber-50/30">
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Project Manager (PM)</label>
+                                <select value={form.pm_id} onChange={e => setForm({ ...form, pm_id: e.target.value })}
+                                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-400 bg-white">
+                                    <option value="">Sin PM asignado</option>
+                                    {users.map(u => <option key={u.id} value={u.id}>{u.full_name}</option>)}
+                                </select>
                             </div>
 
                             {/* Methodology section */}
