@@ -244,7 +244,8 @@ export default function ExchangeRates() {
                     </h3>
                     <span className="text-xs text-gray-400">{filteredRates.length} registros</span>
                 </div>
-                <div className="overflow-x-auto">
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100">
@@ -288,11 +289,47 @@ export default function ExchangeRates() {
                         </tbody>
                     </table>
                 </div>
+                {/* Mobile Cards */}
+                <div className="md:hidden grid grid-cols-1 gap-3 p-4">
+                    {filteredRates.length === 0 ? (
+                        <p className="text-center text-gray-400 text-sm py-8">No hay cotizaciones para {activeCurrency}</p>
+                    ) : filteredRates.map(r => (
+                        <div key={r.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="font-medium text-gray-900 text-sm">
+                                    {new Date(r.date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                    <button onClick={() => openEdit(r)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg"><Pencil size={14} /></button>
+                                    <button onClick={() => handleDelete(r.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg"><Trash2 size={14} /></button>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-center">
+                                <div className="bg-green-50 rounded-lg p-2">
+                                    <p className="text-[10px] text-green-600 font-semibold">Compra</p>
+                                    <p className="font-mono font-bold text-green-700 text-sm">$ {Number(r.buy_rate).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                </div>
+                                <div className="bg-red-50 rounded-lg p-2">
+                                    <p className="text-[10px] text-red-600 font-semibold">Venta</p>
+                                    <p className="font-mono font-bold text-red-700 text-sm">$ {Number(r.sell_rate).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                </div>
+                                <div className="bg-gray-50 rounded-lg p-2">
+                                    <p className="text-[10px] text-gray-500 font-semibold">Spread</p>
+                                    <p className="font-mono font-bold text-gray-700 text-sm">$ {spread(r)}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                                <span className="capitalize">{r.source}</span>
+                                {r.created_by && <span>• {r.created_by}</span>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
                         {/* Gradient Header */}
                         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-5 text-white flex-shrink-0">
                             <div className="flex items-center justify-between">

@@ -252,7 +252,8 @@ export default function Payroll() {
                         <div className="px-5 py-3 border-b border-gray-100">
                             <h3 className="font-bold text-gray-800 text-sm">Detalle del Recibo</h3>
                         </div>
-                        <div className="overflow-x-auto">
+                        {/* Desktop table */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead className="bg-gray-50">
                                     <tr>
@@ -301,6 +302,37 @@ export default function Payroll() {
                                     </tr>
                                 </tfoot>
                             </table>
+                        </div>
+                        {/* Mobile cards */}
+                        <div className="md:hidden divide-y divide-gray-100">
+                            {selectedSlip.items?.map(item => {
+                                const isRem = item.type === 'remunerativo' || item.type === 'no_remunerativo';
+                                const isDed = item.type === 'deduccion';
+                                const isEmp = item.type === 'employer_cost';
+                                return (
+                                    <div key={item.id} className={`p-4 ${isEmp ? 'bg-amber-50/50' : ''}`}>
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <p className="font-medium text-gray-900 text-sm">{item.concept_name}</p>
+                                                {item.concept_code && <p className="text-xs text-gray-400">{item.concept_code}</p>}
+                                            </div>
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${isRem ? 'bg-green-100 text-green-700' : isDed ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                {TYPE_LABELS[item.type] || item.type}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between mt-2">
+                                            <span className="text-xs text-gray-500">{item.rate != null ? `Tasa: ${item.rate}%` : ''}</span>
+                                            <span className={`font-bold text-sm ${isRem ? 'text-green-700' : 'text-red-700'}`}>{fmt(item.amount)}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            <div className="p-4 bg-blue-50">
+                                <div className="flex justify-between items-center">
+                                    <span className="font-black text-blue-900">NETO A COBRAR</span>
+                                    <span className="font-black text-blue-900 text-lg">{fmt(selectedSlip.net_salary)}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -388,7 +420,7 @@ export default function Payroll() {
                     ) : (
                         /* ─── SLIPS LIST FOR A PERIOD ─────────── */
                         <>
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                                 <button onClick={() => { setSelectedPeriod(null); setSlips([]); }} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
                                     <ArrowLeft size={16} /> Volver
                                 </button>
@@ -418,7 +450,8 @@ export default function Payroll() {
                                         <div><p className="text-[10px] text-gray-400 font-bold">Total Neto</p><p className="font-black text-blue-700">{fmt(slips.reduce((s, r) => s + r.net_salary, 0))}</p></div>
                                         <div><p className="text-[10px] text-gray-400 font-bold">Costo Empleador</p><p className="font-black text-amber-700">{fmt(slips.reduce((s, r) => s + r.total_employer_cost, 0))}</p></div>
                                     </div>
-                                    <div className="overflow-x-auto">
+                                    {/* Desktop slips table */}
+                                    <div className="hidden md:block overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead className="bg-gray-50">
                                                 <tr>
@@ -448,6 +481,24 @@ export default function Payroll() {
                                             </tbody>
                                         </table>
                                     </div>
+                                    {/* Mobile slips cards */}
+                                    <div className="md:hidden grid grid-cols-1 gap-3 p-4">
+                                        {slips.map(s => (
+                                            <div key={s.id} onClick={() => fetchSlipDetail(s.id)} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm cursor-pointer active:bg-gray-50">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div>
+                                                        <p className="font-bold text-gray-900 text-sm">{s.employee_name}</p>
+                                                        <p className="text-xs text-teal-600 font-mono">{s.legajo} • {s.department}</p>
+                                                    </div>
+                                                    <Eye size={16} className="text-emerald-500" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                    <div className="bg-green-50 p-2 rounded-lg text-center"><p className="text-[9px] text-green-600 font-bold">BRUTO</p><p className="text-sm font-bold text-green-700">{fmt(s.gross_salary)}</p></div>
+                                                    <div className="bg-blue-50 p-2 rounded-lg text-center"><p className="text-[9px] text-blue-600 font-bold">NETO</p><p className="text-sm font-bold text-blue-700">{fmt(s.net_salary)}</p></div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </>
@@ -470,7 +521,8 @@ export default function Payroll() {
                             <div className="px-5 py-3 border-b border-gray-100">
                                 <h3 className="font-bold text-gray-800 text-sm">{scope === 'employee' ? '🧑 Conceptos del Empleado' : '🏢 Contribuciones Patronales'}</h3>
                             </div>
-                            <div className="overflow-x-auto">
+                            {/* Desktop concepts table */}
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="bg-gray-50">
                                         <tr>
@@ -504,6 +556,30 @@ export default function Payroll() {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                            {/* Mobile concepts cards */}
+                            <div className="md:hidden grid grid-cols-1 gap-3 p-4">
+                                {concepts.filter(c => c.applies_to === scope || c.applies_to === 'both').map(c => (
+                                    <div key={c.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <p className="font-medium text-gray-900 text-sm">{c.name}</p>
+                                                <p className="text-xs text-teal-600 font-mono">{c.code}</p>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <button onClick={() => openEditConcept(c)} className="p-1.5 text-gray-400 hover:text-blue-600"><Pencil size={14} /></button>
+                                                <button onClick={() => deleteConcept(c.id)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 size={14} /></button>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${c.type === 'remunerativo' ? 'bg-green-100 text-green-700' : c.type === 'deduccion' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+                                                {TYPE_LABELS[c.type] || c.type}
+                                            </span>
+                                            <span className="text-xs text-gray-500">{c.calc_mode === 'porcentaje' ? `${c.default_rate}%` : fmt(c.default_rate)}</span>
+                                            {c.is_mandatory && <span className="text-[10px] text-green-600 font-bold">Obligatorio</span>}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     ))}
@@ -540,72 +616,74 @@ export default function Payroll() {
             {/* ─── CONCEPT MODAL ───────────────────────────── */}
             {showNewConcept && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => { setShowNewConcept(false); setEditConcept(null); }}>
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-black text-gray-900 mb-4">{editConcept ? 'Editar' : 'Nuevo'} Concepto</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="text-xs font-bold text-gray-600">Código</label>
-                                <input value={cForm.code} onChange={e => setCForm({ ...cForm, code: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="JUB_EMP" />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-600">Nombre</label>
-                                <input value={cForm.name} onChange={e => setCForm({ ...cForm, name: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="Jubilación" />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-600">Tipo</label>
-                                <select value={cForm.type} onChange={e => setCForm({ ...cForm, type: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                                    <option value="remunerativo">Remunerativo</option>
-                                    <option value="no_remunerativo">No Remunerativo</option>
-                                    <option value="deduccion">Deducción</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-600">Categoría</label>
-                                <select value={cForm.category} onChange={e => setCForm({ ...cForm, category: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                                    <option value="jubilacion">Jubilación</option>
-                                    <option value="pami">PAMI</option>
-                                    <option value="obra_social">Obra Social</option>
-                                    <option value="sindicato">Sindicato</option>
-                                    <option value="ganancias">Imp. Ganancias</option>
-                                    <option value="sac">SAC/Aguinaldo</option>
-                                    <option value="vacaciones">Vacaciones</option>
-                                    <option value="sueldo">Sueldo</option>
-                                    <option value="otro">Otro</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-600">Cálculo</label>
-                                <select value={cForm.calc_mode} onChange={e => setCForm({ ...cForm, calc_mode: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                                    <option value="porcentaje">Porcentaje</option>
-                                    <option value="fijo">Monto Fijo</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-600">{cForm.calc_mode === 'porcentaje' ? 'Tasa %' : 'Monto Fijo'}</label>
-                                <input type="number" step="0.01" value={cForm.default_rate}
-                                    onChange={e => setCForm({ ...cForm, default_rate: parseFloat(e.target.value) || 0 })}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-600">Aplica a</label>
-                                <select value={cForm.applies_to} onChange={e => setCForm({ ...cForm, applies_to: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                                    <option value="employee">Empleado</option>
-                                    <option value="employer">Empleador</option>
-                                    <option value="both">Ambos</option>
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-2 mt-auto">
-                                <input type="checkbox" checked={cForm.is_mandatory} onChange={e => setCForm({ ...cForm, is_mandatory: e.target.checked })} />
-                                <label className="text-xs font-bold text-gray-600">Obligatorio</label>
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-black text-gray-900 p-6 pb-0 flex-shrink-0">{editConcept ? 'Editar' : 'Nuevo'} Concepto</h3>
+                        <div className="p-6 pt-4 overflow-y-auto flex-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-600">Código</label>
+                                    <input value={cForm.code} onChange={e => setCForm({ ...cForm, code: e.target.value })}
+                                        className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="JUB_EMP" />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-600">Nombre</label>
+                                    <input value={cForm.name} onChange={e => setCForm({ ...cForm, name: e.target.value })}
+                                        className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="Jubilación" />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-600">Tipo</label>
+                                    <select value={cForm.type} onChange={e => setCForm({ ...cForm, type: e.target.value })}
+                                        className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                        <option value="remunerativo">Remunerativo</option>
+                                        <option value="no_remunerativo">No Remunerativo</option>
+                                        <option value="deduccion">Deducción</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-600">Categoría</label>
+                                    <select value={cForm.category} onChange={e => setCForm({ ...cForm, category: e.target.value })}
+                                        className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                        <option value="jubilacion">Jubilación</option>
+                                        <option value="pami">PAMI</option>
+                                        <option value="obra_social">Obra Social</option>
+                                        <option value="sindicato">Sindicato</option>
+                                        <option value="ganancias">Imp. Ganancias</option>
+                                        <option value="sac">SAC/Aguinaldo</option>
+                                        <option value="vacaciones">Vacaciones</option>
+                                        <option value="sueldo">Sueldo</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-600">Cálculo</label>
+                                    <select value={cForm.calc_mode} onChange={e => setCForm({ ...cForm, calc_mode: e.target.value })}
+                                        className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                        <option value="porcentaje">Porcentaje</option>
+                                        <option value="fijo">Monto Fijo</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-600">{cForm.calc_mode === 'porcentaje' ? 'Tasa %' : 'Monto Fijo'}</label>
+                                    <input type="number" step="0.01" value={cForm.default_rate}
+                                        onChange={e => setCForm({ ...cForm, default_rate: parseFloat(e.target.value) || 0 })}
+                                        className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-600">Aplica a</label>
+                                    <select value={cForm.applies_to} onChange={e => setCForm({ ...cForm, applies_to: e.target.value })}
+                                        className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                        <option value="employee">Empleado</option>
+                                        <option value="employer">Empleador</option>
+                                        <option value="both">Ambos</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-center gap-2 mt-auto">
+                                    <input type="checkbox" checked={cForm.is_mandatory} onChange={e => setCForm({ ...cForm, is_mandatory: e.target.checked })} />
+                                    <label className="text-xs font-bold text-gray-600">Obligatorio</label>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex justify-end gap-2 mt-5">
+                        <div className="flex justify-end gap-2 p-6 pt-0 flex-shrink-0">
                             <button onClick={() => { setShowNewConcept(false); setEditConcept(null); }} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">Cancelar</button>
                             <button onClick={saveConcept} className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg text-sm font-bold">
                                 {editConcept ? 'Guardar' : 'Crear'}

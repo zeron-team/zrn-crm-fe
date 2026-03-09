@@ -387,46 +387,74 @@ export default function TimeTracking() {
                         {!summary?.days?.length ? (
                             <div className="p-8 text-center text-gray-400 text-sm">No hay registros en este mes</div>
                         ) : (
-                            /* Desktop Table */
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="text-left px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Fecha</th>
-                                            <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Horas Netas</th>
-                                            <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Descanso</th>
-                                            <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Comida</th>
-                                            <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Fichadas</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {summary.days.map(day => {
-                                            const d = new Date(day.date + 'T12:00:00');
-                                            const dayName = d.toLocaleDateString('es-AR', { weekday: 'short' });
-                                            return (
-                                                <tr key={day.date} className="hover:bg-gray-50">
-                                                    <td className="px-4 py-2.5 font-medium text-gray-900">
-                                                        <span className="text-gray-400 text-xs uppercase">{dayName}</span> {day.date.split('-').reverse().join('/')}
-                                                    </td>
-                                                    <td className="px-4 py-2.5 text-right font-bold text-violet-700">{day.worked_hours.toFixed(1)}h</td>
-                                                    <td className="px-4 py-2.5 text-right text-blue-600">{day.break_hours > 0 ? `${day.break_hours.toFixed(1)}h` : '—'}</td>
-                                                    <td className="px-4 py-2.5 text-right text-amber-600">{day.meal_hours > 0 ? `${day.meal_hours.toFixed(1)}h` : '—'}</td>
-                                                    <td className="px-4 py-2.5 text-right text-gray-500">{day.entries}</td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                    <tfoot className="bg-gray-50 font-bold">
-                                        <tr>
-                                            <td className="px-4 py-2.5 text-gray-700">Total: {summary.days.length} días</td>
-                                            <td className="px-4 py-2.5 text-right text-violet-800">{summary.total_hours.toFixed(1)}h</td>
-                                            <td className="px-4 py-2.5 text-right text-blue-700">{summary.days.reduce((s, d) => s + d.break_hours, 0).toFixed(1)}h</td>
-                                            <td className="px-4 py-2.5 text-right text-amber-700">{summary.days.reduce((s, d) => s + d.meal_hours, 0).toFixed(1)}h</td>
-                                            <td className="px-4 py-2.5 text-right text-gray-600">{summary.days.reduce((s, d) => s + d.entries, 0)}</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
+                            <>
+                                {/* Desktop Table */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="text-left px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Fecha</th>
+                                                <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Horas Netas</th>
+                                                <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Descanso</th>
+                                                <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Comida</th>
+                                                <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Fichadas</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {summary.days.map(day => {
+                                                const d = new Date(day.date + 'T12:00:00');
+                                                const dayName = d.toLocaleDateString('es-AR', { weekday: 'short' });
+                                                return (
+                                                    <tr key={day.date} className="hover:bg-gray-50">
+                                                        <td className="px-4 py-2.5 font-medium text-gray-900">
+                                                            <span className="text-gray-400 text-xs uppercase">{dayName}</span> {day.date.split('-').reverse().join('/')}
+                                                        </td>
+                                                        <td className="px-4 py-2.5 text-right font-bold text-violet-700">{day.worked_hours.toFixed(1)}h</td>
+                                                        <td className="px-4 py-2.5 text-right text-blue-600">{day.break_hours > 0 ? `${day.break_hours.toFixed(1)}h` : '—'}</td>
+                                                        <td className="px-4 py-2.5 text-right text-amber-600">{day.meal_hours > 0 ? `${day.meal_hours.toFixed(1)}h` : '—'}</td>
+                                                        <td className="px-4 py-2.5 text-right text-gray-500">{day.entries}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                        <tfoot className="bg-gray-50 font-bold">
+                                            <tr>
+                                                <td className="px-4 py-2.5 text-gray-700">Total: {summary.days.length} días</td>
+                                                <td className="px-4 py-2.5 text-right text-violet-800">{summary.total_hours.toFixed(1)}h</td>
+                                                <td className="px-4 py-2.5 text-right text-blue-700">{summary.days.reduce((s, d) => s + d.break_hours, 0).toFixed(1)}h</td>
+                                                <td className="px-4 py-2.5 text-right text-amber-700">{summary.days.reduce((s, d) => s + d.meal_hours, 0).toFixed(1)}h</td>
+                                                <td className="px-4 py-2.5 text-right text-gray-600">{summary.days.reduce((s, d) => s + d.entries, 0)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                {/* Mobile Cards */}
+                                <div className="md:hidden grid grid-cols-1 gap-3 p-4">
+                                    {summary.days.map(day => {
+                                        const d = new Date(day.date + 'T12:00:00');
+                                        const dayName = d.toLocaleDateString('es-AR', { weekday: 'short' });
+                                        return (
+                                            <div key={day.date} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="font-medium text-gray-900 text-sm">
+                                                        <span className="text-gray-400 text-xs uppercase mr-1">{dayName}</span>
+                                                        {day.date.split('-').reverse().join('/')}
+                                                    </span>
+                                                    <span className="font-bold text-violet-700 text-sm">{day.worked_hours.toFixed(1)}h</span>
+                                                </div>
+                                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                                    {day.break_hours > 0 && <span className="text-blue-600">☕ {day.break_hours.toFixed(1)}h</span>}
+                                                    {day.meal_hours > 0 && <span className="text-amber-600">🍽️ {day.meal_hours.toFixed(1)}h</span>}
+                                                    <span>{day.entries} fichadas</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    <div className="bg-gray-50 p-3 rounded-xl text-center">
+                                        <span className="font-bold text-gray-700 text-sm">Total: {summary.total_hours.toFixed(1)}h en {summary.days.length} días</span>
+                                    </div>
+                                </div>
+                            </>
                         )}
                     </div>
                 </>

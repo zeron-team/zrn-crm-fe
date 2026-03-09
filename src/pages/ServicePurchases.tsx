@@ -231,71 +231,101 @@ export default function ServicePurchases() {
                 ) : filtered.length === 0 ? (
                     <div className="py-16 text-center text-gray-400">No hay pagos registrados</div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="bg-gray-50 border-b border-gray-100">
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Período</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Proveedor</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Servicio</th>
-                                    <th className="text-right px-4 py-3 font-semibold text-gray-600">Monto</th>
-                                    <th className="text-right px-4 py-3 font-semibold text-gray-600">ARS equiv.</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Fecha Pago</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Factura</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600">Auditoría</th>
-                                    <th className="text-center px-4 py-3 font-semibold text-gray-600">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {filtered.map(p => (
-                                    <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-4 py-3">
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold">
-                                                <Calendar size={12} />
-                                                {MONTH_NAMES[p.period_month - 1]} {p.period_year}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 font-medium text-gray-900">{p.provider_name}</td>
-                                        <td className="px-4 py-3 text-gray-600">{p.service_name}</td>
-                                        <td className="px-4 py-3 text-right font-bold text-gray-900">{fmtCurrency(p.amount, p.currency)}</td>
-                                        <td className="px-4 py-3 text-right text-gray-500 text-xs">
-                                            {p.currency !== "ARS" && (
-                                                <span>$ {p.amount_ars.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                                            )}
-                                            {p.currency !== "ARS" && (
-                                                <span className="block text-[10px] text-gray-400">TC: {p.exchange_rate.toLocaleString()}</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600 text-xs">{p.payment_date || "—"}</td>
-                                        <td className="px-4 py-3 text-gray-600 text-xs">{p.invoice_number || "—"}</td>
-                                        <td className="px-4 py-3 text-[10px] text-gray-400">
-                                            {p.created_by && <span className="block">Creado: {p.created_by}</span>}
-                                            {p.updated_by && <span className="block">Editado: {p.updated_by}</span>}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <div className="flex items-center justify-center gap-1">
-                                                <button onClick={() => openEdit(p)}
-                                                    className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
-                                                    <Edit2 size={14} />
-                                                </button>
-                                                <button onClick={() => handleDelete(p.id)}
-                                                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors" title="Eliminar">
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </td>
+                    <>
+                        {/* Desktop Table */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-100">
+                                        <th className="text-left px-4 py-3 font-semibold text-gray-600">Período</th>
+                                        <th className="text-left px-4 py-3 font-semibold text-gray-600">Proveedor</th>
+                                        <th className="text-left px-4 py-3 font-semibold text-gray-600">Servicio</th>
+                                        <th className="text-right px-4 py-3 font-semibold text-gray-600">Monto</th>
+                                        <th className="text-right px-4 py-3 font-semibold text-gray-600">ARS equiv.</th>
+                                        <th className="text-left px-4 py-3 font-semibold text-gray-600">Fecha Pago</th>
+                                        <th className="text-left px-4 py-3 font-semibold text-gray-600">Factura</th>
+                                        <th className="text-left px-4 py-3 font-semibold text-gray-600">Auditoría</th>
+                                        <th className="text-center px-4 py-3 font-semibold text-gray-600">Acciones</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {filtered.map(p => (
+                                        <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-4 py-3">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold">
+                                                    <Calendar size={12} />
+                                                    {MONTH_NAMES[p.period_month - 1]} {p.period_year}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 font-medium text-gray-900">{p.provider_name}</td>
+                                            <td className="px-4 py-3 text-gray-600">{p.service_name}</td>
+                                            <td className="px-4 py-3 text-right font-bold text-gray-900">{fmtCurrency(p.amount, p.currency)}</td>
+                                            <td className="px-4 py-3 text-right text-gray-500 text-xs">
+                                                {p.currency !== "ARS" && (
+                                                    <span>$ {p.amount_ars.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                                )}
+                                                {p.currency !== "ARS" && (
+                                                    <span className="block text-[10px] text-gray-400">TC: {p.exchange_rate.toLocaleString()}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600 text-xs">{p.payment_date || "—"}</td>
+                                            <td className="px-4 py-3 text-gray-600 text-xs">{p.invoice_number || "—"}</td>
+                                            <td className="px-4 py-3 text-[10px] text-gray-400">
+                                                {p.created_by && <span className="block">Creado: {p.created_by}</span>}
+                                                {p.updated_by && <span className="block">Editado: {p.updated_by}</span>}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button onClick={() => openEdit(p)}
+                                                        className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(p.id)}
+                                                        className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors" title="Eliminar">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {/* Mobile Cards */}
+                        <div className="md:hidden grid grid-cols-1 gap-3 p-4">
+                            {filtered.map(p => (
+                                <div key={p.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold">
+                                            <Calendar size={12} />
+                                            {MONTH_NAMES[p.period_month - 1]} {p.period_year}
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={() => openEdit(p)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg"><Edit2 size={14} /></button>
+                                            <button onClick={() => handleDelete(p.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg"><Trash2 size={14} /></button>
+                                        </div>
+                                    </div>
+                                    <p className="font-bold text-gray-900 text-sm">{p.provider_name}</p>
+                                    <p className="text-xs text-gray-500">{p.service_name}</p>
+                                    <div className="flex items-center justify-between mt-3">
+                                        <span className="font-bold text-gray-900">{fmtCurrency(p.amount, p.currency)}</span>
+                                        {p.currency !== "ARS" && <span className="text-xs text-gray-400">ARS $ {p.amount_ars.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
+                                    </div>
+                                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                                        {p.payment_date && <span>{p.payment_date}</span>}
+                                        {p.invoice_number && <span>Fact: {p.invoice_number}</span>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
 
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-between rounded-t-2xl">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><CreditCard size={20} className="text-white" /></div>
@@ -307,7 +337,7 @@ export default function ServicePurchases() {
                             <button onClick={() => setShowModal(false)} className="p-1.5 hover:bg-white/20 rounded-lg"><X size={18} className="text-white" /></button>
                         </div>
 
-                        <div className="p-5 space-y-4">
+                        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
                             {!editingId && (
                                 <div className="border border-blue-100 rounded-xl p-4 bg-blue-50/30 space-y-3">
                                     <div>
@@ -372,7 +402,7 @@ export default function ServicePurchases() {
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-3 p-5 border-t border-gray-100 rounded-b-2xl">
+                        <div className="flex justify-end gap-3 p-4 sm:p-5 border-t border-gray-100 rounded-b-2xl flex-shrink-0">
                             <button onClick={() => setShowModal(false)}
                                 className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
                                 Cancelar

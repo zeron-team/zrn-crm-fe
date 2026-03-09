@@ -362,7 +362,7 @@ export default function Notes() {
 
             {/* List View */}
             {view === 'list' && (
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex-1 overflow-auto p-4 sm:p-6">
                     <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 shadow-sm">
                         {filteredNotes.length === 0 ? (
                             <div className="p-8 text-center text-gray-400 text-sm">No hay notas</div>
@@ -370,7 +370,7 @@ export default function Notes() {
                             const color = getColor(note.color);
                             const entLabel = entityLabel(note.entity_type, note.entity_id);
                             return (
-                                <div key={note.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group">
+                                <div key={note.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-4 sm:px-5 py-3 hover:bg-gray-50 transition-colors group">
                                     {/* Color dot */}
                                     <div className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border-2"
                                         style={{ backgroundColor: color.bg, borderColor: color.border }} />
@@ -381,32 +381,32 @@ export default function Notes() {
                                         {note.content && <p className="text-xs text-gray-400 truncate">{note.content}</p>}
                                     </div>
 
-                                    {/* Entity */}
-                                    {entLabel && (
-                                        <span className="px-2 py-0.5 text-[10px] font-medium rounded-full flex-shrink-0"
-                                            style={{ backgroundColor: color.bg, color: color.text, border: `1px solid ${color.border}40` }}>
-                                            {entLabel}
-                                        </span>
-                                    )}
+                                    {/* Tags row */}
+                                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                        {entLabel && (
+                                            <span className="px-2 py-0.5 text-[10px] font-medium rounded-full flex-shrink-0"
+                                                style={{ backgroundColor: color.bg, color: color.text, border: `1px solid ${color.border}40` }}>
+                                                {entLabel}
+                                            </span>
+                                        )}
 
-                                    {/* Assigned user */}
-                                    {getUserName(note.assigned_to) && (
-                                        <span className="px-2 py-0.5 text-[10px] font-medium rounded-full flex-shrink-0 bg-blue-50 text-blue-600 border border-blue-200">
-                                            👤 {getUserName(note.assigned_to)}
-                                        </span>
-                                    )}
+                                        {getUserName(note.assigned_to) && (
+                                            <span className="px-2 py-0.5 text-[10px] font-medium rounded-full flex-shrink-0 bg-blue-50 text-blue-600 border border-blue-200">
+                                                👤 {getUserName(note.assigned_to)}
+                                            </span>
+                                        )}
 
-                                    {/* Date */}
-                                    <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(note.updated_at)}</span>
+                                        <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(note.updated_at)}</span>
 
-                                    {/* Actions */}
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => openEdit(note)} className="p-1.5 hover:bg-gray-200 rounded-lg">
-                                            <Edit3 size={14} className="text-gray-500" />
-                                        </button>
-                                        <button onClick={() => deleteNote(note.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
-                                            <Trash2 size={14} className="text-red-400" />
-                                        </button>
+                                        {/* Actions - always visible on mobile, hover on desktop */}
+                                        <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ml-auto">
+                                            <button onClick={() => openEdit(note)} className="p-1.5 hover:bg-gray-200 rounded-lg">
+                                                <Edit3 size={14} className="text-gray-500" />
+                                            </button>
+                                            <button onClick={() => deleteNote(note.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
+                                                <Trash2 size={14} className="text-red-400" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -418,7 +418,7 @@ export default function Notes() {
             {/* Create/Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] flex flex-col">
                         {/* ARCA Modal header */}
                         <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -438,7 +438,7 @@ export default function Notes() {
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-4">
+                        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                             {/* Title & Content section */}
                             <div className="border border-blue-100 rounded-xl p-4 bg-blue-50/30 space-y-3">
                                 <div>
@@ -503,7 +503,7 @@ export default function Notes() {
                         </div>
 
                         {/* ARCA Modal footer */}
-                        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+                        <div className="px-4 sm:px-6 py-4 border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
                             <button onClick={() => setShowModal(false)}
                                 className="px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
                                 Cancelar

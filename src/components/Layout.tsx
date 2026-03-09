@@ -14,6 +14,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import HeaderClock from "./HeaderClock";
 import OnlineUsers from "./OnlineUsers";
+import AiChatWidget from "./AiChatWidget";
 
 interface SidebarSectionProps {
     title: string;
@@ -264,6 +265,7 @@ export default function Layout() {
                     <Outlet />
                 </main>
             </div>
+            <AiChatWidget />
         </div>
     );
 }

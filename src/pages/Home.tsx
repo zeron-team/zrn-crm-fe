@@ -4,11 +4,11 @@ import {
     Calendar, Ticket, FolderKanban, BookOpen, Users, Clock, Banknote, Mail, MessageCircle,
     CreditCard, ShoppingCart, Warehouse, Building, LineChart, Package, FolderTree, Settings,
     Shield, Briefcase, UserCheck, Receipt, ArrowRight, Sparkles, Zap, ChevronRight,
-    TrendingUp, Globe
+    TrendingUp, Globe, Bot, BrainCircuit, MessageSquareText
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const VERSION = "3.0.0";
+const VERSION = "4.2.0";
 
 interface ModuleCard {
     title: string;
@@ -126,6 +126,7 @@ const MODULES: ModuleCard[] = [
 ];
 
 const HIGHLIGHTS = [
+    { icon: <BrainCircuit size={20} />, title: "🤖 ZeRoN IA — NUEVO", desc: "Asistente inteligente con IA integrada (Google Gemini). Consultá clientes, facturas, leads, tickets, inventario y más directamente desde el chat. La IA conoce tu negocio.", isNew: true },
     { icon: <Zap size={20} />, title: "Facturación ARCA", desc: "Integración directa con AFIP/ARCA para emisión de comprobantes electrónicos A, B y C con validación en tiempo real." },
     { icon: <TrendingUp size={20} />, title: "Business Intelligence", desc: "8 dashboards analíticos: Ventas, Compras, Inventario, Productos, Proveedores, CRM, Cashflow y RRHH con KPIs en tiempo real." },
     { icon: <Globe size={20} />, title: "Bilingüe ES/EN", desc: "Interfaz completamente traducida al español e inglés con cambio dinámico de idioma." },
@@ -198,14 +199,68 @@ export default function Home() {
                 </div>
             </div>
 
+            {/* AI Announcement Banner */}
+            <div className="px-6 -mt-8 relative z-10 mb-8">
+                <div className="max-w-5xl mx-auto">
+                    <div className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-2xl shadow-2xl shadow-purple-600/20">
+                        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, rgba(255,255,255,0.4) 0%, transparent 50%), radial-gradient(circle at 70% 30%, rgba(255,255,255,0.3) 0%, transparent 50%)' }} />
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+                        <div className="relative p-6 lg:p-8 flex flex-col md:flex-row items-center gap-6">
+                            <div className="flex-shrink-0">
+                                <div className="w-20 h-20 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
+                                    <Bot size={40} className="text-white" />
+                                </div>
+                            </div>
+
+                            <div className="flex-1 text-center md:text-left">
+                                <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-3 py-1 mb-3">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                                    </span>
+                                    <span className="text-xs font-bold text-white/90 uppercase tracking-wider">Nuevo en v4.2.0</span>
+                                </div>
+                                <h3 className="text-2xl lg:text-3xl font-black text-white mb-2">
+                                    Presentamos <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-amber-200">ZeRoN IA</span>
+                                </h3>
+                                <p className="text-purple-100/80 text-sm lg:text-base leading-relaxed max-w-2xl">
+                                    El inicio de la <strong className="text-white">Inteligencia Artificial</strong> en la plataforma.
+                                    ZeRoN IA es tu asistente inteligente que conoce tu negocio en tiempo real: consultá clientes, facturas,
+                                    leads, tickets de soporte, inventario, empleados y presupuestos directamente desde el chat.
+                                    Potenciado por <strong className="text-white">Google Gemini</strong>.
+                                </p>
+                                <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
+                                    <div className="flex items-center gap-1.5 text-xs text-purple-100/70">
+                                        <MessageSquareText size={14} className="text-purple-200" />
+                                        <span>Chat en lenguaje natural</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-xs text-purple-100/70">
+                                        <BarChart3 size={14} className="text-purple-200" />
+                                        <span>9 herramientas de datos</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-xs text-purple-100/70">
+                                        <Zap size={14} className="text-purple-200" />
+                                        <span>Respuestas en tiempo real</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Highlights */}
             <div className="px-6 py-12">
                 <h2 className="text-center text-2xl font-black text-gray-900 mb-2">Características de esta versión</h2>
                 <p className="text-center text-gray-500 mb-8 text-sm">Todo lo que necesitás para gestionar tu empresa de forma profesional</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {HIGHLIGHTS.map((h) => (
-                        <div key={h.title} className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-lg hover:border-blue-100 transition-all duration-300 group">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center text-blue-600 mb-3 group-hover:from-blue-100 group-hover:to-indigo-100 transition-colors">
+                        <div key={h.title} className={`bg-white rounded-xl border p-5 hover:shadow-lg transition-all duration-300 group ${(h as any).isNew ? 'border-purple-200 ring-2 ring-purple-100 hover:border-purple-300' : 'border-gray-100 hover:border-blue-100'
+                            }`}>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors ${(h as any).isNew ? 'bg-gradient-to-br from-purple-100 to-violet-100 text-purple-600 group-hover:from-purple-200 group-hover:to-violet-200' : 'bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 group-hover:from-blue-100 group-hover:to-indigo-100'
+                                }`}>
                                 {h.icon}
                             </div>
                             <h3 className="font-bold text-gray-900 text-sm mb-1">{h.title}</h3>

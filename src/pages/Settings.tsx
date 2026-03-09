@@ -86,16 +86,82 @@ const MODULE_HEADER_COLORS: Record<string, string> = {
     orange: "text-orange-700 bg-orange-100",
 };
 
+const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
+    core: { label: "INFRAESTRUCTURA", color: "bg-blue-100 text-blue-700" },
+    security: { label: "SEGURIDAD", color: "bg-red-100 text-red-700" },
+    fiscal: { label: "FISCAL", color: "bg-green-100 text-green-700" },
+    infra: { label: "OPERACIONES", color: "bg-purple-100 text-purple-700" },
+    ai: { label: "INTELIGENCIA ARTIFICIAL", color: "bg-amber-100 text-amber-700" },
+};
+
+const STATUS_STYLES: Record<string, { bg: string; border: string; badge: string; icon: string }> = {
+    ok: { bg: "bg-emerald-50/60", border: "border-emerald-200", badge: "bg-emerald-100 text-emerald-700", icon: "✅" },
+    warning: { bg: "bg-amber-50/60", border: "border-amber-200", badge: "bg-amber-100 text-amber-700", icon: "⚠️" },
+    error: { bg: "bg-red-50/60", border: "border-red-200", badge: "bg-red-100 text-red-700", icon: "❌" },
+    checking: { bg: "bg-gray-50", border: "border-gray-200", badge: "bg-gray-100 text-gray-500", icon: "⏳" },
+};
+
+function IntegrationCard({ integration }: { integration: any }) {
+    const st = STATUS_STYLES[integration.status] || STATUS_STYLES.checking;
+    const cat = CATEGORY_LABELS[integration.category] || CATEGORY_LABELS.core;
+    const details = integration.details || {};
+    const detailEntries = Object.entries(details).filter(([k]) => k !== "error");
+
+    return (
+        <div className={`rounded-xl border-2 ${st.border} ${st.bg} p-5 transition-all duration-300 hover:shadow-md`}>
+            <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${st.badge}`}>
+                        {st.icon}
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-gray-900 text-sm">{integration.name}</h4>
+                        <p className="text-[11px] text-gray-500">{integration.description}</p>
+                    </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${st.badge}`}>
+                        {integration.status === "ok" ? "ACTIVO" : integration.status === "warning" ? "PARCIAL" : integration.status === "error" ? "INACTIVO" : "..."}
+                    </span>
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${cat.color}`}>
+                        {cat.label}
+                    </span>
+                </div>
+            </div>
+            {details.error && (
+                <div className="px-3 py-2 bg-red-100 border border-red-200 rounded-lg text-xs text-red-700 mb-3">
+                    ⚠️ {details.error}
+                </div>
+            )}
+            {detailEntries.length > 0 && (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+                    {detailEntries.map(([key, val]) => (
+                        <div key={key} className="flex justify-between text-[11px] py-0.5">
+                            <span className="text-gray-400 font-medium">{key.replace(/_/g, " ")}</span>
+                            <span className="text-gray-700 font-bold truncate ml-2">
+                                {typeof val === "boolean" ? (val ? "✅" : "❌") : String(val)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function Settings() {
     const { t } = useTranslation();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState("dashboard");
-    const [healthStatus, setHealthStatus] = useState({
-        backend: "checking",
-        database: "checking",
-        lastChecked: null as Date | null,
-    });
     const [isChecking, setIsChecking] = useState(false);
+    const [systemData, setSystemData] = useState<any>(null);
+    const [lastChecked, setLastChecked] = useState<Date | null>(null);
+
+    // Audit logs state
+    const [auditLogs, setAuditLogs] = useState<any[]>([]);
+    const [loadingLogs, setLoadingLogs] = useState(false);
+    const [logsFilter, setLogsFilter] = useState<string>("");
+    const [logsDays, setLogsDays] = useState(7);
 
     // Dashboard config state
     const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
@@ -104,7 +170,7 @@ export default function Settings() {
     const [savedNotice, setSavedNotice] = useState(false);
 
     useEffect(() => {
-        if (activeTab === "health") runHealthCheck();
+        if (activeTab === "health") { runHealthCheck(); fetchLogs(); }
         if (activeTab === "dashboard" && user?.id) loadWidgetConfig();
     }, [activeTab, user?.id]);
 
@@ -143,36 +209,29 @@ export default function Settings() {
         finally { setSavingWidgets(false); }
     };
 
+    const fetchLogs = async (filter = logsFilter, days = logsDays) => {
+        setLoadingLogs(true);
+        try {
+            const params = new URLSearchParams();
+            if (filter) params.set("action", filter);
+            params.set("days", String(days));
+            params.set("limit", "100");
+            const res = await api.get(`/audit/?${params.toString()}`);
+            setAuditLogs(res.data.logs || []);
+        } catch (e) { console.error(e); }
+        finally { setLoadingLogs(false); }
+    };
+
     const runHealthCheck = async () => {
         setIsChecking(true);
-        setHealthStatus(prev => ({ ...prev, backend: "checking", database: "checking" }));
-        let backendOk = false;
+        setSystemData(null);
         try {
-            const res = await fetch(`/health`);
-            if (res.ok) {
-                backendOk = true;
-                setHealthStatus(prev => ({ ...prev, backend: "ok" }));
-            } else {
-                setHealthStatus(prev => ({ ...prev, backend: "error" }));
-            }
-        } catch {
-            setHealthStatus(prev => ({ ...prev, backend: "error" }));
+            const res = await api.get("/system/status");
+            setSystemData(res.data);
+        } catch (e) {
+            console.error(e);
         }
-        if (backendOk) {
-            try {
-                const res = await api.get("/users/?limit=1");
-                if (res.status === 200) {
-                    setHealthStatus(prev => ({ ...prev, database: "ok" }));
-                } else {
-                    setHealthStatus(prev => ({ ...prev, database: "error" }));
-                }
-            } catch {
-                setHealthStatus(prev => ({ ...prev, database: "error" }));
-            }
-        } else {
-            setHealthStatus(prev => ({ ...prev, database: "error" }));
-        }
-        setHealthStatus(prev => ({ ...prev, lastChecked: new Date() }));
+        setLastChecked(new Date());
         setIsChecking(false);
     };
 
@@ -210,10 +269,11 @@ export default function Settings() {
                         {t('settings.tabs.general')}
                     </button>
                     <button
-                        className={`flex-1 min-w-[140px] py-4 text-sm font-medium transition-colors ${activeTab === "health" ? "text-green-600 border-b-2 border-green-600" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}`}
+                        className={`flex-1 min-w-[140px] py-4 text-sm font-medium transition-colors flex items-center justify-center space-x-2 ${activeTab === "health" ? "text-emerald-600 border-b-2 border-emerald-600" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}`}
                         onClick={() => setActiveTab("health")}
                     >
-                        {t('settings.tabs.health')}
+                        <Activity size={16} />
+                        <span>Integraciones</span>
                     </button>
                 </div>
 
@@ -221,7 +281,6 @@ export default function Settings() {
                     {/* ═══ PANEL DE CONTROL ═══ */}
                     {activeTab === "dashboard" && (
                         <div className="space-y-6">
-                            {/* Header */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -235,18 +294,15 @@ export default function Settings() {
                                         </span>
                                     </p>
                                 </div>
-                                <button
-                                    onClick={saveWidgetConfig}
-                                    disabled={savingWidgets}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl transition-all text-sm font-bold disabled:opacity-50 self-start sm:self-auto"
-                                >
+                                <button onClick={saveWidgetConfig} disabled={savingWidgets}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl transition-all text-sm font-bold disabled:opacity-50 self-start sm:self-auto">
                                     <Save size={16} />
                                     {savingWidgets ? "Guardando..." : "Guardar Configuración"}
                                 </button>
                             </div>
 
                             {savedNotice && (
-                                <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-medium animate-in">
+                                <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-medium">
                                     <CheckCircle2 size={16} /> Configuración guardada. Los cambios se reflejan al recargar el Panel de Control.
                                 </div>
                             )}
@@ -257,53 +313,30 @@ export default function Settings() {
                                 <div className="space-y-6">
                                     {WIDGET_MODULES.map(mod => {
                                         const allSelected = mod.widgets.every(w => selectedWidgets.includes(w.id));
-                                        const someSelected = mod.widgets.some(w => selectedWidgets.includes(w.id));
                                         const selectedCount = mod.widgets.filter(w => selectedWidgets.includes(w.id)).length;
-
                                         return (
                                             <div key={mod.module} className={`rounded-xl border-2 ${MODULE_COLORS[mod.color]} overflow-hidden`}>
-                                                {/* Module header */}
                                                 <div className="px-5 py-3 flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-black ${MODULE_HEADER_COLORS[mod.color]}`}>
-                                                            {mod.module}
-                                                        </span>
+                                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-black ${MODULE_HEADER_COLORS[mod.color]}`}>{mod.module}</span>
                                                         <span className="text-xs text-gray-400">{selectedCount}/{mod.widgets.length} activos</span>
                                                     </div>
-                                                    <button
-                                                        onClick={() => selectAllInModule(mod.widgets)}
-                                                        className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
-                                                    >
+                                                    <button onClick={() => selectAllInModule(mod.widgets)} className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
                                                         {allSelected ? "Deseleccionar todos" : "Seleccionar todos"}
                                                     </button>
                                                 </div>
-
-                                                {/* Widgets grid */}
                                                 <div className="px-5 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                                     {mod.widgets.map(widget => {
                                                         const isActive = selectedWidgets.includes(widget.id);
                                                         const badge = TYPE_BADGES[widget.type];
                                                         return (
-                                                            <label
-                                                                key={widget.id}
+                                                            <label key={widget.id}
                                                                 className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all duration-200
-                                                                    ${isActive
-                                                                        ? 'border-indigo-400 bg-white shadow-sm ring-1 ring-indigo-100'
-                                                                        : 'border-transparent bg-white/60 hover:bg-white hover:border-gray-200'
-                                                                    }`}
-                                                            >
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={isActive}
-                                                                    onChange={() => toggleWidget(widget.id)}
-                                                                    className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2 shrink-0"
-                                                                />
-                                                                <div className="flex-1 min-w-0">
-                                                                    <p className="text-sm font-medium text-gray-800 truncate">{widget.label}</p>
-                                                                </div>
-                                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${badge.color}`}>
-                                                                    {badge.label}
-                                                                </span>
+                                                                    ${isActive ? 'border-indigo-400 bg-white shadow-sm ring-1 ring-indigo-100' : 'border-transparent bg-white/60 hover:bg-white hover:border-gray-200'}`}>
+                                                                <input type="checkbox" checked={isActive} onChange={() => toggleWidget(widget.id)}
+                                                                    className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2 shrink-0" />
+                                                                <div className="flex-1 min-w-0"><p className="text-sm font-medium text-gray-800 truncate">{widget.label}</p></div>
+                                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${badge.color}`}>{badge.label}</span>
                                                             </label>
                                                         );
                                                     })}
@@ -316,70 +349,184 @@ export default function Settings() {
                         </div>
                     )}
 
-                    {activeTab === "arca" && (
-                        <ArcaConfigPanel />
-                    )}
+                    {activeTab === "arca" && <ArcaConfigPanel />}
+                    {activeTab === "general" && <CompanySettingsPanel />}
 
-                    {activeTab === "general" && (
-                        <CompanySettingsPanel />
-                    )}
-
+                    {/* ═══ INTEGRACIONES ═══ */}
                     {activeTab === "health" && (
-                        <div className="max-w-4xl space-y-6">
-                            <div className="flex justify-between items-center">
+                        <div className="space-y-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
-                                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                                        <Activity className="mr-2 text-green-600" size={20} />
-                                        {t('settings.health.title')}
+                                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                        <Activity size={20} className="text-emerald-600" />
+                                        Estado de Integraciones
                                     </h3>
                                     <p className="text-sm text-gray-500 mt-1">
-                                        {t('settings.health.lastChecked')} {healthStatus.lastChecked ? healthStatus.lastChecked.toLocaleTimeString() : t('settings.health.never')}
+                                        Monitoreo en tiempo real de todos los servicios y módulos de seguridad.
+                                        {lastChecked && (
+                                            <span className="ml-2 text-xs text-gray-400">
+                                                Última verificación: {lastChecked.toLocaleTimeString()}
+                                            </span>
+                                        )}
                                     </p>
                                 </div>
-                                <button
-                                    onClick={runHealthCheck}
-                                    disabled={isChecking}
-                                    className="flex items-center px-4 py-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg font-medium transition-colors disabled:opacity-50"
-                                >
-                                    <RefreshCw size={16} className={`mr-2 ${isChecking ? "animate-spin" : ""}`} />
-                                    {isChecking ? t('settings.health.verifying') : t('settings.health.runCheck')}
+                                <button onClick={runHealthCheck} disabled={isChecking}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl shadow-lg shadow-emerald-200 hover:shadow-xl transition-all text-sm font-bold disabled:opacity-50">
+                                    <RefreshCw size={16} className={isChecking ? "animate-spin" : ""} />
+                                    {isChecking ? "Verificando..." : "Verificar Todo"}
                                 </button>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className={`p-5 rounded-xl border ${healthStatus.backend === "ok" ? "bg-green-50/50 border-green-100" : healthStatus.backend === "error" ? "bg-red-50/50 border-red-100" : "bg-gray-50 border-gray-100"}`}>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex items-center space-x-3">
-                                            <div className={`p-2 rounded-lg ${healthStatus.backend === "ok" ? "bg-green-100 text-green-600" : healthStatus.backend === "error" ? "bg-red-100 text-red-600" : "bg-gray-200 text-gray-500"}`}>
-                                                <Server size={20} />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900">{t('settings.health.api')}</h4>
-                                                <p className="text-xs text-gray-500">{t('settings.health.apiDesc')}</p>
-                                            </div>
-                                        </div>
-                                        {healthStatus.backend === "ok" ? <CheckCircle2 size={24} className="text-green-500" /> : healthStatus.backend === "error" ? <XCircle size={24} className="text-red-500" /> : <RefreshCw size={24} className="text-gray-400 animate-spin" />}
+
+                            {/* Summary Bar */}
+                            {systemData?.summary && (
+                                <div className="flex flex-wrap gap-3">
+                                    <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl text-white">
+                                        <Server size={14} />
+                                        <span className="text-xs font-bold">v{systemData.version}</span>
                                     </div>
-                                    <div className="text-sm">
-                                        {healthStatus.backend === "ok" ? <p className="text-green-700">{t('settings.health.apiOk')}</p> : healthStatus.backend === "error" ? <p className="text-red-700">{t('settings.health.apiError')}</p> : <p className="text-gray-500">{t('settings.health.apiChecking')}</p>}
+                                    <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                                        <CheckCircle2 size={14} className="text-emerald-600" />
+                                        <span className="text-xs font-bold text-emerald-700">{systemData.summary.ok} Activos</span>
+                                    </div>
+                                    {systemData.summary.warning > 0 && (
+                                        <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+                                            <span className="text-xs font-bold text-amber-700">⚠️ {systemData.summary.warning} Alertas</span>
+                                        </div>
+                                    )}
+                                    {systemData.summary.error > 0 && (
+                                        <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl">
+                                            <XCircle size={14} className="text-red-600" />
+                                            <span className="text-xs font-bold text-red-700">{systemData.summary.error} Errores</span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+                                        <span className="text-xs font-bold text-gray-600">Total: {systemData.summary.total} servicios</span>
                                     </div>
                                 </div>
-                                <div className={`p-5 rounded-xl border ${healthStatus.database === "ok" ? "bg-green-50/50 border-green-100" : healthStatus.database === "error" ? "bg-red-50/50 border-red-100" : "bg-gray-50 border-gray-100"}`}>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex items-center space-x-3">
-                                            <div className={`p-2 rounded-lg ${healthStatus.database === "ok" ? "bg-green-100 text-green-600" : healthStatus.database === "error" ? "bg-red-100 text-red-600" : "bg-gray-200 text-gray-500"}`}>
-                                                <Database size={20} />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900">{t('settings.health.db')}</h4>
-                                                <p className="text-xs text-gray-500">{t('settings.health.dbDesc')}</p>
-                                            </div>
-                                        </div>
-                                        {healthStatus.database === "ok" ? <CheckCircle2 size={24} className="text-green-500" /> : healthStatus.database === "error" ? <XCircle size={24} className="text-red-500" /> : <RefreshCw size={24} className="text-gray-400 animate-spin" />}
-                                    </div>
-                                    <div className="text-sm">
-                                        {healthStatus.database === "ok" ? <p className="text-green-700">{t('settings.health.dbOk')}</p> : healthStatus.database === "error" ? <p className="text-red-700">{t('settings.health.dbError')}</p> : <p className="text-gray-500">{t('settings.health.dbChecking')}</p>}
-                                    </div>
+                            )}
+
+                            {/* Cards Grid */}
+                            {isChecking ? (
+                                <div className="py-16 text-center">
+                                    <RefreshCw size={32} className="mx-auto text-emerald-500 animate-spin mb-4" />
+                                    <p className="text-gray-500 font-medium">Verificando integraciones...</p>
+                                    <p className="text-xs text-gray-400 mt-1">Testeando Redis, Rust, ARCA, Backups y más</p>
                                 </div>
+                            ) : systemData?.integrations ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                    {systemData.integrations.map((i: any) => <IntegrationCard key={i.id} integration={i} />)}
+                                </div>
+                            ) : (
+                                <div className="py-16 text-center">
+                                    <Activity size={32} className="mx-auto text-gray-300 mb-4" />
+                                    <p className="text-gray-400 font-medium">Hacé clic en "Verificar Todo" para comenzar</p>
+                                </div>
+                            )}
+
+                            {/* ═══ AUDIT LOG VIEWER ═══ */}
+                            <div className="border-t border-gray-200 pt-6 mt-6">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                            📋 Registro de Auditoría
+                                        </h3>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Historial de acciones críticas del sistema.
+                                        </p>
+                                    </div>
+                                    <button onClick={() => fetchLogs()} disabled={loadingLogs}
+                                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-sm font-bold transition-colors disabled:opacity-50">
+                                        <RefreshCw size={14} className={loadingLogs ? "animate-spin" : ""} />
+                                        Actualizar
+                                    </button>
+                                </div>
+
+                                {/* Filters */}
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    {["", "LOGIN", "LOGIN_FAILED", "CREATE", "UPDATE", "DELETE"].map(f => (
+                                        <button key={f} onClick={() => { setLogsFilter(f); fetchLogs(f); }}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${logsFilter === f
+                                                    ? 'bg-slate-800 text-white shadow-md'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}>
+                                            {f || "Todos"}
+                                        </button>
+                                    ))}
+                                    <select value={logsDays} onChange={e => { setLogsDays(Number(e.target.value)); fetchLogs(logsFilter, Number(e.target.value)); }}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 border-0 outline-none">
+                                        <option value={1}>Hoy</option>
+                                        <option value={7}>7 días</option>
+                                        <option value={30}>30 días</option>
+                                        <option value={90}>90 días</option>
+                                    </select>
+                                </div>
+
+                                {/* Logs Table */}
+                                {loadingLogs ? (
+                                    <div className="py-8 text-center text-gray-400 animate-pulse">Cargando logs...</div>
+                                ) : auditLogs.length === 0 ? (
+                                    <div className="py-8 text-center text-gray-400">No hay registros para este filtro.</div>
+                                ) : (
+                                    <div className="rounded-xl border border-gray-200 overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-gradient-to-r from-slate-50 to-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-black text-gray-500 uppercase">Fecha/Hora</th>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-black text-gray-500 uppercase">Acción</th>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-black text-gray-500 uppercase">Usuario</th>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-black text-gray-500 uppercase">Entidad</th>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-black text-gray-500 uppercase">IP</th>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-black text-gray-500 uppercase">Detalles</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {auditLogs.map((log: any) => {
+                                                        const actionColors: Record<string, string> = {
+                                                            LOGIN: "bg-emerald-100 text-emerald-700",
+                                                            LOGIN_FAILED: "bg-red-100 text-red-700",
+                                                            CREATE: "bg-blue-100 text-blue-700",
+                                                            UPDATE: "bg-amber-100 text-amber-700",
+                                                            DELETE: "bg-red-100 text-red-700",
+                                                            LOGOUT: "bg-gray-100 text-gray-700",
+                                                            EXPORT: "bg-purple-100 text-purple-700",
+                                                            EMIT_INVOICE: "bg-indigo-100 text-indigo-700",
+                                                        };
+                                                        const sevColors: Record<string, string> = {
+                                                            info: "",
+                                                            warning: "border-l-4 border-l-amber-400",
+                                                            critical: "border-l-4 border-l-red-500 bg-red-50/30",
+                                                        };
+                                                        return (
+                                                            <tr key={log.id} className={`hover:bg-gray-50 transition-colors ${sevColors[log.severity] || ""}`}>
+                                                                <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                                                                    {log.timestamp ? new Date(log.timestamp).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${actionColors[log.action] || 'bg-gray-100 text-gray-700'}`}>
+                                                                        {log.action}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-3 text-xs text-gray-700 font-medium">{log.user_email || '-'}</td>
+                                                                <td className="px-4 py-3 text-xs text-gray-500">
+                                                                    {log.entity_type && <span className="text-gray-700">{log.entity_type}</span>}
+                                                                    {log.entity_name && <span className="text-gray-400 ml-1">({log.entity_name})</span>}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-xs text-gray-400 font-mono">{log.ip_address || '-'}</td>
+                                                                <td className="px-4 py-3 text-xs text-gray-400 max-w-[200px] truncate">
+                                                                    {log.details ? JSON.stringify(log.details) : '-'}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div className="px-4 py-2 bg-gray-50 text-xs text-gray-400 font-medium">
+                                            {auditLogs.length} registros encontrados
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -504,7 +651,6 @@ function CompanySettingsPanel() {
                 </div>
             </div>
 
-            {/* Identity */}
             <Section id="identity" title="Identidad de la Empresa" icon="🏢">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className={labelCls}>Nombre de la Empresa *</label>
@@ -522,7 +668,6 @@ function CompanySettingsPanel() {
                 </div>
             </Section>
 
-            {/* Contact */}
             <Section id="contact" title="Contacto" icon="📞">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div><label className={labelCls}>Teléfono</label>
@@ -534,7 +679,6 @@ function CompanySettingsPanel() {
                 </div>
             </Section>
 
-            {/* Address */}
             <Section id="address" title="Dirección" icon="📍">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="sm:col-span-2"><label className={labelCls}>Dirección</label>
@@ -550,7 +694,6 @@ function CompanySettingsPanel() {
                 </div>
             </Section>
 
-            {/* Hours */}
             <Section id="hours" title="Horarios" icon="🕐">
                 <div className="space-y-5">
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -584,7 +727,6 @@ function CompanySettingsPanel() {
                 </div>
             </Section>
 
-            {/* Fiscal */}
             <Section id="fiscal" title="Datos Fiscales" icon="📋">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div><label className={labelCls}>Condición IVA</label>
@@ -606,13 +748,11 @@ function CompanySettingsPanel() {
                 </div>
             </Section>
 
-            {/* Notes */}
             <Section id="notes" title="Observaciones" icon="📝">
                 <textarea value={settings.notes || ''} onChange={e => set('notes', e.target.value)}
                     rows={4} className={inputCls + " resize-none"} placeholder="Notas internas sobre la empresa..." />
             </Section>
 
-            {/* Bottom save */}
             <div className="flex justify-end">
                 <button onClick={handleSave} disabled={saving}
                     className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all text-sm font-bold disabled:opacity-50">
@@ -621,7 +761,6 @@ function CompanySettingsPanel() {
                 </button>
             </div>
 
-            {/* Toast */}
             {toast && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-gray-900 text-white rounded-xl shadow-2xl text-sm font-bold">
                     {toast}
