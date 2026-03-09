@@ -163,7 +163,7 @@ export default function Calendar() {
                 api.get("/providers/"),
                 api.get("/contacts/"),
                 api.get("/leads/"),
-                api.get("/projects/").catch(() => ({ data: [] })),
+                api.get("/projects"),
             ]);
             setEvents(eventsRes.data);
             setClients(clipRes.data);
