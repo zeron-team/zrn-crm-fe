@@ -23,11 +23,12 @@ interface CalendarEvent {
     call_url?: string | null;
     is_recurring?: boolean;
     recurrence_pattern?: string | null;
+    recurrence_end_date?: string | null;
     project_id?: number | null;
     notes?: ActivityNote[];
 }
 
-interface ProjectItem { id: number; name: string; key: string; }
+interface ProjectItem { id: number; name: string; key: string; client_id?: number | null; }
 
 interface ActivityNote {
     id: number;
@@ -105,6 +106,7 @@ export default function Calendar() {
         call_url: "",
         is_recurring: false,
         recurrence_pattern: "",
+        recurrence_end_date: "",
         project_id: "" as number | "",
     });
 
@@ -194,6 +196,7 @@ export default function Calendar() {
             call_url: "",
             is_recurring: false,
             recurrence_pattern: "",
+            recurrence_end_date: "",
             project_id: "",
         });
         setEntityType("account");
@@ -219,6 +222,7 @@ export default function Calendar() {
             call_url: event.call_url || "",
             is_recurring: event.is_recurring || false,
             recurrence_pattern: event.recurrence_pattern || "",
+            recurrence_end_date: event.recurrence_end_date || "",
             project_id: event.project_id || "",
         });
         setEntityType(event.lead_id ? "lead" : "account");
@@ -253,6 +257,7 @@ export default function Calendar() {
                 call_url: formData.related_to === 'Call' ? formData.call_url || null : null,
                 is_recurring: formData.related_to === 'Call' ? formData.is_recurring : false,
                 recurrence_pattern: formData.related_to === 'Call' && formData.is_recurring ? formData.recurrence_pattern || null : null,
+                recurrence_end_date: formData.related_to === 'Call' && formData.is_recurring && formData.recurrence_end_date ? formData.recurrence_end_date : null,
                 project_id: formData.related_to === 'Call' && formData.project_id ? Number(formData.project_id) : null,
             };
 
@@ -393,6 +398,7 @@ export default function Calendar() {
             call_url: event.call_url || "",
             is_recurring: event.is_recurring || false,
             recurrence_pattern: event.recurrence_pattern || "",
+            recurrence_end_date: event.recurrence_end_date || "",
             project_id: event.project_id || "",
         });
         if (event.lead_id) {
@@ -1390,16 +1396,43 @@ export default function Calendar() {
                                                 </select>
                                             </div>
                                         )}
+                                        {formData.is_recurring && (
+                                            <div>
+                                                <label className="block text-xs font-medium text-violet-800 mb-1">Repetir hasta</label>
+                                                <div className="flex flex-wrap gap-1.5 mb-2">
+                                                    {[1, 2, 3, 6].map(m => {
+                                                        const d = new Date(formData.start_date || Date.now());
+                                                        d.setMonth(d.getMonth() + m);
+                                                        const val = d.toISOString().split('T')[0];
+                                                        const isActive = formData.recurrence_end_date === val;
+                                                        return (
+                                                            <button key={m} type="button" onClick={() => setFormData({ ...formData, recurrence_end_date: val })}
+                                                                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${isActive ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'bg-white text-violet-700 border-violet-200 hover:bg-violet-50'}`}>
+                                                                {m} {m === 1 ? 'mes' : 'meses'}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <input type="date" value={formData.recurrence_end_date}
+                                                    onChange={(e) => setFormData({ ...formData, recurrence_end_date: e.target.value })}
+                                                    className="w-full px-3 py-2 text-sm bg-white border border-violet-200 rounded-md focus:ring-1 focus:ring-violet-500 outline-none"
+                                                    min={formData.start_date?.split('T')[0]} />
+                                            </div>
+                                        )}
                                         <div>
-                                            <label className="block text-xs font-medium text-violet-800 mb-1">Asociar a Proyecto (de un cliente)</label>
-                                            <select
-                                                value={formData.project_id}
-                                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value ? Number(e.target.value) : "" })}
-                                                className="w-full px-3 py-2 text-sm bg-white border border-violet-200 rounded-md focus:ring-1 focus:ring-violet-500 outline-none"
-                                            >
-                                                <option value="">Sin proyecto asociado</option>
-                                                {projects.map(p => <option key={p.id} value={p.id}>[{p.key}] {p.name}</option>)}
-                                            </select>
+                                            <label className="block text-xs font-medium text-violet-800 mb-1">Asociar a Proyecto del Cliente</label>
+                                            {formData.client_id ? (
+                                                <select
+                                                    value={formData.project_id}
+                                                    onChange={(e) => setFormData({ ...formData, project_id: e.target.value ? Number(e.target.value) : "" })}
+                                                    className="w-full px-3 py-2 text-sm bg-white border border-violet-200 rounded-md focus:ring-1 focus:ring-violet-500 outline-none"
+                                                >
+                                                    <option value="">Sin proyecto asociado</option>
+                                                    {projects.filter(p => p.client_id === Number(formData.client_id)).map(p => <option key={p.id} value={p.id}>[{p.key}] {p.name}</option>)}
+                                                </select>
+                                            ) : (
+                                                <p className="text-xs text-violet-500 italic py-2">Seleccioná una cuenta/cliente arriba para ver sus proyectos</p>
+                                            )}
                                         </div>
                                     </div>
                                 )}
