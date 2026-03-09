@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Banknote, Plus, Trash2, Search, X, FileText, CalendarDays, Settings2,
     ChevronRight, CheckCircle2, Clock, DollarSign, Users, Download, Eye,
-    ArrowLeft, Pencil, AlertTriangle, Check
+    ArrowLeft, Pencil, AlertTriangle, Check, Send, FileDown, BarChart3
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -25,12 +25,19 @@ interface Slip {
     total_no_remunerativo: number; total_deductions: number;
     net_salary: number; total_employer_cost: number;
     status: string; payment_date: string | null; notes: string | null;
+    signature_status: string; signature_date: string | null; sent_date: string | null;
     items?: SlipItem[];
 }
 interface SlipItem {
     id: number; concept_id: number | null; concept_code: string | null;
     concept_name: string; type: string; rate: number | null;
     base_amount: number | null; amount: number; sort_order: number;
+}
+interface SalaryStatus {
+    period_id: number; month: number; month_name: string; year: number;
+    status: string; slip_count: number; total_bruto: number;
+    total_neto: number; total_patronal: number;
+    signature_stats: { pending: number; sent: number; signed: number; rejected: number };
 }
 
 const MONTHS = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -42,6 +49,13 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> =
     paid: { label: 'Pagado', color: 'text-green-700', bg: 'bg-green-100' },
 };
 
+const SIG_MAP: Record<string, { label: string; color: string; bg: string }> = {
+    pending: { label: 'Pendiente', color: 'text-gray-600', bg: 'bg-gray-100' },
+    sent: { label: 'Enviado', color: 'text-blue-700', bg: 'bg-blue-100' },
+    signed: { label: 'Firmado', color: 'text-green-700', bg: 'bg-green-100' },
+    rejected: { label: 'Rechazado', color: 'text-red-700', bg: 'bg-red-100' },
+};
+
 const TYPE_LABELS: Record<string, string> = {
     remunerativo: 'Remunerativo', no_remunerativo: 'No Remunerativo',
     deduccion: 'Deducción', employer_cost: 'Costo Empleador',
@@ -50,7 +64,7 @@ const TYPE_LABELS: Record<string, string> = {
 const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 
 export default function Payroll() {
-    const [tab, setTab] = useState<'periods' | 'slip' | 'concepts'>('periods');
+    const [tab, setTab] = useState<'periods' | 'slip' | 'concepts' | 'status'>('periods');
     const [periods, setPeriods] = useState<Period[]>([]);
     const [concepts, setConcepts] = useState<Concept[]>([]);
     const [slips, setSlips] = useState<Slip[]>([]);
@@ -64,6 +78,7 @@ export default function Payroll() {
     const [editConcept, setEditConcept] = useState<Concept | null>(null);
     const [newMonth, setNewMonth] = useState(new Date().getMonth() + 1);
     const [newYear, setNewYear] = useState(new Date().getFullYear());
+    const [salaryStatus, setSalaryStatus] = useState<SalaryStatus[]>([]);
 
     // Concept form
     const [cForm, setCForm] = useState({ code: '', name: '', type: 'deduccion', category: 'otro', calc_mode: 'porcentaje', default_rate: 0, applies_to: 'employee', is_mandatory: false, sort_order: 0 });
@@ -97,7 +112,11 @@ export default function Payroll() {
         } catch (e) { console.error(e); }
     };
 
-    useEffect(() => { fetchPeriods(); fetchConcepts(); }, []);
+    const fetchSalaryStatus = async () => {
+        try { const { data } = await api.get('/payroll/salary-status'); setSalaryStatus(data); } catch (e) { console.error(e); }
+    };
+
+    useEffect(() => { fetchPeriods(); fetchConcepts(); fetchSalaryStatus(); }, []);
 
     // ─── Actions ──────────────────────────────────────────────────
     const createPeriod = async () => {
@@ -179,6 +198,30 @@ export default function Payroll() {
         setTab('periods');
     };
 
+    const sendRecibo = async (sid: number) => {
+        await api.post(`/payroll/slips/${sid}/send`);
+        if (selectedPeriod) fetchSlips(selectedPeriod.id);
+        fetchSalaryStatus();
+    };
+    const sendAllRecibos = async (pid: number) => {
+        if (!confirm('¿Enviar todos los recibos pendientes?')) return;
+        const { data } = await api.post(`/payroll/periods/${pid}/send-all`);
+        alert(`${data.sent} recibos enviados`);
+        if (selectedPeriod) fetchSlips(selectedPeriod.id);
+        fetchSalaryStatus();
+    };
+    const signRecibo = async (sid: number, action: string) => {
+        await api.put(`/payroll/slips/${sid}/sign`, { action });
+        if (selectedPeriod) fetchSlips(selectedPeriod.id);
+        fetchSalaryStatus();
+    };
+    const downloadReciboPdf = (sid: number) => {
+        window.open(`${api.defaults.baseURL}/payroll/slips/${sid}/pdf`, '_blank');
+    };
+    const downloadLibroDigital = (pid: number) => {
+        window.open(`${api.defaults.baseURL}/payroll/periods/${pid}/libro-sueldos-txt`, '_blank');
+    };
+
     // ─── Render ───────────────────────────────────────────────────
     return (
         <div className="space-y-6">
@@ -197,6 +240,10 @@ export default function Payroll() {
                     <button onClick={() => { setTab('periods'); setSelectedSlip(null); }}
                         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === 'periods' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
                         <CalendarDays size={14} className="inline mr-1" /> Períodos
+                    </button>
+                    <button onClick={() => { setTab('status'); setSelectedSlip(null); fetchSalaryStatus(); }}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === 'status' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
+                        <BarChart3 size={14} className="inline mr-1" /> Estado
                     </button>
                     <button onClick={() => { setTab('concepts'); setSelectedSlip(null); }}
                         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${tab === 'concepts' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
@@ -428,6 +475,10 @@ export default function Payroll() {
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${STATUS_MAP[selectedPeriod.status]?.bg} ${STATUS_MAP[selectedPeriod.status]?.color}`}>
                                     {STATUS_MAP[selectedPeriod.status]?.label}
                                 </span>
+                                <div className="flex gap-1 ml-auto">
+                                    <button onClick={() => sendAllRecibos(selectedPeriod.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"><Send size={10} /> Enviar Todos</button>
+                                    <button onClick={() => downloadLibroDigital(selectedPeriod.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold bg-violet-100 text-violet-700 rounded-lg hover:bg-violet-200"><FileDown size={10} /> Libro Digital</button>
+                                </div>
                             </div>
 
                             {slips.length === 0 ? (
@@ -461,7 +512,8 @@ export default function Payroll() {
                                                     <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Deducciones</th>
                                                     <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Neto</th>
                                                     <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Costo Emp.</th>
-                                                    <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Acción</th>
+                                                    <th className="text-center px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Firma</th>
+                                                    <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Acciones</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">
@@ -473,8 +525,18 @@ export default function Payroll() {
                                                         <td className="px-4 py-2.5 text-right text-red-600">{fmt(s.total_deductions)}</td>
                                                         <td className="px-4 py-2.5 text-right font-bold text-blue-700">{fmt(s.net_salary)}</td>
                                                         <td className="px-4 py-2.5 text-right text-amber-600">{fmt(s.total_employer_cost)}</td>
+                                                        <td className="px-4 py-2.5 text-center">
+                                                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${SIG_MAP[s.signature_status]?.bg || 'bg-gray-100'} ${SIG_MAP[s.signature_status]?.color || 'text-gray-600'}`}>
+                                                                {SIG_MAP[s.signature_status]?.label || 'Pendiente'}
+                                                            </span>
+                                                        </td>
                                                         <td className="px-4 py-2.5 text-right">
-                                                            <button className="text-emerald-600 hover:text-emerald-800"><Eye size={14} /></button>
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                {s.signature_status === 'pending' && <button onClick={(e) => { e.stopPropagation(); sendRecibo(s.id); }} className="p-1 text-blue-500 hover:text-blue-700" title="Enviar"><Send size={13} /></button>}
+                                                                {s.signature_status === 'sent' && <button onClick={(e) => { e.stopPropagation(); signRecibo(s.id, 'sign'); }} className="p-1 text-green-500 hover:text-green-700" title="Firmar"><Check size={13} /></button>}
+                                                                <button onClick={(e) => { e.stopPropagation(); downloadReciboPdf(s.id); }} className="p-1 text-gray-400 hover:text-gray-700" title="Descargar"><FileDown size={13} /></button>
+                                                                <button onClick={() => fetchSlipDetail(s.id)} className="text-emerald-600 hover:text-emerald-800"><Eye size={14} /></button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -501,6 +563,119 @@ export default function Payroll() {
                                     </div>
                                 </div>
                             )}
+                        </>
+                    )}
+                </div>
+            ) : tab === 'status' ? (
+                /* ─── SALARY STATUS TAB ─────────────────────── */
+                <div className="space-y-4">
+                    <h2 className="text-sm font-bold text-gray-700">Estado de Sueldos — {new Date().getFullYear()}</h2>
+                    {salaryStatus.length === 0 ? (
+                        <div className="bg-white rounded-xl border p-12 text-center text-gray-400">
+                            <BarChart3 size={40} className="mx-auto mb-3 text-gray-300" />
+                            <p className="font-medium">No hay períodos para este año</p>
+                        </div>
+                    ) : (
+                        <>
+                            {/* KPI Cards */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-4 rounded-xl text-white">
+                                    <p className="text-[10px] font-bold uppercase opacity-80">Total Bruto Anual</p>
+                                    <p className="text-xl font-black">{fmt(salaryStatus.reduce((s, p) => s + p.total_bruto, 0))}</p>
+                                </div>
+                                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-4 rounded-xl text-white">
+                                    <p className="text-[10px] font-bold uppercase opacity-80">Total Neto Anual</p>
+                                    <p className="text-xl font-black">{fmt(salaryStatus.reduce((s, p) => s + p.total_neto, 0))}</p>
+                                </div>
+                                <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-4 rounded-xl text-white">
+                                    <p className="text-[10px] font-bold uppercase opacity-80">Costo Patronal Anual</p>
+                                    <p className="text-xl font-black">{fmt(salaryStatus.reduce((s, p) => s + p.total_patronal, 0))}</p>
+                                </div>
+                                <div className="bg-gradient-to-br from-violet-500 to-purple-600 p-4 rounded-xl text-white">
+                                    <p className="text-[10px] font-bold uppercase opacity-80">Recibos Firmados</p>
+                                    <p className="text-xl font-black">{salaryStatus.reduce((s, p) => s + p.signature_stats.signed, 0)} / {salaryStatus.reduce((s, p) => s + p.slip_count, 0)}</p>
+                                </div>
+                            </div>
+                            {/* Monthly breakdown */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="px-5 py-3 border-b border-gray-100"><h3 className="font-bold text-gray-800 text-sm">Detalle Mensual</h3></div>
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="text-left px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Mes</th>
+                                                <th className="text-center px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Estado</th>
+                                                <th className="text-center px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Empleados</th>
+                                                <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Bruto</th>
+                                                <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Neto</th>
+                                                <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Patronal</th>
+                                                <th className="text-center px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Firmas</th>
+                                                <th className="text-right px-4 py-2.5 font-bold text-gray-600 text-xs uppercase">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {salaryStatus.map(p => {
+                                                const st = STATUS_MAP[p.status] || STATUS_MAP.draft;
+                                                const sig = p.signature_stats;
+                                                return (
+                                                    <tr key={p.period_id} className="hover:bg-gray-50">
+                                                        <td className="px-4 py-2.5 font-bold text-gray-900">{p.month_name}</td>
+                                                        <td className="px-4 py-2.5 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${st.bg} ${st.color}`}>{st.label}</span></td>
+                                                        <td className="px-4 py-2.5 text-center">{p.slip_count}</td>
+                                                        <td className="px-4 py-2.5 text-right">{fmt(p.total_bruto)}</td>
+                                                        <td className="px-4 py-2.5 text-right font-bold text-blue-700">{fmt(p.total_neto)}</td>
+                                                        <td className="px-4 py-2.5 text-right text-amber-600">{fmt(p.total_patronal)}</td>
+                                                        <td className="px-4 py-2.5 text-center">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                {sig.signed > 0 && <span className="px-1 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold rounded">✓{sig.signed}</span>}
+                                                                {sig.sent > 0 && <span className="px-1 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold rounded">📩{sig.sent}</span>}
+                                                                {sig.pending > 0 && <span className="px-1 py-0.5 bg-gray-100 text-gray-600 text-[9px] font-bold rounded">⏳{sig.pending}</span>}
+                                                                {sig.rejected > 0 && <span className="px-1 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded">✗{sig.rejected}</span>}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-2.5 text-right">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <button onClick={() => sendAllRecibos(p.period_id)} className="p-1 text-blue-500 hover:text-blue-700" title="Enviar Todos"><Send size={13} /></button>
+                                                                <button onClick={() => downloadLibroDigital(p.period_id)} className="p-1 text-violet-500 hover:text-violet-700" title="Libro Digital"><FileDown size={13} /></button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {/* Mobile cards */}
+                                <div className="md:hidden grid grid-cols-1 gap-3 p-4">
+                                    {salaryStatus.map(p => {
+                                        const st = STATUS_MAP[p.status] || STATUS_MAP.draft;
+                                        const sig = p.signature_stats;
+                                        return (
+                                            <div key={p.period_id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="font-bold text-gray-900">{p.month_name}</span>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${st.bg} ${st.color}`}>{st.label}</span>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2 mb-2">
+                                                    <div className="bg-green-50 p-2 rounded-lg text-center"><p className="text-[9px] text-green-600 font-bold">BRUTO</p><p className="text-xs font-bold text-green-700">{fmt(p.total_bruto)}</p></div>
+                                                    <div className="bg-blue-50 p-2 rounded-lg text-center"><p className="text-[9px] text-blue-600 font-bold">NETO</p><p className="text-xs font-bold text-blue-700">{fmt(p.total_neto)}</p></div>
+                                                    <div className="bg-amber-50 p-2 rounded-lg text-center"><p className="text-[9px] text-amber-600 font-bold">PATRON.</p><p className="text-xs font-bold text-amber-700">{fmt(p.total_patronal)}</p></div>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex gap-1">
+                                                        {sig.signed > 0 && <span className="px-1 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold rounded">✓{sig.signed}</span>}
+                                                        {sig.pending > 0 && <span className="px-1 py-0.5 bg-gray-100 text-gray-600 text-[9px] font-bold rounded">⏳{sig.pending}</span>}
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                        <button onClick={() => sendAllRecibos(p.period_id)} className="p-1.5 text-blue-500"><Send size={14} /></button>
+                                                        <button onClick={() => downloadLibroDigital(p.period_id)} className="p-1.5 text-violet-500"><FileDown size={14} /></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </>
                     )}
                 </div>
