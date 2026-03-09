@@ -36,16 +36,19 @@ function timeAgo(iso: string | null): string {
     return formatDate(iso);
 }
 
-const ALL_ROLES = [
-    { value: 'admin', label: 'Administrador', color: 'bg-purple-100 text-purple-800' },
-    { value: 'user', label: 'Usuario', color: 'bg-blue-100 text-blue-800' },
-    { value: 'empleado', label: 'Empleado', color: 'bg-teal-100 text-teal-800' },
-    { value: 'vendedor', label: 'Vendedor', color: 'bg-green-100 text-green-800' },
+const DEFAULT_ROLE_COLORS: Record<string, string> = {
+    admin: 'bg-purple-100 text-purple-800',
+    user: 'bg-blue-100 text-blue-800',
+    empleado: 'bg-teal-100 text-teal-800',
+    vendedor: 'bg-green-100 text-green-800',
+};
+const FALLBACK_COLORS = [
+    'bg-indigo-100 text-indigo-800', 'bg-pink-100 text-pink-800',
+    'bg-cyan-100 text-cyan-800', 'bg-amber-100 text-amber-800',
+    'bg-rose-100 text-rose-800', 'bg-emerald-100 text-emerald-800',
 ];
 
 const parseRoles = (role: string): string[] => role ? role.split(',').map(r => r.trim()).filter(Boolean) : ['user'];
-const roleBadgeColor = (r: string) => ALL_ROLES.find(ar => ar.value === r)?.color || 'bg-gray-100 text-gray-700';
-const roleLabel = (r: string) => ALL_ROLES.find(ar => ar.value === r)?.label || r;
 
 export default function Users() {
     const { t } = useTranslation();
@@ -62,10 +65,39 @@ export default function Users() {
         role: "user",
         commission_pct: 0,
     });
+    const [allRoles, setAllRoles] = useState<{ value: string; label: string; color: string }[]>([]);
+
+    const roleBadgeColor = (r: string) => allRoles.find(ar => ar.value === r)?.color || DEFAULT_ROLE_COLORS[r] || 'bg-gray-100 text-gray-700';
+    const roleLabel = (r: string) => allRoles.find(ar => ar.value === r)?.label || r;
 
     useEffect(() => {
         fetchUsers();
+        fetchRoles();
     }, []);
+
+    const fetchRoles = async () => {
+        try {
+            const { data } = await api.get('/role-configs/');
+            const fetched = (data || []).map((rc: any, i: number) => ({
+                value: rc.role_name,
+                label: rc.display_name || rc.role_name,
+                color: DEFAULT_ROLE_COLORS[rc.role_name] || FALLBACK_COLORS[i % FALLBACK_COLORS.length],
+            }));
+            // Ensure at least admin + user exist
+            const roleNames = fetched.map((r: any) => r.value);
+            if (!roleNames.includes('admin')) fetched.unshift({ value: 'admin', label: 'Administrador', color: DEFAULT_ROLE_COLORS.admin });
+            if (!roleNames.includes('user')) fetched.splice(1, 0, { value: 'user', label: 'Usuario', color: DEFAULT_ROLE_COLORS.user });
+            setAllRoles(fetched);
+        } catch {
+            // Fallback to defaults
+            setAllRoles([
+                { value: 'admin', label: 'Administrador', color: DEFAULT_ROLE_COLORS.admin },
+                { value: 'user', label: 'Usuario', color: DEFAULT_ROLE_COLORS.user },
+                { value: 'empleado', label: 'Empleado', color: DEFAULT_ROLE_COLORS.empleado },
+                { value: 'vendedor', label: 'Vendedor', color: DEFAULT_ROLE_COLORS.vendedor },
+            ]);
+        }
+    };
 
     const fetchUsers = async () => {
         try {
@@ -326,7 +358,7 @@ export default function Users() {
                             <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-4">
                                 <h4 className="text-xs font-semibold text-green-700 uppercase tracking-wide">🔑 Roles (múltiples)</h4>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {ALL_ROLES.map(r => {
+                                    {allRoles.map(r => {
                                         const currentRoles = parseRoles(formData.role);
                                         const isChecked = currentRoles.includes(r.value);
                                         return (
