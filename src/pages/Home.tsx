@@ -43,10 +43,59 @@ interface NewsItem {
 function getCatColor(c: string) { return CATEGORY_COLORS[c] || "bg-gray-100 text-gray-700"; }
 function fmtDate(d: string) { return new Date(d).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
 
+// ─── Templates ─────────────────────────────────────────────
+const NEWS_TEMPLATES = [
+    {
+        id: "comunicado",
+        name: "📢 Comunicado Oficial",
+        desc: "Anuncio formal de la empresa",
+        gradient: "from-indigo-500 to-blue-600",
+        category: "General",
+        priority: "normal",
+        titleTemplate: "Comunicado: ",
+        contentTemplate: "Estimado equipo,\n\nNos complace informar que [detalle del comunicado].\n\n[Desarrollo del mensaje]\n\nQuedamos a disposición ante cualquier consulta.\n\nAtentamente,\nDirección",
+    },
+    {
+        id: "actualizacion",
+        name: "🔄 Actualización de Sistema",
+        desc: "Cambios técnicos o de procesos",
+        gradient: "from-cyan-500 to-teal-600",
+        category: "Tecnología",
+        priority: "important",
+        titleTemplate: "Actualización: ",
+        contentTemplate: "📋 Resumen del cambio\n[Describir brevemente el cambio]\n\n🔧 Detalle técnico\n• [Punto 1]\n• [Punto 2]\n• [Punto 3]\n\n📅 Fecha efectiva\n[Fecha de implementación]\n\n⚠️ Impacto\n[Describir el impacto en los usuarios]",
+    },
+    {
+        id: "evento",
+        name: "🎉 Evento / Actividad",
+        desc: "Reuniones, capacitaciones, celebraciones",
+        gradient: "from-amber-500 to-orange-600",
+        category: "Comunicaciones",
+        priority: "normal",
+        titleTemplate: "Evento: ",
+        contentTemplate: "🎯 Evento\n[Nombre del evento]\n\n📅 Fecha y hora\n[Día y horario]\n\n📍 Lugar\n[Ubicación o link de videollamada]\n\n👥 Participantes\n[Quiénes deben asistir]\n\n📝 Agenda\n1. [Tema 1]\n2. [Tema 2]\n3. [Tema 3]\n\n¡Los esperamos!",
+    },
+    {
+        id: "alerta",
+        name: "🚨 Alerta Urgente",
+        desc: "Avisos críticos que requieren atención inmediata",
+        gradient: "from-red-500 to-rose-600",
+        category: "General",
+        priority: "urgent",
+        titleTemplate: "⚠️ ALERTA: ",
+        contentTemplate: "🚨 ALERTA IMPORTANTE\n\n[Describir la situación o problema]\n\n📌 Acciones requeridas\n• [Acción inmediata 1]\n• [Acción inmediata 2]\n\n📞 Contacto\n[A quién contactar para más información]\n\n⏰ Vigencia\n[Hasta cuándo aplica esta alerta]",
+    },
+];
+
 // ─── Editor Modal ──────────────────────────────────────────
-function NewsEditor({ article, onSave, onClose }: {
-    article: Partial<NewsItem> | null; onSave: (d: any) => void; onClose: () => void;
+function NewsEditor({ article, onSave, onClose, onImageUploaded }: {
+    article: Partial<NewsItem> | null;
+    onSave: (d: any) => void;
+    onClose: () => void;
+    onImageUploaded?: (newsId: number, file: File) => Promise<void>;
 }) {
+    const isNew = !article?.id;
+    const [step, setStep] = useState<"template" | "edit">(isNew ? "template" : "edit");
     const [form, setForm] = useState({
         title: article?.title || "",
         content: article?.content || "",
@@ -55,17 +104,115 @@ function NewsEditor({ article, onSave, onClose }: {
         status: article?.status || "draft",
         priority: article?.priority || "normal",
     });
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(
+        article?.image_url ? `${API_BASE}${article.image_url}` : null
+    );
+    const [dragging, setDragging] = useState(false);
 
+    const selectTemplate = (t: typeof NEWS_TEMPLATES[0]) => {
+        setForm({
+            ...form,
+            title: t.titleTemplate,
+            content: t.contentTemplate,
+            category: t.category,
+            priority: t.priority,
+        });
+        setStep("edit");
+    };
+
+    const handlePhotoPick = (file: File) => {
+        if (!file.type.startsWith("image/")) return;
+        setPhotoFile(file);
+        const url = URL.createObjectURL(file);
+        setPhotoPreview(url);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) handlePhotoPick(file);
+    };
+
+    const handleSaveWithPhoto = async () => {
+        onSave({ ...form, _photoFile: photoFile });
+    };
+
+    // ─── Template Selection ───
+    if (step === "template") {
+        return (
+            <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h2 className="text-lg font-black text-gray-900">Elegí una plantilla</h2>
+                        <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center"><X size={18} /></button>
+                    </div>
+                    <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {NEWS_TEMPLATES.map(t => (
+                            <button key={t.id} onClick={() => selectTemplate(t)}
+                                className="text-left rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all group">
+                                <div className={`bg-gradient-to-r ${t.gradient} p-4`}>
+                                    <h3 className="text-lg font-black text-white">{t.name}</h3>
+                                    <p className="text-white/70 text-xs mt-1">{t.desc}</p>
+                                </div>
+                                <div className="p-4">
+                                    <p className="text-[11px] text-gray-400 leading-relaxed whitespace-pre-wrap line-clamp-4">{t.contentTemplate}</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="px-6 py-3 bg-gray-50 rounded-b-2xl border-t border-gray-100 text-center">
+                        <button onClick={() => setStep("edit")}
+                            className="text-sm text-indigo-600 font-bold hover:underline">
+                            O empezar desde cero →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ─── Content Editor ───
     return (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-lg font-black text-gray-900">
-                        {article?.id ? "Editar Noticia" : "Nueva Noticia"}
-                    </h2>
+                    <div className="flex items-center gap-3">
+                        {isNew && <button onClick={() => setStep("template")} className="text-xs text-indigo-600 font-bold hover:underline">← Plantillas</button>}
+                        <h2 className="text-lg font-black text-gray-900">{isNew ? "Nueva Noticia" : "Editar Noticia"}</h2>
+                    </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center"><X size={18} /></button>
                 </div>
                 <div className="p-6 space-y-4">
+                    {/* Photo upload area */}
+                    <div
+                        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+                        onDragLeave={() => setDragging(false)}
+                        onDrop={handleDrop}
+                        className={`relative border-2 border-dashed rounded-xl transition-all cursor-pointer ${dragging ? 'border-indigo-400 bg-indigo-50' : photoPreview ? 'border-transparent' : 'border-gray-200 hover:border-indigo-300'}`}
+                        onClick={() => { const i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.onchange = (e: any) => handlePhotoPick(e.target.files[0]); i.click(); }}
+                    >
+                        {photoPreview ? (
+                            <div className="relative">
+                                <img src={photoPreview} alt="Preview" className="w-full h-48 object-cover rounded-xl" />
+                                <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all rounded-xl flex items-center justify-center">
+                                    <span className="text-white font-bold text-sm opacity-0 hover:opacity-100 transition-opacity">Cambiar foto</span>
+                                </div>
+                                <button onClick={(e) => { e.stopPropagation(); setPhotoFile(null); setPhotoPreview(null); }}
+                                    className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow hover:bg-white">
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="py-8 text-center">
+                                <Image size={32} className="mx-auto text-gray-300 mb-2" />
+                                <p className="text-sm text-gray-400">Arrastrá una imagen o hacé clic para adjuntar</p>
+                                <p className="text-[10px] text-gray-300 mt-1">JPG, PNG, WebP</p>
+                            </div>
+                        )}
+                    </div>
+
                     <div>
                         <label className="block text-xs text-gray-500 mb-1 font-medium">Título *</label>
                         <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
@@ -75,7 +222,7 @@ function NewsEditor({ article, onSave, onClose }: {
                     <div>
                         <label className="block text-xs text-gray-500 mb-1 font-medium">Contenido *</label>
                         <textarea value={form.content} onChange={e => setForm({ ...form, content: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none min-h-[150px] resize-y"
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none min-h-[180px] resize-y"
                             placeholder="Contenido de la noticia..." />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -123,7 +270,7 @@ function NewsEditor({ article, onSave, onClose }: {
                     </div>
                     <div className="flex gap-3">
                         <button onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">Cancelar</button>
-                        <button onClick={() => onSave(form)}
+                        <button onClick={handleSaveWithPhoto}
                             className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-500 hover:to-purple-500 flex items-center gap-2">
                             <Save size={14} /> {article?.id ? "Guardar" : "Crear"}
                         </button>
@@ -213,11 +360,23 @@ export default function Home() {
     useEffect(() => { fetchNews(activeCategory, activeStatus); }, [activeCategory, activeStatus]);
 
     const handleSave = async (formData: any) => {
+        const { _photoFile, ...data } = formData;
         try {
+            let newsId: number;
             if (editor?.article?.id) {
-                await api.put(`/news/${editor.article.id}`, formData);
+                await api.put(`/news/${editor.article.id}`, data);
+                newsId = editor.article.id;
             } else {
-                await api.post("/news/", formData);
+                const res = await api.post("/news/", data);
+                newsId = res.data.id;
+            }
+            // Upload photo if one was selected
+            if (_photoFile) {
+                const fd = new FormData();
+                fd.append("file", _photoFile);
+                await api.post(`/news/${newsId}/image`, fd, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
             }
             setEditor(null);
             fetchNews(activeCategory, activeStatus);
