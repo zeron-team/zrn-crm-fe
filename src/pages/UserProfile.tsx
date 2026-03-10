@@ -97,8 +97,9 @@ export default function UserProfile() {
             const res = await api.post("/users/me/avatar", fd);
             setProfile((p: any) => ({ ...p, avatar_url: res.data.avatar_url }));
             if (refreshUser) refreshUser();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
+            alert(err?.response?.data?.detail || "Error al subir la foto. Intentá de nuevo.");
         }
         setUploading(false);
     };
