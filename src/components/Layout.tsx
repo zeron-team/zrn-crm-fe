@@ -122,27 +122,28 @@ export default function Layout() {
 
             {/* Sidebar */}
             <aside className={`fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-                <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100">
-                    <div className="flex items-center min-w-0">
+                <div className="relative border-b border-gray-100">
+                    {/* Mobile close */}
+                    <button onClick={toggleMobileMenu} className="md:hidden absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10">
+                        <X size={20} />
+                    </button>
+                    <div className="flex flex-col items-center px-4 py-4 gap-2">
                         {companyInfo?.logo_url ? (
-                            <img src={companyInfo.logo_url} alt="Logo" className="w-8 h-8 rounded-lg shadow-md mr-3 shrink-0 object-contain bg-white" />
+                            <img src={companyInfo.logo_url} alt="Logo" className="w-20 h-14 object-contain" />
                         ) : (
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-md flex items-center justify-center mr-3 shrink-0">
-                                <div className="w-3 h-3 bg-white rounded-full"></div>
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-md flex items-center justify-center">
+                                <div className="w-4 h-4 bg-white rounded-full"></div>
                             </div>
                         )}
-                        <div className="min-w-0">
-                            <h1 className="text-sm font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 truncate leading-tight">
+                        <div className="text-center min-w-0 w-full">
+                            <h1 className="text-xs font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 truncate leading-tight">
                                 {companyInfo?.legal_name || companyInfo?.company_name || 'ZRN360°'}
                             </h1>
                             {companyInfo?.cuit && (
-                                <p className="text-[9px] text-gray-400 font-mono truncate">CUIT {companyInfo.cuit}</p>
+                                <p className="text-[9px] text-gray-400 font-mono">CUIT {companyInfo.cuit}</p>
                             )}
                         </div>
                     </div>
-                    <button onClick={toggleMobileMenu} className="md:hidden text-gray-500 hover:text-gray-700">
-                        <X size={24} />
-                    </button>
                 </div>
 
                 <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto scrollbar-thin">
