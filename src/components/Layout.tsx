@@ -33,7 +33,7 @@ interface SidebarSectionProps {
     defaultOpen?: boolean;
 }
 
-function SidebarSection({ title, icon, children, defaultOpen = false }: SidebarSectionProps) {
+function SidebarSection({ title, icon, children, defaultOpen = true }: SidebarSectionProps) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     return (
