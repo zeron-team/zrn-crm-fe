@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { Newspaper, Plus, Pin, Calendar, User, Tag, Trash2, Edit3, X, Save, Image, Search } from "lucide-react";
+import {
+    Newspaper, Plus, Pin, Calendar, User, Tag, Trash2, Edit3, X, Save,
+    Image, Search, AlertTriangle, AlertCircle, Eye, Archive, FileEdit,
+    Send, ChevronDown
+} from "lucide-react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -15,41 +19,41 @@ const CATEGORY_COLORS: Record<string, string> = {
     "Logística": "bg-teal-100 text-teal-700",
     "Comunicaciones": "bg-pink-100 text-pink-700",
 };
-
 const ALL_CATEGORIES = Object.keys(CATEGORY_COLORS);
 
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+    draft: { label: "Borrador", color: "bg-gray-100 text-gray-600", icon: <FileEdit size={12} /> },
+    published: { label: "Publicado", color: "bg-green-100 text-green-700", icon: <Eye size={12} /> },
+    archived: { label: "Archivado", color: "bg-slate-100 text-slate-600", icon: <Archive size={12} /> },
+};
+
+const PRIORITY_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; border: string }> = {
+    normal: { label: "Normal", color: "bg-gray-50 text-gray-500", icon: null, border: "border-gray-100" },
+    important: { label: "Importante", color: "bg-amber-100 text-amber-700", icon: <AlertTriangle size={12} />, border: "border-amber-200" },
+    urgent: { label: "Urgente", color: "bg-red-100 text-red-700", icon: <AlertCircle size={12} />, border: "border-red-200" },
+};
+
 interface NewsItem {
-    id: number;
-    title: string;
-    content: string;
-    category: string;
-    image_url: string | null;
-    is_pinned: boolean;
-    author_id: number;
-    author?: { id: number; full_name?: string; email: string; avatar_url?: string };
-    created_at: string;
-    updated_at: string;
+    id: number; title: string; content: string; category: string;
+    image_url: string | null; is_pinned: boolean; status: string; priority: string;
+    author_id: number; author?: { id: number; full_name?: string; email: string; avatar_url?: string };
+    created_at: string; updated_at: string;
 }
 
-function getCategoryColor(cat: string) {
-    return CATEGORY_COLORS[cat] || "bg-gray-100 text-gray-700";
-}
-
-function formatDate(dt: string) {
-    return new Date(dt).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-}
+function getCatColor(c: string) { return CATEGORY_COLORS[c] || "bg-gray-100 text-gray-700"; }
+function fmtDate(d: string) { return new Date(d).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
 
 // ─── Editor Modal ──────────────────────────────────────────
 function NewsEditor({ article, onSave, onClose }: {
-    article: Partial<NewsItem> | null;
-    onSave: (data: any) => void;
-    onClose: () => void;
+    article: Partial<NewsItem> | null; onSave: (d: any) => void; onClose: () => void;
 }) {
     const [form, setForm] = useState({
         title: article?.title || "",
         content: article?.content || "",
         category: article?.category || "General",
         is_pinned: article?.is_pinned || false,
+        status: article?.status || "draft",
+        priority: article?.priority || "normal",
     });
 
     return (
@@ -59,51 +63,125 @@ function NewsEditor({ article, onSave, onClose }: {
                     <h2 className="text-lg font-black text-gray-900">
                         {article?.id ? "Editar Noticia" : "Nueva Noticia"}
                     </h2>
-                    <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
-                        <X size={18} />
-                    </button>
+                    <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center"><X size={18} /></button>
                 </div>
                 <div className="p-6 space-y-4">
                     <div>
-                        <label className="block text-xs text-gray-500 mb-1 font-medium">Título</label>
+                        <label className="block text-xs text-gray-500 mb-1 font-medium">Título *</label>
                         <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                             placeholder="Título de la noticia..." />
                     </div>
                     <div>
-                        <label className="block text-xs text-gray-500 mb-1 font-medium">Contenido</label>
+                        <label className="block text-xs text-gray-500 mb-1 font-medium">Contenido *</label>
                         <textarea value={form.content} onChange={e => setForm({ ...form, content: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 min-h-[150px] resize-none"
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none min-h-[150px] resize-y"
                             placeholder="Contenido de la noticia..." />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs text-gray-500 mb-1 font-medium">Categoría</label>
                             <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
                                 {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-1 font-medium">Prioridad</label>
+                            <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option value="normal">🔵 Normal</option>
+                                <option value="important">🟡 Importante</option>
+                                <option value="urgent">🔴 Urgente</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-1 font-medium">Estado</label>
+                            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option value="draft">📝 Borrador</option>
+                                <option value="published">✅ Publicado</option>
+                                <option value="archived">📦 Archivado</option>
                             </select>
                         </div>
                         <div className="flex items-end pb-1">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" checked={form.is_pinned} onChange={e => setForm({ ...form, is_pinned: e.target.checked })}
                                     className="w-4 h-4 rounded border-gray-300 text-indigo-600" />
-                                <span className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                                    <Pin size={14} /> Fijar como destacada
-                                </span>
+                                <span className="text-sm text-gray-700 font-medium flex items-center gap-1"><Pin size={14} /> Fijar como destacada</span>
                             </label>
                         </div>
                     </div>
                 </div>
-                <div className="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-100 flex justify-end gap-3">
-                    <button onClick={onClose}
-                        className="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
-                        Cancelar
-                    </button>
-                    <button onClick={() => onSave(form)}
-                        className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-500 hover:to-purple-500 flex items-center gap-2">
-                        <Save size={14} /> {article?.id ? "Guardar" : "Publicar"}
-                    </button>
+                <div className="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-100 flex flex-col sm:flex-row justify-between gap-3">
+                    <div className="text-xs text-gray-400">
+                        {form.status === "draft" && "💡 Los borradores solo son visibles para gestores de noticias"}
+                        {form.status === "published" && "✅ Esta noticia será visible para todos los usuarios"}
+                        {form.status === "archived" && "📦 Las archivadas no se muestran en el feed"}
+                    </div>
+                    <div className="flex gap-3">
+                        <button onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">Cancelar</button>
+                        <button onClick={() => onSave(form)}
+                            className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-500 hover:to-purple-500 flex items-center gap-2">
+                            <Save size={14} /> {article?.id ? "Guardar" : "Crear"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── News Card ─────────────────────────────────────────────
+function NewsCard({ n, canManage, large, onEdit, onDelete, onUploadImage }: {
+    n: NewsItem; canManage: boolean; large?: boolean;
+    onEdit: () => void; onDelete: () => void; onUploadImage: (id: number) => void;
+}) {
+    const pri = PRIORITY_CONFIG[n.priority] || PRIORITY_CONFIG.normal;
+    const st = STATUS_CONFIG[n.status] || STATUS_CONFIG.draft;
+
+    return (
+        <div className={`bg-white rounded-2xl ${n.is_pinned ? 'border-2 border-indigo-100 shadow-lg' : `border ${pri.border} shadow-sm`} overflow-hidden hover:shadow-xl transition-all group`}>
+            {n.image_url && (
+                <div className={`${large ? 'h-48' : 'h-36'} overflow-hidden`}>
+                    <img src={`${API_BASE}${n.image_url}`} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                </div>
+            )}
+            <div className={large ? "p-6" : "p-5"}>
+                {/* Badges row */}
+                <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getCatColor(n.category)}`}>{n.category}</span>
+                        {n.is_pinned && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 flex items-center gap-1"><Pin size={10} /> Fijada</span>}
+                        {n.priority !== "normal" && (
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${pri.color}`}>
+                                {pri.icon} {pri.label}
+                            </span>
+                        )}
+                        {canManage && n.status !== "published" && (
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${st.color}`}>
+                                {st.icon} {st.label}
+                            </span>
+                        )}
+                    </div>
+                    {canManage && (
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => onUploadImage(n.id)} title="Subir imagen"
+                                className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400"><Image size={14} /></button>
+                            <button onClick={onEdit} title="Editar"
+                                className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400"><Edit3 size={14} /></button>
+                            <button onClick={onDelete} title="Eliminar"
+                                className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-red-400"><Trash2 size={14} /></button>
+                        </div>
+                    )}
+                </div>
+                <h3 className={`${large ? 'text-xl' : 'text-base'} font-black text-gray-900 mb-2 ${large ? '' : 'line-clamp-2'}`}>{n.title}</h3>
+                <p className={`text-sm text-gray-600 leading-relaxed whitespace-pre-wrap ${large ? '' : 'line-clamp-3 text-xs'}`}>{n.content}</p>
+                <div className="flex items-center gap-3 mt-3 text-[11px] text-gray-400">
+                    <span className="flex items-center gap-1"><User size={11} /> {n.author?.full_name || n.author?.email || "Admin"}</span>
+                    <span className="flex items-center gap-1"><Calendar size={11} /> {n.created_at ? fmtDate(n.created_at) : ""}</span>
                 </div>
             </div>
         </div>
@@ -116,21 +194,23 @@ export default function Home() {
     const [news, setNews] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const [activeStatus, setActiveStatus] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [editor, setEditor] = useState<{ article: Partial<NewsItem> | null } | null>(null);
-    const [imageUploadId, setImageUploadId] = useState<number | null>(null);
+    const [canManage, setCanManage] = useState(false);
 
-    const isAdmin = (user?.role || "").includes("admin") || (user?.role || "").includes("superadmin");
+    useEffect(() => {
+        api.get("/news/can-manage").then(r => setCanManage(r.data.can_manage)).catch(() => { });
+    }, []);
 
-    const fetchNews = (cat?: string | null) => {
-        const params = cat ? `?category=${encodeURIComponent(cat)}` : "";
-        api.get(`/news/${params}`).then(r => {
-            setNews(r.data);
-            setLoading(false);
-        }).catch(() => setLoading(false));
+    const fetchNews = (cat?: string | null, status?: string | null) => {
+        let params = "?";
+        if (cat) params += `category=${encodeURIComponent(cat)}&`;
+        if (status) params += `status=${encodeURIComponent(status)}&`;
+        api.get(`/news/${params}`).then(r => { setNews(r.data); setLoading(false); }).catch(() => setLoading(false));
     };
 
-    useEffect(() => { fetchNews(activeCategory); }, [activeCategory]);
+    useEffect(() => { fetchNews(activeCategory, activeStatus); }, [activeCategory, activeStatus]);
 
     const handleSave = async (formData: any) => {
         try {
@@ -140,7 +220,7 @@ export default function Home() {
                 await api.post("/news/", formData);
             }
             setEditor(null);
-            fetchNews(activeCategory);
+            fetchNews(activeCategory, activeStatus);
         } catch (err: any) {
             alert(err?.response?.data?.detail || "Error al guardar");
         }
@@ -149,21 +229,36 @@ export default function Home() {
     const handleDelete = async (id: number) => {
         if (!confirm("¿Eliminar esta noticia?")) return;
         await api.delete(`/news/${id}`);
-        fetchNews(activeCategory);
+        fetchNews(activeCategory, activeStatus);
     };
 
-    const handleImageUpload = async (newsId: number, file: File) => {
-        const fd = new FormData();
-        fd.append("file", file);
-        try {
-            await api.post(`/news/${newsId}/image`, fd, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-            fetchNews(activeCategory);
-        } catch (err: any) {
-            alert(err?.response?.data?.detail || "Error al subir imagen");
-        }
-        setImageUploadId(null);
+    const triggerImageUpload = (newsId: number) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.onchange = async (e: any) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const fd = new FormData();
+            fd.append("file", file);
+            try {
+                await api.post(`/news/${newsId}/image`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+                fetchNews(activeCategory, activeStatus);
+            } catch (err: any) {
+                alert(err?.response?.data?.detail || "Error al subir imagen");
+            }
+        };
+        input.click();
+    };
+
+    const quickPublish = async (id: number) => {
+        await api.put(`/news/${id}`, { status: "published" });
+        fetchNews(activeCategory, activeStatus);
+    };
+
+    const quickArchive = async (id: number) => {
+        await api.put(`/news/${id}`, { status: "archived" });
+        fetchNews(activeCategory, activeStatus);
     };
 
     const pinnedNews = news.filter(n => n.is_pinned);
@@ -171,9 +266,12 @@ export default function Home() {
     const filteredRegular = searchQuery
         ? regularNews.filter(n => n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.content.toLowerCase().includes(searchQuery.toLowerCase()))
         : regularNews;
-
-    // Gather unique categories from actual data
     const usedCategories = [...new Set(news.map(n => n.category))].sort();
+
+    // Stats for manager
+    const draftCount = news.filter(n => n.status === "draft").length;
+    const publishedCount = news.filter(n => n.status === "published").length;
+    const archivedCount = news.filter(n => n.status === "archived").length;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -187,7 +285,7 @@ export default function Home() {
                             </h1>
                             <p className="text-white/70 text-sm mt-1">Novedades y comunicados de la empresa</p>
                         </div>
-                        {isAdmin && (
+                        {canManage && (
                             <button onClick={() => setEditor({ article: null })}
                                 className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white font-bold px-5 py-2.5 rounded-xl hover:bg-white/30 transition-all border border-white/20">
                                 <Plus size={18} /> Nueva Noticia
@@ -195,8 +293,9 @@ export default function Home() {
                         )}
                     </div>
 
-                    {/* Category pills */}
-                    <div className="flex flex-wrap gap-2 mt-5">
+                    {/* Filter row */}
+                    <div className="flex flex-wrap items-center gap-2 mt-5">
+                        {/* Category pills */}
                         <button onClick={() => setActiveCategory(null)}
                             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${!activeCategory ? 'bg-white text-indigo-700 shadow-lg' : 'bg-white/15 text-white hover:bg-white/25'}`}>
                             Todas
@@ -207,6 +306,22 @@ export default function Home() {
                                 {cat}
                             </button>
                         ))}
+
+                        {/* Status filter for managers */}
+                        {canManage && (
+                            <>
+                                <span className="text-white/30 mx-1">|</span>
+                                {(["draft", "published", "archived"] as const).map(s => (
+                                    <button key={s} onClick={() => setActiveStatus(activeStatus === s ? null : s)}
+                                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1 ${activeStatus === s ? 'bg-white text-gray-800 shadow-lg' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
+                                        {STATUS_CONFIG[s].icon} {STATUS_CONFIG[s].label}
+                                        <span className="ml-0.5 opacity-70">
+                                            ({s === "draft" ? draftCount : s === "published" ? publishedCount : archivedCount})
+                                        </span>
+                                    </button>
+                                ))}
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -216,7 +331,7 @@ export default function Home() {
                 <div className="relative mb-6">
                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm outline-none"
                         placeholder="Buscar noticias..." />
                 </div>
 
@@ -231,7 +346,7 @@ export default function Home() {
                         <Newspaper size={48} className="mx-auto text-gray-300 mb-4" />
                         <h3 className="text-lg font-bold text-gray-500">No hay noticias aún</h3>
                         <p className="text-sm text-gray-400 mt-1">
-                            {isAdmin ? "Creá la primera noticia con el botón de arriba" : "Pronto habrá novedades"}
+                            {canManage ? "Creá la primera noticia con el botón de arriba" : "Pronto habrá novedades"}
                         </p>
                     </div>
                 )}
@@ -239,50 +354,13 @@ export default function Home() {
                 {/* Pinned News */}
                 {pinnedNews.length > 0 && (
                     <div className="mb-8">
-                        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <Pin size={14} /> Destacadas
-                        </h2>
+                        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2"><Pin size={14} /> Destacadas</h2>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                             {pinnedNews.map(n => (
-                                <div key={n.id} className="bg-white rounded-2xl border-2 border-indigo-100 shadow-lg overflow-hidden hover:shadow-xl transition-all group">
-                                    {n.image_url && (
-                                        <div className="h-48 overflow-hidden">
-                                            <img src={`${API_BASE}${n.image_url}`} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        </div>
-                                    )}
-                                    <div className="p-6">
-                                        <div className="flex items-start justify-between gap-3 mb-3">
-                                            <div className="flex items-center gap-2">
-                                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getCategoryColor(n.category)}`}>
-                                                    {n.category}
-                                                </span>
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 flex items-center gap-1">
-                                                    <Pin size={10} /> Fijada
-                                                </span>
-                                            </div>
-                                            {isAdmin && (
-                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = (e: any) => handleImageUpload(n.id, e.target.files[0]); input.click(); }}
-                                                        className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400"><Image size={14} /></button>
-                                                    <button onClick={() => setEditor({ article: n })}
-                                                        className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400"><Edit3 size={14} /></button>
-                                                    <button onClick={() => handleDelete(n.id)}
-                                                        className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-red-400"><Trash2 size={14} /></button>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <h3 className="text-xl font-black text-gray-900 mb-2">{n.title}</h3>
-                                        <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{n.content}</p>
-                                        <div className="flex items-center gap-3 mt-4 text-xs text-gray-400">
-                                            <span className="flex items-center gap-1">
-                                                <User size={12} /> {n.author?.full_name || n.author?.email || "Admin"}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Calendar size={12} /> {n.created_at ? formatDate(n.created_at) : ""}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                                <NewsCard key={n.id} n={n} canManage={canManage} large
+                                    onEdit={() => setEditor({ article: n })}
+                                    onDelete={() => handleDelete(n.id)}
+                                    onUploadImage={triggerImageUpload} />
                             ))}
                         </div>
                     </div>
@@ -292,53 +370,20 @@ export default function Home() {
                 {filteredRegular.length > 0 && (
                     <div>
                         {pinnedNews.length > 0 && (
-                            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                <Newspaper size={14} /> Últimas Noticias
-                            </h2>
+                            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2"><Newspaper size={14} /> Últimas Noticias</h2>
                         )}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {filteredRegular.map(n => (
-                                <div key={n.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:border-gray-200 transition-all group">
-                                    {n.image_url && (
-                                        <div className="h-36 overflow-hidden">
-                                            <img src={`${API_BASE}${n.image_url}`} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        </div>
-                                    )}
-                                    <div className="p-5">
-                                        <div className="flex items-start justify-between gap-2 mb-2">
-                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getCategoryColor(n.category)}`}>
-                                                {n.category}
-                                            </span>
-                                            {isAdmin && (
-                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = (e: any) => handleImageUpload(n.id, e.target.files[0]); input.click(); }}
-                                                        className="w-6 h-6 rounded hover:bg-gray-100 flex items-center justify-center text-gray-400"><Image size={12} /></button>
-                                                    <button onClick={() => setEditor({ article: n })}
-                                                        className="w-6 h-6 rounded hover:bg-gray-100 flex items-center justify-center text-gray-400"><Edit3 size={12} /></button>
-                                                    <button onClick={() => handleDelete(n.id)}
-                                                        className="w-6 h-6 rounded hover:bg-red-50 flex items-center justify-center text-red-400"><Trash2 size={12} /></button>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2">{n.title}</h3>
-                                        <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 whitespace-pre-wrap">{n.content}</p>
-                                        <div className="flex items-center gap-3 mt-3 text-[11px] text-gray-400">
-                                            <span className="flex items-center gap-1">
-                                                <User size={11} /> {n.author?.full_name || n.author?.email || "Admin"}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Calendar size={11} /> {n.created_at ? formatDate(n.created_at) : ""}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                                <NewsCard key={n.id} n={n} canManage={canManage}
+                                    onEdit={() => setEditor({ article: n })}
+                                    onDelete={() => handleDelete(n.id)}
+                                    onUploadImage={triggerImageUpload} />
                             ))}
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Editor Modal */}
             {editor && <NewsEditor article={editor.article} onSave={handleSave} onClose={() => setEditor(null)} />}
         </div>
     );
