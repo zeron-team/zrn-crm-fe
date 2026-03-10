@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
-import { CheckCircle2, XCircle, RefreshCw, Activity, Server, Database, Shield, LayoutDashboard, Save, BarChart3, Table2, Gauge, Building2, UserPlus, FileText, Package, Users, DollarSign, Calendar as CalendarIcon, Contact, FolderTree, ShieldCheck, TrendingUp } from "lucide-react";
+import { CheckCircle2, XCircle, X, RefreshCw, Activity, Server, Database, Shield, LayoutDashboard, Save, BarChart3, Table2, Gauge, Building2, UserPlus, FileText, Package, Users, DollarSign, Calendar as CalendarIcon, Contact, FolderTree, ShieldCheck, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import ArcaConfigPanel from "../components/ArcaConfigPanel";
@@ -664,10 +664,10 @@ export default function Settings() {
                                                         {routesModal.dependencies_status.map((dep: any) => (
                                                             <div key={dep.slug}
                                                                 className={`flex items-center justify-between px-3 py-2 rounded-lg border ${dep.found && dep.enabled
-                                                                        ? 'bg-emerald-50 border-emerald-200'
-                                                                        : dep.found
-                                                                            ? 'bg-amber-50 border-amber-200'
-                                                                            : 'bg-red-50 border-red-200'
+                                                                    ? 'bg-emerald-50 border-emerald-200'
+                                                                    : dep.found
+                                                                        ? 'bg-amber-50 border-amber-200'
+                                                                        : 'bg-red-50 border-red-200'
                                                                     }`}>
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-sm">{dep.found && dep.enabled ? '✅' : dep.found ? '⚠️' : '❌'}</span>
@@ -677,8 +677,8 @@ export default function Settings() {
                                                                     </div>
                                                                 </div>
                                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${dep.found && dep.enabled ? 'bg-emerald-100 text-emerald-700' :
-                                                                        dep.found ? 'bg-amber-100 text-amber-700' :
-                                                                            'bg-red-100 text-red-700'
+                                                                    dep.found ? 'bg-amber-100 text-amber-700' :
+                                                                        'bg-red-100 text-red-700'
                                                                     }`}>
                                                                     {dep.found && dep.enabled ? 'OK' : dep.found ? 'Desactivado' : 'No encontrado'}
                                                                 </span>
