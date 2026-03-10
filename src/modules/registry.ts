@@ -125,7 +125,7 @@ const crmModule: ModuleManifest = {
     sidebarSection: {
         title: "CRM",
         icon: "Briefcase",
-        defaultOpen: true,
+        defaultOpen: false,
         items: [
             { to: "/leads", label: "Leads", icon: "UserPlus" },
             { to: "/quotes", label: "Presupuestos", icon: "FileText" },
@@ -161,7 +161,7 @@ const projectsModule: ModuleManifest = {
     sidebarSection: {
         title: "Proyectos",
         icon: "FolderKanban",
-        defaultOpen: true,
+        defaultOpen: false,
         items: [
             { to: "/projects", label: "Mis Proyectos", icon: "FolderKanban" },
             { to: "/wiki", label: "Wiki", icon: "BookOpen" },
@@ -186,7 +186,7 @@ const hrModule: ModuleManifest = {
     sidebarSection: {
         title: "RRHH",
         icon: "UserCheck",
-        defaultOpen: true,
+        defaultOpen: false,
         items: [
             { to: "/employees", label: "Empleados", icon: "Users" },
             { to: "/time-tracking", label: "Fichadas", icon: "Clock" },
@@ -214,7 +214,7 @@ const communicationsModule: ModuleManifest = {
     sidebarSection: {
         title: "Comunicaciones",
         icon: "Mail",
-        defaultOpen: true,
+        defaultOpen: false,
         items: [
             { to: "/email", label: "Email", icon: "Mail" },
             { to: "/whatsapp", label: "WhatsApp", icon: "MessageCircle" },
@@ -238,7 +238,7 @@ const erpModule: ModuleManifest = {
     sidebarSection: {
         title: "ERP",
         icon: "Receipt",
-        defaultOpen: true,
+        defaultOpen: false,
         items: [
             { to: "/billing", label: "Facturación", icon: "FileText" },
             { to: "/service-purchases", label: "Compras de Servicios", icon: "CreditCard" },
@@ -276,7 +276,7 @@ const accountingModule: ModuleManifest = {
     sidebarSection: {
         title: "Contabilidad",
         icon: "Calculator",
-        defaultOpen: true,
+        defaultOpen: false,
         items: [
             { to: "/accounting", label: "Contabilidad", icon: "Calculator" },
         ],
