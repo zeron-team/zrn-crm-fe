@@ -169,6 +169,7 @@ export default function Settings() {
     const [togglingModule, setTogglingModule] = useState<string | null>(null);
     const [expandedModule, setExpandedModule] = useState<string | null>(null);
     const [moduleInfo, setModuleInfo] = useState<Record<string, any>>({});
+    const [routesModal, setRoutesModal] = useState<any | null>(null);
 
     // Dashboard config state
     const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
@@ -517,12 +518,19 @@ export default function Settings() {
                                                         {mod.license_status === "active" ? "✅ Licenciado" :
                                                             mod.license_status === "expired" ? "❌ Expirado" : "🔑 Trial"}
                                                     </span>
-                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold">
-                                                        {mod.routes_count} rutas
-                                                    </span>
-                                                    {mod.dependencies?.length > 0 && (
+                                                    <button
+                                                        onClick={() => setRoutesModal(mod)}
+                                                        className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold hover:bg-indigo-100 hover:text-indigo-700 transition-colors cursor-pointer"
+                                                    >
+                                                        🔗 {mod.routes_count} rutas
+                                                    </button>
+                                                    {mod.dependencies_status?.length > 0 && (
                                                         <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold">
-                                                            Deps: {mod.dependencies.join(", ")}
+                                                            Deps: {mod.dependencies_status.map((d: any) => (
+                                                                <span key={d.slug} className={`mr-1 ${d.found && d.enabled ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                                    {d.found && d.enabled ? '✅' : '❌'} {d.name}
+                                                                </span>
+                                                            ))}
                                                         </span>
                                                     )}
                                                 </div>
@@ -623,6 +631,131 @@ export default function Settings() {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Routes Detail Modal */}
+                            {routesModal && (
+                                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setRoutesModal(null)}>
+                                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                                        {/* Modal Header */}
+                                        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-5 text-white flex-shrink-0">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center text-2xl font-black backdrop-blur-sm">
+                                                        {routesModal.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <h2 className="text-lg font-black">{routesModal.name}</h2>
+                                                        <p className="text-indigo-100 text-xs">v{routesModal.version} · {routesModal.routes_count} endpoints · {routesModal.slug}</p>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => setRoutesModal(null)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                                                    <X size={20} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Modal Body */}
+                                        <div className="overflow-y-auto flex-1 p-5 space-y-4">
+                                            {/* Dependencies */}
+                                            <div>
+                                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">📦 Dependencias</h3>
+                                                {routesModal.dependencies_status?.length > 0 ? (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        {routesModal.dependencies_status.map((dep: any) => (
+                                                            <div key={dep.slug}
+                                                                className={`flex items-center justify-between px-3 py-2 rounded-lg border ${dep.found && dep.enabled
+                                                                        ? 'bg-emerald-50 border-emerald-200'
+                                                                        : dep.found
+                                                                            ? 'bg-amber-50 border-amber-200'
+                                                                            : 'bg-red-50 border-red-200'
+                                                                    }`}>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm">{dep.found && dep.enabled ? '✅' : dep.found ? '⚠️' : '❌'}</span>
+                                                                    <div>
+                                                                        <span className="text-sm font-bold text-gray-800">{dep.name}</span>
+                                                                        <span className="text-[10px] text-gray-400 ml-1 font-mono">({dep.slug})</span>
+                                                                    </div>
+                                                                </div>
+                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${dep.found && dep.enabled ? 'bg-emerald-100 text-emerald-700' :
+                                                                        dep.found ? 'bg-amber-100 text-amber-700' :
+                                                                            'bg-red-100 text-red-700'
+                                                                    }`}>
+                                                                    {dep.found && dep.enabled ? 'OK' : dep.found ? 'Desactivado' : 'No encontrado'}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-gray-400 italic">Sin dependencias (módulo independiente)</p>
+                                                )}
+                                            </div>
+
+                                            {/* Routes */}
+                                            <div>
+                                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">🔗 Rutas API ({routesModal.routes_count} endpoints)</h3>
+                                                {routesModal.routes_detail?.map((group: any, gi: number) => (
+                                                    <div key={gi} className="mb-3">
+                                                        {group.tags?.length > 0 && (
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                {group.tags.map((tag: string) => (
+                                                                    <span key={tag} className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold uppercase">
+                                                                        {tag}
+                                                                    </span>
+                                                                ))}
+                                                                {group.prefix && (
+                                                                    <span className="text-[10px] text-gray-400 font-mono">prefix: {group.prefix}</span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        <div className="border border-gray-100 rounded-xl overflow-hidden">
+                                                            {group.endpoints?.map((ep: any, ei: number) => (
+                                                                <div key={ei} className={`flex items-center gap-3 px-3 py-2 text-sm ${ei > 0 ? 'border-t border-gray-50' : ''} hover:bg-gray-50 transition-colors`}>
+                                                                    <div className="flex gap-1 flex-shrink-0">
+                                                                        {ep.methods?.map((method: string) => {
+                                                                            const colors: Record<string, string> = {
+                                                                                GET: 'bg-emerald-100 text-emerald-700',
+                                                                                POST: 'bg-blue-100 text-blue-700',
+                                                                                PUT: 'bg-amber-100 text-amber-700',
+                                                                                PATCH: 'bg-orange-100 text-orange-700',
+                                                                                DELETE: 'bg-red-100 text-red-700',
+                                                                            };
+                                                                            return (
+                                                                                <span key={method} className={`px-1.5 py-0.5 rounded text-[9px] font-black ${colors[method] || 'bg-gray-100 text-gray-600'}`}>
+                                                                                    {method}
+                                                                                </span>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                    <span className="font-mono text-xs text-gray-700 truncate">{ep.path || '/'}</span>
+                                                                    {ep.name && (
+                                                                        <span className="text-[10px] text-gray-400 truncate ml-auto">{ep.name}</span>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Modal Footer */}
+                                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`w-2 h-2 rounded-full ${routesModal.enabled ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                                                    <span className="text-xs text-gray-500">
+                                                        {routesModal.enabled ? 'Módulo activo' : 'Módulo desactivado'}
+                                                    </span>
+                                                </div>
+                                                <button onClick={() => setRoutesModal(null)}
+                                                    className="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-900 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
+                                                    Cerrar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
