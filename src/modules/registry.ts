@@ -45,6 +45,7 @@ const Dashboard = lazy(() => import("../pages/Dashboard"));
 const DashboardHub = lazy(() => import("../pages/DashboardHub"));
 const Notes = lazy(() => import("../pages/Notes"));
 const Calendar = lazy(() => import("../pages/Calendar"));
+const UserProfile = lazy(() => import("../pages/UserProfile"));
 const Leads = lazy(() => import("../pages/Leads"));
 const LeadProfile = lazy(() => import("../pages/LeadProfile"));
 const Quotes = lazy(() => import("../pages/Quotes"));
@@ -110,6 +111,7 @@ const coreModule: ModuleManifest = {
         { path: "dashboards", component: DashboardHub },
         { path: "notes", component: Notes },
         { path: "calendar", component: Calendar },
+        { path: "profile", component: UserProfile },
     ],
 };
 

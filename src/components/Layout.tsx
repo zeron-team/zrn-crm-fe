@@ -198,11 +198,21 @@ export default function Layout() {
                 {/* User footer */}
                 <div className="p-3 border-t border-gray-100 bg-gray-50/50">
                     <div className="flex items-center gap-3 px-2">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                            {(user?.full_name || user?.email || 'U').charAt(0).toUpperCase()}
+                        <div
+                            className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden shadow-sm cursor-pointer hover:ring-2 hover:ring-indigo-400 transition-all"
+                            onClick={() => navigate('/profile')}
+                            title="Mi Perfil"
+                        >
+                            {user?.avatar_url ? (
+                                <img src={`${(import.meta as any).env?.VITE_API_URL?.replace('/api/v1', '') || ''}${user.avatar_url}`} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+                                    {(user?.full_name || user?.email || 'U').charAt(0).toUpperCase()}
+                                </div>
+                            )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-gray-800 truncate">{user?.full_name || 'Usuario'}</p>
+                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate('/profile')}>
+                            <p className="text-xs font-semibold text-gray-800 truncate hover:text-indigo-600 transition-colors">{user?.full_name || 'Usuario'}</p>
                             <p className="text-[10px] text-gray-400 truncate">{user?.email || ''}</p>
                         </div>
                         <button
