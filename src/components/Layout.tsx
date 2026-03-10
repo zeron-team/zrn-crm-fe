@@ -69,6 +69,7 @@ export default function Layout() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [allowedPages, setAllowedPages] = useState<string[]>([]);
     const [permLoaded, setPermLoaded] = useState(false);
+    const [companyInfo, setCompanyInfo] = useState<{ company_name?: string; legal_name?: string; cuit?: string; logo_url?: string } | null>(null);
 
     // Fetch user permissions
     useEffect(() => {
@@ -84,6 +85,13 @@ export default function Layout() {
         };
         fetchPerms();
     }, [user?.id]);
+
+    // Fetch company settings for header
+    useEffect(() => {
+        api.get('/company-settings/').then(r => {
+            if (r.data) setCompanyInfo(r.data);
+        }).catch(() => { });
+    }, []);
 
     const isAdmin = (user?.role || '').split(',').map(r => r.trim()).includes('admin');
     const canAccess = (path: string) => isAdmin || !permLoaded || allowedPages.includes(path);
@@ -115,11 +123,18 @@ export default function Layout() {
             {/* Sidebar */}
             <aside className={`fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
                 <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100">
-                    <div className="flex items-center">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-md flex items-center justify-center mr-3">
+                    <div className="flex items-center min-w-0">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg shadow-md flex items-center justify-center mr-3 shrink-0">
                             <div className="w-3 h-3 bg-white rounded-full"></div>
                         </div>
-                        <h1 className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">ZRN360°</h1>
+                        <div className="min-w-0">
+                            <h1 className="text-sm font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 truncate leading-tight">
+                                {companyInfo?.legal_name || companyInfo?.company_name || 'ZRN360°'}
+                            </h1>
+                            {companyInfo?.cuit && (
+                                <p className="text-[9px] text-gray-400 font-mono truncate">CUIT {companyInfo.cuit}</p>
+                            )}
+                        </div>
                     </div>
                     <button onClick={toggleMobileMenu} className="md:hidden text-gray-500 hover:text-gray-700">
                         <X size={24} />
