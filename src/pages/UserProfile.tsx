@@ -94,7 +94,9 @@ export default function UserProfile() {
         const fd = new FormData();
         fd.append("file", file);
         try {
-            const res = await api.post("/profile/avatar", fd);
+            const res = await api.post("/profile/avatar", fd, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
             setProfile((p: any) => ({ ...p, avatar_url: res.data.avatar_url }));
             if (refreshUser) refreshUser();
         } catch (err: any) {
