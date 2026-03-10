@@ -43,7 +43,7 @@ export default function UserProfile() {
     });
 
     useEffect(() => {
-        api.get("/users/me/profile").then(r => {
+        api.get("/profile").then(r => {
             setProfile(r.data);
             setForm({
                 full_name: r.data.full_name || "",
@@ -76,7 +76,7 @@ export default function UserProfile() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await api.put("/users/me/profile", form);
+            const res = await api.put("/profile", form);
             setProfile(res.data);
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
@@ -94,18 +94,19 @@ export default function UserProfile() {
         const fd = new FormData();
         fd.append("file", file);
         try {
-            const res = await api.post("/users/me/avatar", fd);
+            const res = await api.post("/profile/avatar", fd);
             setProfile((p: any) => ({ ...p, avatar_url: res.data.avatar_url }));
             if (refreshUser) refreshUser();
         } catch (err: any) {
             console.error(err);
-            alert(err?.response?.data?.detail || "Error al subir la foto. Intentá de nuevo.");
+            const detail = err?.response?.data?.detail;
+            alert(typeof detail === 'string' ? detail : JSON.stringify(detail) || "Error al subir la foto. Intentá de nuevo.");
         }
         setUploading(false);
     };
 
     const handleDeleteAvatar = async () => {
-        await api.delete("/users/me/avatar");
+        await api.delete("/profile/avatar");
         setProfile((p: any) => ({ ...p, avatar_url: null }));
         if (refreshUser) refreshUser();
     };
