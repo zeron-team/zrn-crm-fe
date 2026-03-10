@@ -43,7 +43,7 @@ export default function UserProfile() {
     });
 
     useEffect(() => {
-        api.get("/profile").then(r => {
+        api.get("/profile/").then(r => {
             setProfile(r.data);
             setForm({
                 full_name: r.data.full_name || "",
@@ -76,7 +76,7 @@ export default function UserProfile() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await api.put("/profile", form);
+            const res = await api.put("/profile/", form);
             setProfile(res.data);
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
