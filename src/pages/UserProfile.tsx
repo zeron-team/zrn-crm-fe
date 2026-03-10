@@ -5,6 +5,26 @@ import { Camera, Save, User, Phone, MapPin, Heart, AlertTriangle, FileText, Tras
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace("/api/v1", "") || "";
 
+// ─── Stable sub-component (defined OUTSIDE to avoid re-mount on parent re-render) ───
+function InputField({ label, name, value, onChange, type = "text", placeholder = "", icon }: {
+    label: string; name: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    type?: string; placeholder?: string; icon?: React.ReactNode;
+}) {
+    return (
+        <div>
+            <label className="block text-xs text-gray-500 mb-1 font-medium">{label}</label>
+            <div className="relative">
+                {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300">{icon}</span>}
+                <input
+                    type={type} name={name} value={value}
+                    onChange={onChange} placeholder={placeholder}
+                    className={`w-full ${icon ? 'pl-10' : 'pl-3'} pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white transition-all`}
+                />
+            </div>
+        </div>
+    );
+}
+
 export default function UserProfile() {
     const { user, refreshUser } = useAuth();
     const fileRef = useRef<HTMLInputElement>(null);
@@ -97,20 +117,6 @@ export default function UserProfile() {
 
     const avatarUrl = profile?.avatar_url ? `${API_BASE}${profile.avatar_url}` : null;
 
-    const InputField = ({ label, name, type = "text", placeholder = "", icon }: any) => (
-        <div>
-            <label className="block text-xs text-gray-500 mb-1 font-medium">{label}</label>
-            <div className="relative">
-                {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300">{icon}</span>}
-                <input
-                    type={type} name={name} value={(form as any)[name]}
-                    onChange={handleChange} placeholder={placeholder}
-                    className={`w-full ${icon ? 'pl-10' : 'pl-3'} pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white transition-all`}
-                />
-            </div>
-        </div>
-    );
-
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             {/* Header */}
@@ -176,11 +182,11 @@ export default function UserProfile() {
                     </div>
                     <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="sm:col-span-2">
-                            <InputField label="Nombre Completo" name="full_name" placeholder="Juan Pérez" />
+                            <InputField label="Nombre Completo" name="full_name" value={form.full_name} onChange={handleChange} placeholder="Juan Pérez" />
                         </div>
-                        <InputField label="DNI" name="dni" placeholder="12.345.678" />
-                        <InputField label="CUIL" name="cuil" placeholder="20-12345678-9" />
-                        <InputField label="Fecha de Nacimiento" name="birth_date" type="date" />
+                        <InputField label="DNI" name="dni" value={form.dni} onChange={handleChange} placeholder="12.345.678" />
+                        <InputField label="CUIL" name="cuil" value={form.cuil} onChange={handleChange} placeholder="20-12345678-9" />
+                        <InputField label="Fecha de Nacimiento" name="birth_date" value={form.birth_date} onChange={handleChange} type="date" />
                         <div>
                             <label className="block text-xs text-gray-500 mb-1 font-medium">Género</label>
                             <select name="gender" value={form.gender} onChange={handleChange}
@@ -192,7 +198,7 @@ export default function UserProfile() {
                                 <option value="Otro">Otro</option>
                             </select>
                         </div>
-                        <InputField label="Nacionalidad" name="nationality" placeholder="Argentina" />
+                        <InputField label="Nacionalidad" name="nationality" value={form.nationality} onChange={handleChange} placeholder="Argentina" />
                         <div>
                             <label className="block text-xs text-gray-500 mb-1 font-medium">Estado Civil</label>
                             <select name="marital_status" value={form.marital_status} onChange={handleChange}
@@ -216,8 +222,8 @@ export default function UserProfile() {
                         </h2>
                     </div>
                     <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <InputField label="Teléfono Fijo" name="phone" placeholder="+54 11 1234-5678" />
-                        <InputField label="Celular" name="mobile" placeholder="+54 9 11 1234-5678" />
+                        <InputField label="Teléfono Fijo" name="phone" value={form.phone} onChange={handleChange} placeholder="+54 11 1234-5678" />
+                        <InputField label="Celular" name="mobile" value={form.mobile} onChange={handleChange} placeholder="+54 9 11 1234-5678" />
                         <div className="sm:col-span-2">
                             <label className="block text-xs text-gray-500 mb-1 font-medium">Email</label>
                             <input type="email" value={profile?.email || ""} disabled
@@ -236,12 +242,12 @@ export default function UserProfile() {
                     </div>
                     <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="sm:col-span-2">
-                            <InputField label="Dirección" name="address" placeholder="Av. Corrientes 1234, Piso 5" />
+                            <InputField label="Dirección" name="address" value={form.address} onChange={handleChange} placeholder="Av. Corrientes 1234, Piso 5" />
                         </div>
-                        <InputField label="Ciudad" name="city" placeholder="Buenos Aires" />
-                        <InputField label="Provincia" name="state" placeholder="CABA" />
-                        <InputField label="Código Postal" name="zip_code" placeholder="C1043" />
-                        <InputField label="País" name="country" placeholder="Argentina" />
+                        <InputField label="Ciudad" name="city" value={form.city} onChange={handleChange} placeholder="Buenos Aires" />
+                        <InputField label="Provincia" name="state" value={form.state} onChange={handleChange} placeholder="CABA" />
+                        <InputField label="Código Postal" name="zip_code" value={form.zip_code} onChange={handleChange} placeholder="C1043" />
+                        <InputField label="País" name="country" value={form.country} onChange={handleChange} placeholder="Argentina" />
                     </div>
                 </div>
 
@@ -253,8 +259,8 @@ export default function UserProfile() {
                         </h2>
                     </div>
                     <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <InputField label="Contacto de Emergencia" name="emergency_contact" placeholder="María López" />
-                        <InputField label="Teléfono de Emergencia" name="emergency_phone" placeholder="+54 9 11 5555-1234" />
+                        <InputField label="Contacto de Emergencia" name="emergency_contact" value={form.emergency_contact} onChange={handleChange} placeholder="María López" />
+                        <InputField label="Teléfono de Emergencia" name="emergency_phone" value={form.emergency_phone} onChange={handleChange} placeholder="+54 9 11 5555-1234" />
                         <div>
                             <label className="block text-xs text-gray-500 mb-1 font-medium">Grupo Sanguíneo</label>
                             <select name="blood_type" value={form.blood_type} onChange={handleChange}
