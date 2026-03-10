@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../api/client";
 import { Plus, Pencil, Trash2, Clock, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext";
 
 interface User {
     id: number;
@@ -52,6 +53,8 @@ const parseRoles = (role: string): string[] => role ? role.split(',').map(r => r
 
 export default function Users() {
     const { t } = useTranslation();
+    const { user: currentUser } = useAuth();
+    const isSuperAdmin = (currentUser?.role || '').split(',').map(r => r.trim()).includes('superadmin');
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -358,7 +361,7 @@ export default function Users() {
                             <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-4">
                                 <h4 className="text-xs font-semibold text-green-700 uppercase tracking-wide">🔑 Roles (múltiples)</h4>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {allRoles.map(r => {
+                                    {allRoles.filter(r => isSuperAdmin || r.value !== 'superadmin').map(r => {
                                         const currentRoles = parseRoles(formData.role);
                                         const isChecked = currentRoles.includes(r.value);
                                         return (

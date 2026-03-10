@@ -93,7 +93,8 @@ export default function Layout() {
         }).catch(() => { });
     }, []);
 
-    const isAdmin = (user?.role || '').split(',').map(r => r.trim()).includes('admin');
+    const userRoles = (user?.role || '').split(',').map(r => r.trim());
+    const isAdmin = userRoles.includes('admin') || userRoles.includes('superadmin');
     const canAccess = (path: string) => isAdmin || !permLoaded || allowedPages.includes(path);
 
     const handleLogout = () => {

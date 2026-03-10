@@ -153,6 +153,7 @@ export default function Settings() {
     const { t } = useTranslation();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState("dashboard");
+    const isSuperAdmin = (user?.role || '').split(',').map((r: string) => r.trim()).includes('superadmin');
     const [isChecking, setIsChecking] = useState(false);
     const [systemData, setSystemData] = useState<any>(null);
     const [lastChecked, setLastChecked] = useState<Date | null>(null);
@@ -339,13 +340,15 @@ export default function Settings() {
                         <Activity size={16} />
                         <span>Integraciones</span>
                     </button>
-                    <button
-                        className={`flex-1 min-w-[140px] py-4 text-sm font-medium transition-colors flex items-center justify-center space-x-2 ${activeTab === "modules" ? "text-purple-600 border-b-2 border-purple-600" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}`}
-                        onClick={() => setActiveTab("modules")}
-                    >
-                        <Server size={16} />
-                        <span>Módulos</span>
-                    </button>
+                    {isSuperAdmin && (
+                        <button
+                            className={`flex-1 min-w-[140px] py-4 text-sm font-medium transition-colors flex items-center justify-center space-x-2 ${activeTab === "modules" ? "text-purple-600 border-b-2 border-purple-600" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}`}
+                            onClick={() => setActiveTab("modules")}
+                        >
+                            <Server size={16} />
+                            <span>Módulos</span>
+                        </button>
+                    )}
                 </div>
 
                 <div className="p-6 cursor-default">
