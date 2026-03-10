@@ -4,11 +4,12 @@ import {
     Calendar, Ticket, FolderKanban, BookOpen, Users, Clock, Banknote, Mail, MessageCircle,
     CreditCard, ShoppingCart, Warehouse, Building, LineChart, Package, FolderTree, Settings,
     Shield, Briefcase, UserCheck, Receipt, ArrowRight, Sparkles, Zap, ChevronRight,
-    TrendingUp, Globe, Bot, BrainCircuit, MessageSquareText
+    TrendingUp, Globe, Bot, BrainCircuit, MessageSquareText, Calculator, ClipboardList,
+    FilePenLine, UserCog, Landmark, BadgeCheck
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const VERSION = "5.0.0";
+const VERSION = "6.1.0";
 
 interface ModuleCard {
     title: string;
@@ -16,7 +17,7 @@ interface ModuleCard {
     icon: React.ReactNode;
     color: string;
     bgGradient: string;
-    items: { label: string; path: string; icon: React.ReactNode }[];
+    items: { label: string; path: string; icon: React.ReactNode; isNew?: boolean }[];
 }
 
 const MODULES: ModuleCard[] = [
@@ -51,25 +52,28 @@ const MODULES: ModuleCard[] = [
     },
     {
         title: "Proyectos",
-        description: "Gestión de proyectos con tableros Kanban interactivos, seguimiento de tareas, asignación de recursos y documentación centralizada en la Wiki.",
+        description: "Gestión de proyectos con tableros Kanban/Scrum, seguimiento de tareas, asignación de recursos, control de acceso por miembros con roles (Dueño/Admin/Editor/Viewer) y documentación centralizada en la Wiki.",
         icon: <FolderKanban size={24} />,
         color: "text-purple-600",
         bgGradient: "from-purple-500 to-violet-600",
         items: [
-            { label: "Mis Proyectos (Kanban)", path: "/projects", icon: <FolderKanban size={14} /> },
+            { label: "Mis Proyectos (Kanban/Scrum)", path: "/projects", icon: <FolderKanban size={14} /> },
+            { label: "Gestión de Equipo y Roles", path: "/projects", icon: <UserCog size={14} />, isNew: true },
             { label: "Wiki / Documentación", path: "/wiki", icon: <BookOpen size={14} /> },
         ],
     },
     {
         title: "RRHH",
-        description: "Módulo completo de recursos humanos: legajos digitales, control de fichadas con reloj en tiempo real, liquidación de sueldos con cálculos automáticos según ley argentina.",
+        description: "Módulo completo de recursos humanos: legajos digitales online, control de fichadas con reloj en tiempo real, liquidación de sueldos con cálculos automáticos según legislación argentina, novedades por empleado, documentos digitales y firma electrónica.",
         icon: <UserCheck size={24} />,
         color: "text-teal-600",
         bgGradient: "from-teal-500 to-cyan-600",
         items: [
-            { label: "Empleados / Legajos", path: "/employees", icon: <Users size={14} /> },
+            { label: "Empleados / Legajos Digitales", path: "/employees", icon: <Users size={14} /> },
             { label: "Fichadas / Control Horario", path: "/time-tracking", icon: <Clock size={14} /> },
             { label: "Liquidación de Sueldos", path: "/payroll", icon: <Banknote size={14} /> },
+            { label: "Novedades por Empleado", path: "/employees", icon: <ClipboardList size={14} />, isNew: true },
+            { label: "Documentos Digitales y Firma", path: "/employees", icon: <FilePenLine size={14} />, isNew: true },
         ],
     },
     {
@@ -84,8 +88,8 @@ const MODULES: ModuleCard[] = [
         ],
     },
     {
-        title: "ERP / Contabilidad",
-        description: "Sistema contable completo con facturación electrónica ARCA/AFIP, remitos, órdenes de compra y pago, gestión de inventario multialmacén y tipo de cambio USD/ARS.",
+        title: "ERP / Facturación",
+        description: "Facturación electrónica ARCA/AFIP con emisión de comprobantes A, B y C, remitos, órdenes de compra y pago, gestión de inventario multialmacén, tipo de cambio USD/ARS y compras de servicios.",
         icon: <Receipt size={24} />,
         color: "text-amber-600",
         bgGradient: "from-amber-500 to-orange-600",
@@ -101,6 +105,18 @@ const MODULES: ModuleCard[] = [
         ],
     },
     {
+        title: "Contabilidad",
+        description: "Módulo contable completo con períodos mensuales, asientos contables por categoría (ingresos, egresos, impuestos, cargas sociales, retenciones, percepciones), obligaciones fiscales con vencimientos y dashboard con resumen mensual integrado con facturación ARCA.",
+        icon: <Calculator size={24} />,
+        color: "text-rose-600",
+        bgGradient: "from-rose-500 to-red-600",
+        items: [
+            { label: "Períodos y Liquidaciones", path: "/accounting", icon: <Calculator size={14} />, isNew: true },
+            { label: "Obligaciones Fiscales", path: "/accounting", icon: <Landmark size={14} />, isNew: true },
+            { label: "Dashboard Contable", path: "/accounting", icon: <BarChart3 size={14} />, isNew: true },
+        ],
+    },
+    {
         title: "Catálogo",
         description: "Administración del catálogo de productos, servicios y mano de obra. Organización jerárquica con Familias, Categorías y Subcategorías para una gestión eficiente.",
         icon: <Package size={24} />,
@@ -113,26 +129,32 @@ const MODULES: ModuleCard[] = [
     },
     {
         title: "Sistema",
-        description: "Configuración global del sistema: gestión de usuarios, roles y permisos granulares por módulo, y parámetros de la plataforma.",
+        description: "Configuración global: gestión de usuarios, roles y permisos granulares por módulo, configuración de empresa (razón social, CUIT, logo, moneda, huso horario), auditoría del sistema y parámetros de la plataforma.",
         icon: <Settings size={24} />,
         color: "text-gray-600",
         bgGradient: "from-gray-500 to-gray-700",
         items: [
             { label: "Usuarios", path: "/users", icon: <Users size={14} /> },
             { label: "Roles y Permisos", path: "/role-permissions", icon: <Shield size={14} /> },
-            { label: "Configuración", path: "/settings", icon: <Settings size={14} /> },
+            { label: "Configuración General", path: "/settings", icon: <Settings size={14} /> },
+            { label: "Logo, Razón Social y CUIT", path: "/settings", icon: <BadgeCheck size={14} />, isNew: true },
         ],
     },
 ];
 
 const HIGHLIGHTS = [
-    { icon: <BrainCircuit size={20} />, title: "🤖 ZeRoN IA — NUEVO", desc: "Asistente inteligente con IA integrada (Google Gemini). Consultá clientes, facturas, leads, tickets, inventario y más directamente desde el chat. La IA conoce tu negocio.", isNew: true },
+    { icon: <BrainCircuit size={20} />, title: "🤖 ZeRoN IA", desc: "Asistente inteligente con IA integrada (Google Gemini). Consultá clientes, facturas, leads, tickets, inventario y más directamente desde el chat.", isNew: false },
+    { icon: <Calculator size={20} />, title: "📊 Contabilidad — NUEVO", desc: "Módulo contable completo: períodos mensuales, asientos por categoría, obligaciones fiscales con vencimientos, dashboard integrado con facturación ARCA/AFIP.", isNew: true },
+    { icon: <UserCog size={20} />, title: "👥 Equipo en Proyectos — NUEVO", desc: "Control de acceso por proyecto con roles: Dueño, Admin, Editor, Viewer. Los usuarios solo ven proyectos donde están asignados.", isNew: true },
+    { icon: <BadgeCheck size={20} />, title: "🏢 Identidad de Empresa — NUEVO", desc: "Configuración de razón social, nombre de fantasía, CUIT, logo, dirección, moneda por defecto y huso horario. Se refleja en el sidebar y facturación.", isNew: true },
+    { icon: <ClipboardList size={20} />, title: "📋 Novedades RRHH — NUEVO", desc: "Sistema de novedades por empleado (horas extra, ausencias, bonos, descuentos) que se integran automáticamente con la liquidación de sueldos.", isNew: true },
+    { icon: <FilePenLine size={20} />, title: "📄 Documentos Digitales — NUEVO", desc: "Envío de recibos de sueldo en formato digital. Legajos, liquidaciones y acuerdos salariales digitalizados con firma electrónica.", isNew: true },
     { icon: <Zap size={20} />, title: "Facturación ARCA", desc: "Integración directa con AFIP/ARCA para emisión de comprobantes electrónicos A, B y C con validación en tiempo real." },
     { icon: <TrendingUp size={20} />, title: "Business Intelligence", desc: "8 dashboards analíticos: Ventas, Compras, Inventario, Productos, Proveedores, CRM, Cashflow y RRHH con KPIs en tiempo real." },
     { icon: <Globe size={20} />, title: "Bilingüe ES/EN", desc: "Interfaz completamente traducida al español e inglés con cambio dinámico de idioma." },
-    { icon: <UserCheck size={20} />, title: "RRHH Completo", desc: "Legajos digitales, control de fichadas, liquidación de sueldos automática según legislación argentina vigente." },
-    { icon: <Sparkles size={20} />, title: "Diseño Premium", desc: "Interfaz moderna, responsive y profesional con animaciones fluidas, dark mode parcial y experiencia de usuario optimizada." },
-    { icon: <Shield size={20} />, title: "Roles y Permisos", desc: "Control granular de acceso por usuario y módulo. Cada rol puede tener permisos personalizados a nivel de página." },
+    { icon: <UserCheck size={20} />, title: "RRHH Completo", desc: "Legajos digitales online, control de fichadas, liquidación de sueldos automática según legislación argentina, convenios preconfigurados." },
+    { icon: <Sparkles size={20} />, title: "Diseño Premium", desc: "Interfaz moderna, responsive y profesional con animaciones fluidas, empresa branding integrado y experiencia de usuario optimizada." },
+    { icon: <Shield size={20} />, title: "Roles y Permisos", desc: "Control granular de acceso por usuario, módulo y proyecto. Cada rol puede tener permisos personalizados a nivel de página." },
 ];
 
 export default function Home() {
@@ -153,7 +175,7 @@ export default function Home() {
                         <div className="flex-1">
                             <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 rounded-full px-4 py-1.5 mb-6">
                                 <Sparkles size={14} className="text-emerald-400" />
-                                <span className="text-emerald-300 text-xs font-bold uppercase tracking-wider">Nueva Versión</span>
+                                <span className="text-emerald-300 text-xs font-bold uppercase tracking-wider">Versión {VERSION}</span>
                             </div>
 
                             <h1 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
@@ -161,7 +183,7 @@ export default function Home() {
                             </h1>
 
                             <p className="text-lg text-blue-100/80 max-w-xl mb-8 leading-relaxed">
-                                Plataforma integral de gestión empresarial 360°. CRM, ERP, RRHH, Facturación Electrónica ARCA, Business Intelligence y más — todo en un solo lugar.
+                                Plataforma integral de gestión empresarial 360°. CRM, ERP, Contabilidad, RRHH, Facturación Electrónica ARCA, Proyectos con control de acceso, Business Intelligence e IA — todo en un solo lugar.
                             </p>
 
                             <div className="flex flex-wrap gap-3">
@@ -220,7 +242,7 @@ export default function Home() {
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
                                     </span>
-                                    <span className="text-xs font-bold text-white/90 uppercase tracking-wider">Nuevo en v5.0.0</span>
+                                    <span className="text-xs font-bold text-white/90 uppercase tracking-wider">Potenciado por IA</span>
                                 </div>
                                 <h3 className="text-2xl lg:text-3xl font-black text-white mb-2">
                                     Presentamos <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-amber-200">ZeRoN IA</span>
@@ -251,16 +273,33 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* Highlights */}
-            <div className="px-6 py-12">
-                <h2 className="text-center text-2xl font-black text-gray-900 mb-2">Características de esta versión</h2>
+            {/* What's New in 6.1.0 */}
+            <div className="px-6 py-8">
+                <div className="max-w-5xl mx-auto">
+                    <h2 className="text-center text-2xl font-black text-gray-900 mb-2">🚀 Novedades en v{VERSION}</h2>
+                    <p className="text-center text-gray-500 mb-6 text-sm">Todo lo nuevo en esta versión</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {HIGHLIGHTS.filter(h => h.isNew).map((h) => (
+                            <div key={h.title} className="bg-white rounded-xl border border-purple-200 ring-2 ring-purple-100 hover:border-purple-300 p-5 hover:shadow-lg transition-all duration-300 group">
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors bg-gradient-to-br from-purple-100 to-violet-100 text-purple-600 group-hover:from-purple-200 group-hover:to-violet-200">
+                                    {h.icon}
+                                </div>
+                                <h3 className="font-bold text-gray-900 text-sm mb-1">{h.title}</h3>
+                                <p className="text-xs text-gray-500 leading-relaxed">{h.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* All Highlights */}
+            <div className="px-6 py-8">
+                <h2 className="text-center text-2xl font-black text-gray-900 mb-2">Características de la Plataforma</h2>
                 <p className="text-center text-gray-500 mb-8 text-sm">Todo lo que necesitás para gestionar tu empresa de forma profesional</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {HIGHLIGHTS.map((h) => (
-                        <div key={h.title} className={`bg-white rounded-xl border p-5 hover:shadow-lg transition-all duration-300 group ${(h as any).isNew ? 'border-purple-200 ring-2 ring-purple-100 hover:border-purple-300' : 'border-gray-100 hover:border-blue-100'
-                            }`}>
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors ${(h as any).isNew ? 'bg-gradient-to-br from-purple-100 to-violet-100 text-purple-600 group-hover:from-purple-200 group-hover:to-violet-200' : 'bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 group-hover:from-blue-100 group-hover:to-indigo-100'
-                                }`}>
+                    {HIGHLIGHTS.filter(h => !h.isNew).map((h) => (
+                        <div key={h.title} className="bg-white rounded-xl border border-gray-100 hover:border-blue-100 p-5 hover:shadow-lg transition-all duration-300 group">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 group-hover:from-blue-100 group-hover:to-indigo-100">
                                 {h.icon}
                             </div>
                             <h3 className="font-bold text-gray-900 text-sm mb-1">{h.title}</h3>
@@ -302,11 +341,14 @@ export default function Home() {
                             <div className="px-5 pb-5 flex-1">
                                 <div className="mt-3 space-y-1">
                                     {mod.items.map((item) => (
-                                        <button key={item.path}
+                                        <button key={item.label}
                                             onClick={() => navigate(item.path)}
                                             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-gray-50 transition-colors group/item">
                                             <span className={`${mod.color} opacity-60 group-hover/item:opacity-100 transition-opacity`}>{item.icon}</span>
                                             <span className="text-sm text-gray-700 group-hover/item:text-gray-900 font-medium flex-1">{item.label}</span>
+                                            {item.isNew && (
+                                                <span className="text-[9px] font-bold bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full uppercase">Nuevo</span>
+                                            )}
                                             <ChevronRight size={14} className="text-gray-300 group-hover/item:text-gray-500 transition-colors" />
                                         </button>
                                     ))}
