@@ -10,6 +10,7 @@ import {
 import SidebarItem from "./SidebarItem";
 import NotificationBar from "./NotificationBar";
 import HelpManual from "./HelpManual";
+import WelcomeModal from "./WelcomeModal";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import HeaderClock from "./HeaderClock";
@@ -271,6 +272,7 @@ export default function Layout() {
                 </main>
             </div>
             <AiChatWidget />
+            <WelcomeModal />
         </div>
     );
 }
