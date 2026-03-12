@@ -6,7 +6,7 @@ import {
     ChevronDown, ChevronRight, Layers, GitBranch, BarChart3, ListTree, Milestone,
     Paperclip, Upload, Trash2, Square, SquareCheckBig, Pencil,
     LayoutDashboard, StickyNote, BookMarked, Timer, Target, TrendingUp, Shield,
-    Lock, Globe, UserPlus, Pin, GripVertical, UserCircle
+    Lock, Globe, UserPlus, Pin, GripVertical, UserCircle, ArrowRightCircle
 } from 'lucide-react';
 import api from '../api/client';
 import ReactMarkdown from 'react-markdown';
@@ -1015,6 +1015,21 @@ export default function ProjectBoard() {
                                                     <div className="absolute top-2 left-3">{visIcon(n.visibility)}</div>
                                                     <div className="absolute top-2 right-3 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                                                         <span className="p-1 cursor-grab"><GripVertical size={12} style={{ color: c.text + '80' }} /></span>
+                                                        <button title="Convertir a Tarea (Backlog)" onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            if (!confirm(`¿Convertir la nota "${n.title}" en una tarea del Backlog?`)) return;
+                                                            try {
+                                                                await api.post(`/projects/${projectId}/tasks`, {
+                                                                    title: n.title || 'Nota sin título',
+                                                                    description: n.content || '',
+                                                                    type: 'task',
+                                                                    priority: 'medium',
+                                                                    status: 'todo',
+                                                                });
+                                                                loadTasks();
+                                                                alert('✅ Tarea creada en el Backlog');
+                                                            } catch (err: any) { alert(err.response?.data?.detail || 'Error al convertir'); }
+                                                        }} className="p-1.5 rounded-lg hover:bg-white/40"><ArrowRightCircle size={13} style={{ color: c.text }} /></button>
                                                         <button onClick={() => { setEditingNote(n); setNoteForm({ title: n.title, content: n.content || '', color: n.color, visibility: n.visibility || 'team', shared_with: n.shared_with || [] }); setShowNoteModal(true); }} className="p-1.5 rounded-lg hover:bg-white/40"><Pencil size={13} style={{ color: c.text }} /></button>
                                                         <button onClick={async () => { if (confirm('¿Eliminar nota?')) { await api.delete(`/projects/${projectId}/notes/${n.id}`); setNotes(prev => prev.filter(x => x.id !== n.id)); } }} className="p-1.5 rounded-lg hover:bg-red-100/60"><Trash2 size={13} className="text-red-500" /></button>
                                                     </div>
