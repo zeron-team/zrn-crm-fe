@@ -158,7 +158,7 @@ export default function ProjectBoard() {
         sprint_id: '', parent_id: '',
     });
     const [sprintForm, setSprintForm] = useState({ name: '', goal: '', start_date: '', end_date: '', version_id: '' });
-    const [versionForm, setVersionForm] = useState({ name: '', description: '', start_date: '', release_date: '' });
+    const [versionForm, setVersionForm] = useState({ name: '', description: '', start_date: '', release_date: '', repository_url: '' });
 
     useEffect(() => {
         if (!projectId) return;
@@ -323,10 +323,13 @@ export default function ProjectBoard() {
         await api.post(`/projects/${projectId}/versions`, {
             name: versionForm.name, description: versionForm.description || null,
             start_date: versionForm.start_date || null, release_date: versionForm.release_date || null,
+            repository_url: versionForm.repository_url || null,
         });
         setShowVersionModal(false);
+        setVersionForm({ name: '', description: '', start_date: '', release_date: '', repository_url: '' });
         const { data } = await api.get(`/projects/${projectId}/versions`);
         setVersions(data);
+        api.get(`/projects/${projectId}/summary`).then(r => setSummary(r.data));
     };
 
     // ── Drag & Drop ──
@@ -781,30 +784,72 @@ export default function ProjectBoard() {
                         {/* Version roadmap */}
                         {summary.versions.length > 0 && (
                             <div className="bg-white rounded-xl border border-gray-200 p-4">
-                                <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2"><Milestone size={12} /> Versiones</h4>
-                                <div className="space-y-3">
+                                <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2"><Milestone size={12} /> Versiones / Roadmap</h4>
+                                <div className="space-y-4">
                                     {summary.versions.map((v: any) => (
-                                        <div key={v.id} className="border border-gray-100 rounded-lg p-3">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="font-bold text-sm text-gray-900">{v.name}</span>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${v.status === 'released' ? 'bg-green-50 text-green-600' : v.status === 'in_progress' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
-                                                    {v.status === 'released' ? 'Lanzada' : v.status === 'in_progress' ? 'En progreso' : 'Planificada'}
-                                                </span>
+                                        <div key={v.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-black text-sm text-gray-900">{v.name}</span>
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${v.status === 'released' ? 'bg-green-50 text-green-600' : v.status === 'in_progress' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                                                        {v.status === 'released' ? '✅ Lanzada' : v.status === 'in_progress' ? '🔄 En progreso' : '📋 Planificada'}
+                                                    </span>
+                                                </div>
+                                                {v.repository_url && (
+                                                    <a href={v.repository_url} target="_blank" rel="noopener noreferrer"
+                                                        className="flex items-center gap-1 text-[10px] text-violet-500 hover:text-violet-700 font-medium bg-violet-50 px-2 py-1 rounded-lg">
+                                                        <GitBranch size={10} /> Repositorio
+                                                    </a>
+                                                )}
                                             </div>
-                                            {v.description && <p className="text-[10px] text-gray-500 mb-2">{v.description}</p>}
-                                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
-                                                <div className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full" style={{ width: `${v.completion}%` }} />
+                                            {v.description && <p className="text-xs text-gray-600 mb-2 leading-relaxed">{v.description}</p>}
+                                            {/* Vigencia */}
+                                            {(v.start_date || v.release_date) && (
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Calendar size={11} className="text-gray-400" />
+                                                    <span className="text-[10px] text-gray-500 font-medium">
+                                                        {v.start_date ? new Date(v.start_date + 'T12:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                                        {' → '}
+                                                        {v.release_date ? new Date(v.release_date + 'T12:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Sin fecha'}
+                                                    </span>
+                                                    {v.start_date && v.release_date && (() => {
+                                                        const now = new Date();
+                                                        const start = new Date(v.start_date);
+                                                        const end = new Date(v.release_date);
+                                                        const isActive = now >= start && now <= end;
+                                                        const isPast = now > end;
+                                                        return (
+                                                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${isActive ? 'bg-green-50 text-green-600' : isPast ? 'bg-gray-100 text-gray-400' : 'bg-amber-50 text-amber-600'}`}>
+                                                                {isActive ? '● Vigente' : isPast ? 'Finalizada' : 'Próxima'}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            )}
+                                            {/* Progress bar */}
+                                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                                <div className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all" style={{ width: `${v.completion}%` }} />
                                             </div>
-                                            <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                                            <div className="flex items-center gap-4 text-[10px] text-gray-500 mb-2">
+                                                <span className="font-bold">{v.completion}% completado</span>
+                                                <span>{v.task_count} tareas ({v.done_count} hechas)</span>
                                                 <span>{v.sprint_count} sprints</span>
-                                                <span>{v.task_count} tareas</span>
-                                                <span>{v.completion}% completado</span>
                                             </div>
+                                            {/* Sprints dentro de la versión */}
                                             {v.sprints.length > 0 && (
-                                                <div className="flex flex-wrap gap-1 mt-2">
-                                                    {v.sprints.map((sn: string, i: number) => (
-                                                        <span key={i} className="text-[9px] bg-violet-50 text-violet-500 px-1.5 py-0.5 rounded">{sn}</span>
-                                                    ))}
+                                                <div className="mt-2 pt-2 border-t border-gray-50">
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Sprints en esta versión</p>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {v.sprints.map((sn: string, i: number) => {
+                                                            const sprintData = summary.sprint_breakdown.find((sb: any) => sb.name === sn);
+                                                            return (
+                                                                <span key={i} className="text-[10px] bg-violet-50 text-violet-600 px-2 py-1 rounded-lg font-medium flex items-center gap-1">
+                                                                    <GitBranch size={9} />{sn}
+                                                                    {sprintData && <span className="text-violet-400">({sprintData.task_count})</span>}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -1548,7 +1593,7 @@ export default function ProjectBoard() {
                                         className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400 resize-none bg-white" />
                                 </div>
                             </div>
-                            <div className="border border-purple-100 rounded-xl p-4 bg-purple-50/30">
+                            <div className="border border-purple-100 rounded-xl p-4 bg-purple-50/30 space-y-3">
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Inicio</label>
@@ -1560,6 +1605,11 @@ export default function ProjectBoard() {
                                         <input value={versionForm.release_date} onChange={e => setVersionForm({ ...versionForm, release_date: e.target.value })} type="date"
                                             className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Repositorio (URL)</label>
+                                    <input value={versionForm.repository_url} onChange={e => setVersionForm({ ...versionForm, repository_url: e.target.value })} placeholder="https://github.com/org/repo"
+                                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
                                 </div>
                             </div>
                         </div>
