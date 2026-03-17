@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import {
     Plus, Search, Filter, Ticket, AlertCircle, Clock, CheckCircle2,
     MessageSquare, ChevronRight, X, Send, User, Building2, RefreshCw,
-    ArrowLeft, ShieldAlert, Info, XCircle, Tag, Code
+    ArrowLeft, ShieldAlert, Info, XCircle, Tag, Code, Timer, CalendarDays, Bug, Sparkles, HelpCircle, Save
 } from "lucide-react";
 
 interface TicketData {
@@ -15,9 +15,13 @@ interface TicketData {
     status: string;
     priority: string;
     category: string | null;
+    ticket_type: string | null;
     client_id: number | null;
     assigned_to: number | null;
     created_by: number | null;
+    estimated_hours: number | null;
+    actual_hours: number | null;
+    estimated_date: string | null;
     created_at: string;
     updated_at: string;
     closed_at: string | null;
@@ -65,6 +69,12 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string; dot: strin
 
 const CATEGORIES = ["General", "Facturación", "Técnico", "Redes", "Software", "Hardware", "Otro"];
 
+const TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
+    bug: { label: "Bug", icon: Bug, color: "text-red-600", bg: "bg-red-50 border-red-200" },
+    feature: { label: "Requerimiento", icon: Sparkles, color: "text-purple-600", bg: "bg-purple-50 border-purple-200" },
+    consultation: { label: "Consulta", icon: HelpCircle, color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
+};
+
 export default function Support() {
     const { user } = useAuth();
     const [tickets, setTickets] = useState<TicketData[]>([]);
@@ -84,7 +94,7 @@ export default function Support() {
     const [users, setUsers] = useState<UserOption[]>([]);
     const [formData, setFormData] = useState({
         subject: "", description: "", priority: "medium", category: "General",
-        client_id: "", assigned_to: "",
+        ticket_type: "consultation", client_id: "", assigned_to: "",
     });
 
     // Comment
@@ -140,7 +150,7 @@ export default function Support() {
                 created_by: (user as any)?.id || null,
             });
             setShowCreateModal(false);
-            setFormData({ subject: "", description: "", priority: "medium", category: "General", client_id: "", assigned_to: "" });
+            setFormData({ subject: "", description: "", priority: "medium", category: "General", ticket_type: "consultation", client_id: "", assigned_to: "" });
             fetchTickets();
         } catch (err) {
             console.error("Failed to create ticket", err);
@@ -238,6 +248,14 @@ export default function Support() {
                                 <span className={`w-2 h-2 rounded-full ${pc.dot}`} />
                                 <span className={pc.color}>{pc.label}</span>
                             </span>
+                            {selectedTicket.ticket_type && (() => {
+                                const tc = TYPE_CONFIG[selectedTicket.ticket_type] || TYPE_CONFIG.consultation;
+                                return (
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${tc.bg} ${tc.color}`}>
+                                        <tc.icon size={12} /> {tc.label}
+                                    </span>
+                                );
+                            })()}
                         </div>
                         <h3 className="text-lg text-gray-700 mt-0.5">{selectedTicket.subject}</h3>
                     </div>
@@ -372,6 +390,93 @@ export default function Support() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Ticket Type */}
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
+                            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tipo de Solicitud</h4>
+                            <div className="grid grid-cols-1 gap-1.5">
+                                {Object.entries(TYPE_CONFIG).map(([key, cfg]) => {
+                                    const active = selectedTicket.ticket_type === key;
+                                    return (
+                                        <button key={key} onClick={async () => {
+                                            try {
+                                                await api.put(`/tickets/${selectedTicket.id}?user_id=${(user as any)?.id || ''}`, { ticket_type: key });
+                                                setSelectedTicket({ ...selectedTicket, ticket_type: key });
+                                                const res = await api.get(`/tickets/${selectedTicket.id}`);
+                                                setTicketDetail(res.data);
+                                                fetchTickets();
+                                            } catch { }
+                                        }}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${active ? `${cfg.bg} ${cfg.color} ring-2 ring-offset-1` : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
+                                            <cfg.icon size={14} /> {cfg.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Hours & Estimated Date */}
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
+                            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Gestión de Tiempo</h4>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1"><Timer size={12} /> Horas Estimadas</label>
+                                    <div className="flex gap-1.5">
+                                        <input type="number" step="0.5" min="0" defaultValue={selectedTicket.estimated_hours ?? ''}
+                                            id={`est-hours-${selectedTicket.id}`}
+                                            className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                            placeholder="0" />
+                                        <button onClick={async () => {
+                                            const val = parseFloat((document.getElementById(`est-hours-${selectedTicket.id}`) as HTMLInputElement)?.value || '0');
+                                            try {
+                                                await api.put(`/tickets/${selectedTicket.id}?user_id=${(user as any)?.id || ''}`, { estimated_hours: val });
+                                                setSelectedTicket({ ...selectedTicket, estimated_hours: val });
+                                                const res = await api.get(`/tickets/${selectedTicket.id}`); setTicketDetail(res.data); fetchTickets();
+                                            } catch { }
+                                        }} className="px-2.5 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" title="Guardar">
+                                            <Save size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1"><Clock size={12} /> Horas Reales</label>
+                                    <div className="flex gap-1.5">
+                                        <input type="number" step="0.5" min="0" defaultValue={selectedTicket.actual_hours ?? ''}
+                                            id={`act-hours-${selectedTicket.id}`}
+                                            className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                            placeholder="0" />
+                                        <button onClick={async () => {
+                                            const val = parseFloat((document.getElementById(`act-hours-${selectedTicket.id}`) as HTMLInputElement)?.value || '0');
+                                            try {
+                                                await api.put(`/tickets/${selectedTicket.id}?user_id=${(user as any)?.id || ''}`, { actual_hours: val });
+                                                setSelectedTicket({ ...selectedTicket, actual_hours: val });
+                                                const res = await api.get(`/tickets/${selectedTicket.id}`); setTicketDetail(res.data); fetchTickets();
+                                            } catch { }
+                                        }} className="px-2.5 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors" title="Guardar">
+                                            <Save size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1"><CalendarDays size={12} /> Fecha Tentativa</label>
+                                    <div className="flex gap-1.5">
+                                        <input type="date" defaultValue={selectedTicket.estimated_date ? selectedTicket.estimated_date.slice(0, 10) : ''}
+                                            id={`est-date-${selectedTicket.id}`}
+                                            className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
+                                        <button onClick={async () => {
+                                            const val = (document.getElementById(`est-date-${selectedTicket.id}`) as HTMLInputElement)?.value;
+                                            try {
+                                                await api.put(`/tickets/${selectedTicket.id}?user_id=${(user as any)?.id || ''}`, { estimated_date: val ? `${val}T00:00:00` : null });
+                                                setSelectedTicket({ ...selectedTicket, estimated_date: val || null });
+                                                const res = await api.get(`/tickets/${selectedTicket.id}`); setTicketDetail(res.data); fetchTickets();
+                                            } catch { }
+                                        }} className="px-2.5 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors" title="Guardar">
+                                            <Save size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -474,11 +579,21 @@ export default function Support() {
                                                 <sc.icon size={10} /> {sc.label}
                                             </span>
                                             {t.category && <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-medium">{t.category}</span>}
+                                            {t.ticket_type && (() => {
+                                                const tc = TYPE_CONFIG[t.ticket_type] || TYPE_CONFIG.consultation;
+                                                return (
+                                                    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${tc.bg} ${tc.color}`}>
+                                                        <tc.icon size={10} /> {tc.label}
+                                                    </span>
+                                                );
+                                            })()}
                                         </div>
                                         <h4 className="text-sm font-semibold text-gray-900 mt-0.5 truncate">{t.subject}</h4>
                                         <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-400">
                                             {t.client_name && <span className="flex items-center gap-1"><Building2 size={10} />{t.client_name}</span>}
                                             {t.assignee_name && <span className="flex items-center gap-1"><User size={10} />{t.assignee_name}</span>}
+                                            {t.estimated_hours != null && <span className="flex items-center gap-1 text-blue-500"><Timer size={10} />~{t.estimated_hours}h</span>}
+                                            {t.actual_hours != null && <span className="flex items-center gap-1 text-green-600"><Clock size={10} />{t.actual_hours}h</span>}
                                             <span>{new Date(t.updated_at).toLocaleDateString('es-AR')}</span>
                                         </div>
                                     </div>
@@ -528,12 +643,23 @@ export default function Support() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Prioridad</label>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Tipo de Solicitud</label>
+                                    <select value={formData.ticket_type} onChange={e => setFormData({ ...formData, ticket_type: e.target.value })}
+                                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                                        <option value="bug">🐛 Bug</option>
+                                        <option value="feature">✨ Requerimiento</option>
+                                        <option value="consultation">💬 Consulta</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Criticidad</label>
                                     <select value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })}
                                         className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm">
                                         {Object.entries(PRIORITY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                                     </select>
                                 </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">Categoría</label>
                                     <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}
