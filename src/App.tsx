@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import registry from "./modules/registry";
+
+const ClientPortal = lazy(() => import("./pages/ClientPortal"));
 
 /**
  * App.tsx — Dynamic route generation from Module Registry
@@ -27,6 +29,7 @@ function App() {
         }>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/portal" element={<ClientPortal />} />
             <Route
               path="/"
               element={
