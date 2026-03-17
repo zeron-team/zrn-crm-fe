@@ -124,6 +124,8 @@ export default function Calendar() {
 
     // Quick Add Contact State
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [contactModalMode, setContactModalMode] = useState<"browse" | "create">("browse");
+    const [contactSearch, setContactSearch] = useState("");
     const [contactFormData, setContactFormData] = useState({
         name: "",
         email: "",
@@ -1622,60 +1624,153 @@ export default function Calendar() {
                 )
             }
 
-            {/* Quick Add Contact Modal */}
+            {/* Contact Picker + Quick Add Modal */}
             {
-                isContactModalOpen && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden max-h-[90vh] overflow-y-auto flex flex-col">
-                            <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-between shrink-0">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><User size={20} className="text-white" /></div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-white">{t('calendar.quickContact.title')}</h3>
-                                        <p className="text-blue-100 text-xs">Datos del nuevo contacto</p>
+                isContactModalOpen && (() => {
+                    const clientContacts = contacts.filter(c => c.client_id === formData.client_id);
+                    const selectedClient = clients.find(c => c.id === formData.client_id);
+                    const filteredContacts = clientContacts.filter(c =>
+                        contactSearch === '' || c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                        (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase())) ||
+                        (c.position && c.position.toLowerCase().includes(contactSearch.toLowerCase()))
+                    );
+                    return (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+                            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
+                                {/* Header */}
+                                <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-between shrink-0">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><User size={20} className="text-white" /></div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-white">Contactos</h3>
+                                            <p className="text-blue-100 text-xs">{selectedClient?.name || 'Empresa'}</p>
+                                        </div>
                                     </div>
+                                    <button onClick={() => { setIsContactModalOpen(false); setContactModalMode('browse'); setContactSearch(''); }} className="p-1.5 hover:bg-white/20 rounded-lg"><X size={18} className="text-white" /></button>
                                 </div>
-                                <button onClick={() => setIsContactModalOpen(false)} className="p-1.5 hover:bg-white/20 rounded-lg"><X size={18} className="text-white" /></button>
+
+                                {/* Tabs */}
+                                <div className="flex border-b border-gray-200 shrink-0">
+                                    <button type="button" onClick={() => setContactModalMode('browse')}
+                                        className={`flex-1 py-2.5 text-sm font-medium transition-colors ${contactModalMode === 'browse' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-gray-500 hover:text-gray-700'}`}>
+                                        Seleccionar Existente
+                                    </button>
+                                    <button type="button" onClick={() => setContactModalMode('create')}
+                                        className={`flex-1 py-2.5 text-sm font-medium transition-colors ${contactModalMode === 'create' ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50' : 'text-gray-500 hover:text-gray-700'}`}>
+                                        <Plus size={14} className="inline mr-1" />Crear Nuevo
+                                    </button>
+                                </div>
+
+                                {/* Browse Mode */}
+                                {contactModalMode === 'browse' && (
+                                    <div className="flex flex-col flex-1 overflow-hidden">
+                                        {/* Search */}
+                                        <div className="p-3 border-b border-gray-100 shrink-0">
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar contacto por nombre, email o cargo..."
+                                                value={contactSearch}
+                                                onChange={(e) => setContactSearch(e.target.value)}
+                                                className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                                autoFocus
+                                            />
+                                        </div>
+                                        {/* Contact List */}
+                                        <div className="overflow-y-auto flex-1 max-h-[300px]">
+                                            {filteredContacts.length === 0 ? (
+                                                <div className="p-8 text-center">
+                                                    <User size={32} className="mx-auto text-gray-300 mb-2" />
+                                                    <p className="text-sm text-gray-500 mb-1">
+                                                        {clientContacts.length === 0 ? 'Esta empresa no tiene contactos' : 'No se encontraron contactos'}
+                                                    </p>
+                                                    <button type="button" onClick={() => setContactModalMode('create')}
+                                                        className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium">
+                                                        + Crear nuevo contacto
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <ul className="divide-y divide-gray-50">
+                                                    {filteredContacts.map(c => (
+                                                        <li key={c.id}
+                                                            onClick={() => {
+                                                                setFormData({ ...formData, contact_id: c.id });
+                                                                setIsContactModalOpen(false);
+                                                                setContactModalMode('browse');
+                                                                setContactSearch('');
+                                                            }}
+                                                            className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-blue-50 ${
+                                                                formData.contact_id === c.id ? 'bg-blue-50 border-l-3 border-blue-500' : ''
+                                                            }`}
+                                                        >
+                                                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                                                {c.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-sm font-semibold text-gray-900 truncate">{c.name}</p>
+                                                                <p className="text-xs text-gray-500 truncate">
+                                                                    {[c.position, c.email].filter(Boolean).join(' · ') || 'Sin detalles'}
+                                                                </p>
+                                                            </div>
+                                                            {formData.contact_id === c.id && (
+                                                                <CheckCircle2 size={16} className="text-blue-600 shrink-0" />
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Create Mode */}
+                                {contactModalMode === 'create' && (
+                                    <form onSubmit={handleQuickAddContact} className="p-5 space-y-4 overflow-y-auto flex-1">
+                                        <div className="px-3 py-2 bg-blue-50 rounded-lg text-xs text-blue-700 flex items-center gap-2">
+                                            <Building2 size={14} />
+                                            <span>Se creará asociado a <strong>{selectedClient?.name || 'la empresa seleccionada'}</strong></span>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">Nombre completo *</label>
+                                            <input type="text" required value={contactFormData.name}
+                                                onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
+                                                className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="Ej: Juan Pérez" autoFocus />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                                                <input type="email" value={contactFormData.email}
+                                                    onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
+                                                    className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                                    placeholder="email@ejemplo.com" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">Teléfono</label>
+                                                <input type="text" value={contactFormData.phone}
+                                                    onChange={(e) => setContactFormData({ ...contactFormData, phone: e.target.value })}
+                                                    className="w-full px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                                    placeholder="+54 11 ..." />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">Cargo</label>
+                                            <input type="text" value={contactFormData.position}
+                                                onChange={(e) => setContactFormData({ ...contactFormData, position: e.target.value })}
+                                                className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="Ej: Gerente Comercial" />
+                                        </div>
+                                        <div className="pt-2 flex justify-end space-x-2">
+                                            <button type="button" onClick={() => setContactModalMode('browse')}
+                                                className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg font-medium">Volver</button>
+                                            <button type="submit"
+                                                className="px-4 py-1.5 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium shadow-sm hover:shadow-md transition-shadow">Crear Contacto</button>
+                                        </div>
+                                    </form>
+                                )}
                             </div>
-                            <form onSubmit={handleQuickAddContact} className="p-5 space-y-4 overflow-y-auto flex-1">
-                                <div className="border border-blue-100 rounded-xl p-4 bg-blue-50/30">
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">{t('calendar.quickContact.fullName')}</label>
-                                    <input type="text" required value={contactFormData.name}
-                                        onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
-                                        className="w-full px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                                </div>
-                                <div className="border border-purple-100 rounded-xl p-4 bg-purple-50/30">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">{t('calendar.quickContact.email')}</label>
-                                            <input type="email" value={contactFormData.email}
-                                                onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
-                                                className="w-full px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">{t('calendar.quickContact.phone')}</label>
-                                            <input type="text" value={contactFormData.phone}
-                                                onChange={(e) => setContactFormData({ ...contactFormData, phone: e.target.value })}
-                                                className="w-full px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="border border-green-100 rounded-xl p-4 bg-green-50/30">
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">{t('calendar.quickContact.position')}</label>
-                                    <input type="text" value={contactFormData.position}
-                                        onChange={(e) => setContactFormData({ ...contactFormData, position: e.target.value })}
-                                        className="w-full px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                                </div>
-                                <div className="pt-2 flex justify-end space-x-2">
-                                    <button type="button" onClick={() => setIsContactModalOpen(false)}
-                                        className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-md font-medium">Cancel</button>
-                                    <button type="submit"
-                                        className="px-4 py-1.5 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-md font-medium shadow-sm">Create Contact</button>
-                                </div>
-                            </form>
                         </div>
-                    </div>
-                )
+                    );
+                })() 
             }
         </div >
     );
