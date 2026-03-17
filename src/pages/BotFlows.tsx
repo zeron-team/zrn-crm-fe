@@ -20,7 +20,7 @@ import api from '../api/client';
 import {
     Plus, ArrowLeft, Save, ToggleLeft, ToggleRight, Trash2, Play, Pencil,
     MessageSquare, HelpCircle, GitBranch, Clock, Globe, UserCheck,
-    Zap, X, GripVertical, Search
+    Zap, X, GripVertical, Search, Ticket, FilePlus2
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════
@@ -52,6 +52,8 @@ const nodeColors: Record<string, { bg: string; border: string; icon: string; lab
     delay: { bg: 'bg-gray-50', border: 'border-gray-300', icon: '⏱', label: 'Espera' },
     api_call: { bg: 'bg-green-50', border: 'border-green-300', icon: '🌐', label: 'API Call' },
     assign_agent: { bg: 'bg-red-50', border: 'border-red-300', icon: '👤', label: 'Asignar Agente' },
+    ticket_lookup: { bg: 'bg-cyan-50', border: 'border-cyan-300', icon: '🎫', label: 'Consultar Tickets' },
+    ticket_create: { bg: 'bg-teal-50', border: 'border-teal-300', icon: '📝', label: 'Crear Ticket' },
 };
 
 function FlowNode({ data, type, selected }: NodeProps) {
@@ -91,6 +93,12 @@ function FlowNode({ data, type, selected }: NodeProps) {
                 {type === 'assign_agent' && (
                     <p className="text-xs text-gray-700 line-clamp-2">{data.message || 'Transferir a agente'}</p>
                 )}
+                {type === 'ticket_lookup' && (
+                    <p className="text-xs text-gray-700">Busca tickets del contacto por su teléfono</p>
+                )}
+                {type === 'ticket_create' && (
+                    <p className="text-xs text-gray-700">Crea un ticket con la descripción del usuario</p>
+                )}
             </div>
             {/* Handles */}
             {type !== 'trigger' && <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white" />}
@@ -118,6 +126,8 @@ const nodeTypes = {
     delay: FlowNode,
     api_call: FlowNode,
     assign_agent: FlowNode,
+    ticket_lookup: FlowNode,
+    ticket_create: FlowNode,
 };
 
 // ═══════════════════════════════════════════
@@ -131,6 +141,8 @@ const paletteItems = [
     { type: 'delay', icon: Clock, label: 'Espera', color: 'text-gray-600 bg-gray-50 border-gray-200' },
     { type: 'api_call', icon: Globe, label: 'API Call', color: 'text-green-600 bg-green-50 border-green-200' },
     { type: 'assign_agent', icon: UserCheck, label: 'Asignar Agente', color: 'text-red-600 bg-red-50 border-red-200' },
+    { type: 'ticket_lookup', icon: Ticket, label: 'Consultar Tickets', color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
+    { type: 'ticket_create', icon: FilePlus2, label: 'Crear Ticket', color: 'text-teal-600 bg-teal-50 border-teal-200' },
 ];
 
 // ═══════════════════════════════════════════
