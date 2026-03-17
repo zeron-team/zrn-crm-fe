@@ -16,6 +16,8 @@ interface CalendarEvent {
     color: string;
     client_id?: number | null;
     contact_id?: number | null;
+    contact_ids?: number[];
+    contacts?: { id: number; name: string; email?: string; position?: string }[];
     lead_id?: number | null;
     status?: string;
     status_reason?: string | null;
@@ -101,7 +103,7 @@ export default function Calendar() {
         related_to: "",
         color: "#3788d8",
         client_id: "" as number | "",
-        contact_id: "" as number | "",
+        contact_ids: [] as number[],
         lead_id: "" as number | "",
         call_url: "",
         is_recurring: false,
@@ -147,7 +149,7 @@ export default function Calendar() {
             openAddModal();
             setFormData(prev => ({
                 ...prev,
-                contact_id: Number(contactId),
+                contact_ids: [Number(contactId)],
                 client_id: clientId ? Number(clientId) : '',
                 related_to: 'Meeting',
             }));
@@ -193,7 +195,7 @@ export default function Calendar() {
             related_to: "Meeting",
             color: "#3788d8",
             client_id: "",
-            contact_id: "",
+            contact_ids: [],
             lead_id: "",
             call_url: "",
             is_recurring: false,
@@ -219,7 +221,7 @@ export default function Calendar() {
             related_to: event.related_to || "",
             color: event.color || "#3788d8",
             client_id: event.client_id || "",
-            contact_id: event.contact_id || "",
+            contact_ids: event.contacts?.map(c => c.id) || (event.contact_id ? [event.contact_id] : []),
             lead_id: event.lead_id || "",
             call_url: event.call_url || "",
             is_recurring: event.is_recurring || false,
@@ -254,7 +256,8 @@ export default function Calendar() {
                 related_to: formData.related_to,
                 color: formData.color,
                 client_id: formData.client_id ? Number(formData.client_id) : null,
-                contact_id: formData.contact_id ? Number(formData.contact_id) : null,
+                contact_ids: formData.contact_ids.length > 0 ? formData.contact_ids : [],
+                contact_id: formData.contact_ids.length > 0 ? formData.contact_ids[0] : null,
                 lead_id: formData.lead_id ? Number(formData.lead_id) : null,
                 call_url: formData.related_to === 'Call' ? formData.call_url || null : null,
                 is_recurring: formData.related_to === 'Call' ? formData.is_recurring : false,
@@ -328,7 +331,7 @@ export default function Calendar() {
             };
             const res = await api.post("/contacts/", payload);
             setContacts([...contacts, res.data]);
-            setFormData({ ...formData, contact_id: res.data.id });
+            setFormData({ ...formData, contact_ids: [...formData.contact_ids, res.data.id] });
             setIsContactModalOpen(false);
             setContactFormData({ name: "", email: "", phone: "", position: "" });
         } catch (error) {
@@ -395,7 +398,7 @@ export default function Calendar() {
             related_to: event.related_to || "",
             color: event.color || "#3788d8",
             client_id: event.client_id || "",
-            contact_id: event.contact_id || "",
+            contact_ids: event.contacts?.map(c => c.id) || (event.contact_id ? [event.contact_id] : []),
             lead_id: event.lead_id || "",
             call_url: event.call_url || "",
             is_recurring: event.is_recurring || false,
@@ -639,7 +642,9 @@ export default function Calendar() {
                 const cl = clients.find(c => c.id === ev.client_id);
                 if (cl) parts.push(cl.name);
             }
-            if (ev.contact_id) {
+            if (ev.contacts && ev.contacts.length > 0) {
+                parts.push(...ev.contacts.map(ct => ct.name));
+            } else if (ev.contact_id) {
                 const ct = contacts.find(c => c.id === ev.contact_id);
                 if (ct) parts.push(ct.name);
             }
@@ -1301,7 +1306,7 @@ export default function Calendar() {
                                             type="button"
                                             onClick={() => {
                                                 setEntityType("account");
-                                                setFormData({ ...formData, lead_id: "" });
+                                                setFormData({ ...formData, client_id: "", contact_ids: [] });
                                             }}
                                             className={`flex-1 flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${entityType === 'account' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                         >
@@ -1312,7 +1317,7 @@ export default function Calendar() {
                                             type="button"
                                             onClick={() => {
                                                 setEntityType("lead");
-                                                setFormData({ ...formData, client_id: "", contact_id: "" });
+                                                setFormData({ ...formData, client_id: "", contact_ids: [] });
                                             }}
                                             className={`flex-1 flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${entityType === 'lead' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                         >
@@ -1324,47 +1329,57 @@ export default function Calendar() {
 
                                 {/* Account selectors */}
                                 {entityType === "account" && (
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">{t('calendar.modal.clientAssoc')}</label>
                                             <select
                                                 value={formData.client_id}
-                                                onChange={(e) => setFormData({ ...formData, client_id: e.target.value ? Number(e.target.value) : "", contact_id: "" })}
+                                                onChange={(e) => setFormData({ ...formData, client_id: e.target.value ? Number(e.target.value) : "", contact_ids: [] })}
                                                 className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                             >
                                                 <option value="">{t('calendar.modal.noClient')}</option>
                                                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                             </select>
                                         </div>
-                                        <div className="relative">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('calendar.modal.contactAssoc')}</label>
-                                            <div className="flex space-x-2">
-                                                <select
-                                                    value={formData.contact_id}
-                                                    onChange={(e) => setFormData({ ...formData, contact_id: e.target.value ? Number(e.target.value) : "" })}
-                                                    disabled={!formData.client_id}
-                                                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
-                                                >
-                                                    <option value="">{formData.client_id ? t('common.selectContact') : t('common.selectClientFirst')}</option>
-                                                    {contacts.filter(c => c.client_id === formData.client_id).map(c => (
-                                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                                    ))}
-                                                </select>
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <label className="block text-sm font-medium text-gray-700">{t('calendar.modal.contactAssoc')}</label>
                                                 <button
                                                     type="button"
                                                     onClick={() => {
                                                         if (!formData.client_id) {
-                                                            alert("Please select a client first.");
+                                                            alert("Seleccioná una empresa primero.");
                                                             return;
                                                         }
                                                         setIsContactModalOpen(true);
                                                     }}
-                                                    className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors border border-blue-200 flex-shrink-0"
-                                                    title={t("calendar.quickContact.title")}
+                                                    className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors border border-blue-200"
+                                                    title="Agregar contacto"
                                                 >
-                                                    <Plus size={20} />
+                                                    <Plus size={14} /> Agregar
                                                 </button>
                                             </div>
+                                            {formData.contact_ids.length === 0 ? (
+                                                <div className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-400 flex items-center justify-between">
+                                                    <span>{formData.client_id ? 'Sin contactos asignados' : 'Seleccioná una empresa primero'}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-wrap gap-2 p-2 bg-gray-50 border border-gray-200 rounded-lg min-h-[40px]">
+                                                    {formData.contact_ids.map(cId => {
+                                                        const contact = contacts.find(c => c.id === cId);
+                                                        if (!contact) return null;
+                                                        return (
+                                                            <span key={cId} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                                                {contact.name}
+                                                                <button type="button" onClick={() => setFormData({ ...formData, contact_ids: formData.contact_ids.filter(id => id !== cId) })}
+                                                                    className="hover:bg-blue-200 rounded-full p-0.5 transition-colors">
+                                                                    <X size={12} />
+                                                                </button>
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -1690,16 +1705,19 @@ export default function Calendar() {
                                                 </div>
                                             ) : (
                                                 <ul className="divide-y divide-gray-50">
-                                                    {filteredContacts.map(c => (
+                                                    {filteredContacts.map(c => {
+                                                        const isSelected = formData.contact_ids.includes(c.id);
+                                                        return (
                                                         <li key={c.id}
                                                             onClick={() => {
-                                                                setFormData({ ...formData, contact_id: c.id });
-                                                                setIsContactModalOpen(false);
-                                                                setContactModalMode('browse');
-                                                                setContactSearch('');
+                                                                if (isSelected) {
+                                                                    setFormData({ ...formData, contact_ids: formData.contact_ids.filter(id => id !== c.id) });
+                                                                } else {
+                                                                    setFormData({ ...formData, contact_ids: [...formData.contact_ids, c.id] });
+                                                                }
                                                             }}
                                                             className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-blue-50 ${
-                                                                formData.contact_id === c.id ? 'bg-blue-50 border-l-3 border-blue-500' : ''
+                                                                isSelected ? 'bg-blue-50 border-l-3 border-blue-500' : ''
                                                             }`}
                                                         >
                                                             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -1711,11 +1729,12 @@ export default function Calendar() {
                                                                     {[c.position, c.email].filter(Boolean).join(' · ') || 'Sin detalles'}
                                                                 </p>
                                                             </div>
-                                                            {formData.contact_id === c.id && (
+                                                            {isSelected && (
                                                                 <CheckCircle2 size={16} className="text-blue-600 shrink-0" />
                                                             )}
                                                         </li>
-                                                    ))}
+                                                    );
+                                                    })}
                                                 </ul>
                                             )}
                                         </div>
