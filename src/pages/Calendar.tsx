@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api/client";
-import { Plus, Pencil, Trash2, Calendar as CalendarIcon, Clock, AlertCircle, Building2, ChevronLeft, ChevronRight, List as ListIcon, Zap, MessageSquare, Send, CornerDownRight, CheckCircle2, XCircle, PauseCircle, X, LayoutGrid, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Calendar as CalendarIcon, Clock, AlertCircle, Building2, ChevronLeft, ChevronRight, List as ListIcon, Zap, MessageSquare, Send, CornerDownRight, CheckCircle2, XCircle, PauseCircle, X, LayoutGrid, GripVertical, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, addDays, parseISO, addWeeks, subWeeks } from "date-fns";
 import { es } from "date-fns/locale/es";
