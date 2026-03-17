@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import { Camera, Save, User, Phone, MapPin, Heart, AlertTriangle, FileText, Trash2, CheckCircle } from "lucide-react";
+import { Camera, Save, User, Phone, MapPin, Heart, AlertTriangle, FileText, Trash2, CheckCircle, Bell } from "lucide-react";
+import NotificationPreferences from "../components/NotificationPreferences";
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace("/api/v1", "") || "";
 
@@ -298,6 +299,17 @@ export default function UserProfile() {
                         className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white resize-none"
                     />
                 </div>
+            </div>
+
+            {/* Notificaciones */}
+            <div className="mt-6">
+                <NotificationPreferences
+                    profile={profile}
+                    onProfileUpdate={() => {
+                        api.get('/profile/').then(r => setProfile(r.data));
+                        if (refreshUser) refreshUser();
+                    }}
+                />
             </div>
 
             {/* Save Button */}
