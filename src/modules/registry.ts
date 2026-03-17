@@ -63,6 +63,7 @@ const Payroll = lazy(() => import("../pages/Payroll"));
 const EmployeeNovelties = lazy(() => import("../pages/EmployeeNovelties"));
 const Email = lazy(() => import("../pages/Email"));
 const WhatsApp = lazy(() => import("../pages/WhatsApp"));
+const BotFlows = lazy(() => import("../pages/BotFlows"));
 const Billing = lazy(() => import("../pages/Billing"));
 const Finances = lazy(() => import("../pages/Finances"));
 const ServicePurchases = lazy(() => import("../pages/ServicePurchases"));
@@ -207,8 +208,8 @@ const hrModule: ModuleManifest = {
 const communicationsModule: ModuleManifest = {
     name: "Comunicaciones",
     slug: "communications",
-    version: "5.0.0",
-    description: "Email corporativo, WhatsApp integrado",
+    version: "5.1.0",
+    description: "Email corporativo, WhatsApp integrado, Bot Flows",
     icon: "Mail",
     category: "business",
     dependencies: ["core"],
@@ -220,11 +221,13 @@ const communicationsModule: ModuleManifest = {
         items: [
             { to: "/email", label: "Email", icon: "Mail" },
             { to: "/whatsapp", label: "WhatsApp", icon: "MessageCircle" },
+            { to: "/bot-flows", label: "Bot Flows", icon: "Zap" },
         ],
     },
     routes: [
         { path: "email", component: Email },
         { path: "whatsapp", component: WhatsApp },
+        { path: "bot-flows", component: BotFlows },
     ],
 };
 
