@@ -91,9 +91,9 @@ export default function ClientPortal() {
     const [draggedTicket, setDraggedTicket] = useState<number | null>(null);
     const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
-    // Resolve modal
-    const [resolveModal, setResolveModal] = useState<{ticketId: number; targetStatus: string} | null>(null);
-    const [resolveHours, setResolveHours] = useState('');
+    // Status note modal
+    const [statusNoteModal, setStatusNoteModal] = useState<{ticketId: number; targetStatus: string} | null>(null);
+    const [statusNote, setStatusNote] = useState('');
 
     useEffect(() => {
         if (token) { fetchTickets(); fetchKpis(); }
@@ -200,22 +200,29 @@ export default function ClientPortal() {
         finally { setCommenting(false); }
     }
 
-    async function updateTicketStatus(ticketId: number, newStatus: string, actualHours?: number) {
-        // If moving to resolved/closed, show modal for hours
-        if ((newStatus === 'resolved' || newStatus === 'closed') && actualHours === undefined) {
-            setResolveModal({ ticketId, targetStatus: newStatus });
+    async function updateTicketStatus(ticketId: number, newStatus: string, noteText?: string) {
+        // Always show modal to optionally add a note
+        if (noteText === undefined) {
+            setStatusNoteModal({ ticketId, targetStatus: newStatus });
             return;
         }
 
         setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
         try {
             const body: Record<string, unknown> = { status: newStatus };
-            if (actualHours !== undefined) body.actual_hours = actualHours;
             const res = await fetch(`${API}/tickets/${ticketId}/status`, {
                 method: 'PATCH',
                 headers: headers(),
                 body: JSON.stringify(body),
             });
+            // If note was provided, post it as a comment
+            if (noteText && noteText.trim()) {
+                await fetch(`${API}/tickets/${ticketId}/comments`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: JSON.stringify({ content: noteText.trim() }),
+                });
+            }
             if (!res.ok) fetchTickets();
             else { fetchTickets(); fetchKpis(); }
         } catch {
@@ -223,12 +230,11 @@ export default function ClientPortal() {
         }
     }
 
-    function handleResolveConfirm() {
-        if (!resolveModal) return;
-        const hours = parseFloat(resolveHours) || 0;
-        updateTicketStatus(resolveModal.ticketId, resolveModal.targetStatus, hours);
-        setResolveModal(null);
-        setResolveHours('');
+    function handleStatusConfirm() {
+        if (!statusNoteModal) return;
+        updateTicketStatus(statusNoteModal.ticketId, statusNoteModal.targetStatus, statusNote);
+        setStatusNoteModal(null);
+        setStatusNote('');
     }
 
     // ═══════════════════════════════════════
@@ -274,24 +280,24 @@ export default function ClientPortal() {
     // ═══════════════════════════════════════
     //  RESOLVE HOURS MODAL
     // ═══════════════════════════════════════
-    const ResolveModal = () => {
-        if (!resolveModal) return null;
-        const targetLabel = statusConfig[resolveModal.targetStatus]?.label || resolveModal.targetStatus;
+    const StatusNoteModal = () => {
+        if (!statusNoteModal) return null;
+        const targetLabel = statusConfig[statusNoteModal.targetStatus]?.label || statusNoteModal.targetStatus;
         return (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setResolveModal(null)}>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setStatusNoteModal(null)}>
                 <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Marcar como {targetLabel}</h3>
-                    <p className="text-sm text-gray-500 mb-4">¿Cuántas horas llevó resolver este ticket?</p>
-                    <input type="number" step="0.5" min="0" value={resolveHours} onChange={(e) => setResolveHours(e.target.value)}
-                        placeholder="Ej: 2.5" autoFocus
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400 mb-4" />
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">Cambiar a {targetLabel}</h3>
+                    <p className="text-sm text-gray-500 mb-4">¿Querés agregar una nota al cambio de estado? (opcional)</p>
+                    <textarea value={statusNote} onChange={(e) => setStatusNote(e.target.value)}
+                        placeholder="Escribí una nota..." autoFocus rows={3}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400 mb-4 resize-none" />
                     <div className="flex gap-2">
-                        <button onClick={() => setResolveModal(null)}
+                        <button onClick={() => setStatusNoteModal(null)}
                             className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50">
                             Cancelar
                         </button>
-                        <button onClick={handleResolveConfirm}
-                            className="flex-1 py-2.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md">
+                        <button onClick={handleStatusConfirm}
+                            className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md">
                             Confirmar
                         </button>
                     </div>
@@ -408,7 +414,7 @@ export default function ClientPortal() {
         return (
             <div className="min-h-screen bg-gray-50">
                 <Header />
-                <ResolveModal />
+                <StatusNoteModal />
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
                     <button onClick={() => setView('list')} className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mb-4">← Volver a tickets</button>
                     <h2 className="text-xl font-bold text-gray-900 mb-5">📊 KPIs de Soporte</h2>
@@ -516,7 +522,7 @@ export default function ClientPortal() {
         return (
             <div className="min-h-screen bg-gray-50">
                 <Header />
-                <ResolveModal />
+                <StatusNoteModal />
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
                     <button onClick={() => { setView('list'); fetchTickets(); }} className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mb-4">← Volver a tickets</button>
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -681,7 +687,7 @@ export default function ClientPortal() {
         return (
             <div className="min-h-screen bg-gray-50">
                 <Header />
-                <ResolveModal />
+                <StatusNoteModal />
                 <div className="max-w-full mx-auto px-4 sm:px-6 py-6">
                     <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                         <div>
@@ -749,7 +755,7 @@ export default function ClientPortal() {
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
-            <ResolveModal />
+            <StatusNoteModal />
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
                 <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                     <div>

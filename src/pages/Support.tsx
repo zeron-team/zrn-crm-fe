@@ -101,6 +101,29 @@ export default function Support() {
     const [newComment, setNewComment] = useState("");
     const [sendingComment, setSendingComment] = useState(false);
 
+    // Batch edit fields for sidebar (single save)
+    const [editFields, setEditFields] = useState<Record<string, any>>({});
+    const [savingFields, setSavingFields] = useState(false);
+
+    const handleSaveFields = async () => {
+        if (!selectedTicket || Object.keys(editFields).length === 0) return;
+        setSavingFields(true);
+        try {
+            const payload: Record<string, any> = {};
+            if (editFields.ticket_type !== undefined) payload.ticket_type = editFields.ticket_type;
+            if (editFields.estimated_hours !== undefined) payload.estimated_hours = parseFloat(editFields.estimated_hours) || 0;
+            if (editFields.actual_hours !== undefined) payload.actual_hours = parseFloat(editFields.actual_hours) || 0;
+            if (editFields.estimated_date !== undefined) payload.estimated_date = editFields.estimated_date ? `${editFields.estimated_date}T00:00:00` : null;
+            await api.put(`/tickets/${selectedTicket.id}?user_id=${(user as any)?.id || ''}`, payload);
+            const res = await api.get(`/tickets/${selectedTicket.id}`);
+            setTicketDetail(res.data);
+            setSelectedTicket(res.data);
+            setEditFields({});
+            fetchTickets();
+        } catch { }
+        setSavingFields(false);
+    };
+
     useEffect(() => {
         fetchTickets();
         fetchOptions();
@@ -129,6 +152,7 @@ export default function Support() {
 
     const openTicketDetail = async (ticket: TicketData) => {
         setSelectedTicket(ticket);
+        setEditFields({});
         setDetailLoading(true);
         try {
             const res = await api.get(`/tickets/${ticket.id}`);
@@ -391,91 +415,62 @@ export default function Support() {
                             </div>
                         </div>
 
-                        {/* Ticket Type */}
+                        {/* Gestión del Ticket — single save */}
                         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
-                            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tipo de Solicitud</h4>
-                            <div className="grid grid-cols-1 gap-1.5">
-                                {Object.entries(TYPE_CONFIG).map(([key, cfg]) => {
-                                    const active = selectedTicket.ticket_type === key;
-                                    return (
-                                        <button key={key} onClick={async () => {
-                                            try {
-                                                await api.put(`/tickets/${selectedTicket.id}?user_id=${(user as any)?.id || ''}`, { ticket_type: key });
-                                                setSelectedTicket({ ...selectedTicket, ticket_type: key });
-                                                const res = await api.get(`/tickets/${selectedTicket.id}`);
-                                                setTicketDetail(res.data);
-                                                fetchTickets();
-                                            } catch { }
-                                        }}
-                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${active ? `${cfg.bg} ${cfg.color} ring-2 ring-offset-1` : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
+                            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Gestión del Ticket</h4>
+
+                            {/* Tipo */}
+                            <div>
+                                <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">Tipo de Solicitud</label>
+                                <div className="grid grid-cols-1 gap-1.5">
+                                    {Object.entries(TYPE_CONFIG).map(([key, cfg]) => (
+                                        <button key={key} type="button"
+                                            onClick={() => setEditFields(prev => ({ ...prev, ticket_type: key }))}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${(editFields.ticket_type ?? selectedTicket.ticket_type) === key ? `${cfg.bg} ${cfg.color} ring-2 ring-offset-1` : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
                                             <cfg.icon size={14} /> {cfg.label}
                                         </button>
-                                    );
-                                })}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Hours & Estimated Date */}
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
-                            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Gestión de Tiempo</h4>
-                            <div className="space-y-3">
+                            {/* Horas */}
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1"><Timer size={12} /> Horas Estimadas</label>
-                                    <div className="flex gap-1.5">
-                                        <input type="number" step="0.5" min="0" defaultValue={selectedTicket.estimated_hours ?? ''}
-                                            id={`est-hours-${selectedTicket.id}`}
-                                            className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400"
-                                            placeholder="0" />
-                                        <button onClick={async () => {
-                                            const val = parseFloat((document.getElementById(`est-hours-${selectedTicket.id}`) as HTMLInputElement)?.value || '0');
-                                            try {
-                                                await api.put(`/tickets/${selectedTicket.id}?user_id=${(user as any)?.id || ''}`, { estimated_hours: val });
-                                                setSelectedTicket({ ...selectedTicket, estimated_hours: val });
-                                                const res = await api.get(`/tickets/${selectedTicket.id}`); setTicketDetail(res.data); fetchTickets();
-                                            } catch { }
-                                        }} className="px-2.5 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" title="Guardar">
-                                            <Save size={14} />
-                                        </button>
-                                    </div>
+                                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1"><Timer size={12} /> Horas Est.</label>
+                                    <input type="number" step="0.5" min="0"
+                                        value={editFields.estimated_hours ?? selectedTicket.estimated_hours ?? ''}
+                                        onChange={e => setEditFields(prev => ({ ...prev, estimated_hours: e.target.value }))}
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                        placeholder="0" />
                                 </div>
                                 <div>
                                     <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1"><Clock size={12} /> Horas Reales</label>
-                                    <div className="flex gap-1.5">
-                                        <input type="number" step="0.5" min="0" defaultValue={selectedTicket.actual_hours ?? ''}
-                                            id={`act-hours-${selectedTicket.id}`}
-                                            className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400"
-                                            placeholder="0" />
-                                        <button onClick={async () => {
-                                            const val = parseFloat((document.getElementById(`act-hours-${selectedTicket.id}`) as HTMLInputElement)?.value || '0');
-                                            try {
-                                                await api.put(`/tickets/${selectedTicket.id}?user_id=${(user as any)?.id || ''}`, { actual_hours: val });
-                                                setSelectedTicket({ ...selectedTicket, actual_hours: val });
-                                                const res = await api.get(`/tickets/${selectedTicket.id}`); setTicketDetail(res.data); fetchTickets();
-                                            } catch { }
-                                        }} className="px-2.5 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors" title="Guardar">
-                                            <Save size={14} />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1"><CalendarDays size={12} /> Fecha Tentativa</label>
-                                    <div className="flex gap-1.5">
-                                        <input type="date" defaultValue={selectedTicket.estimated_date ? selectedTicket.estimated_date.slice(0, 10) : ''}
-                                            id={`est-date-${selectedTicket.id}`}
-                                            className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
-                                        <button onClick={async () => {
-                                            const val = (document.getElementById(`est-date-${selectedTicket.id}`) as HTMLInputElement)?.value;
-                                            try {
-                                                await api.put(`/tickets/${selectedTicket.id}?user_id=${(user as any)?.id || ''}`, { estimated_date: val ? `${val}T00:00:00` : null });
-                                                setSelectedTicket({ ...selectedTicket, estimated_date: val || null });
-                                                const res = await api.get(`/tickets/${selectedTicket.id}`); setTicketDetail(res.data); fetchTickets();
-                                            } catch { }
-                                        }} className="px-2.5 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors" title="Guardar">
-                                            <Save size={14} />
-                                        </button>
-                                    </div>
+                                    <input type="number" step="0.5" min="0"
+                                        value={editFields.actual_hours ?? selectedTicket.actual_hours ?? ''}
+                                        onChange={e => setEditFields(prev => ({ ...prev, actual_hours: e.target.value }))}
+                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                                        placeholder="0" />
                                 </div>
                             </div>
+
+                            {/* Fecha tentativa */}
+                            <div>
+                                <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1"><CalendarDays size={12} /> Fecha Tentativa</label>
+                                <input type="date"
+                                    value={editFields.estimated_date ?? (selectedTicket.estimated_date ? selectedTicket.estimated_date.slice(0, 10) : '')}
+                                    onChange={e => setEditFields(prev => ({ ...prev, estimated_date: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400" />
+                            </div>
+
+                            {/* Single save button */}
+                            <button
+                                onClick={handleSaveFields}
+                                disabled={savingFields}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm disabled:opacity-50"
+                            >
+                                {savingFields ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                                {savingFields ? 'Guardando...' : 'Guardar Cambios'}
+                            </button>
                         </div>
                     </div>
                 </div>
