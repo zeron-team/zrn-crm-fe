@@ -64,6 +64,10 @@ export default function ClientPortal() {
     const [comment, setComment] = useState('');
     const [commenting, setCommenting] = useState(false);
 
+    // Drag & Drop
+    const [draggedTicket, setDraggedTicket] = useState<number | null>(null);
+    const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+
     useEffect(() => {
         if (token) fetchTickets();
     }, [token]);
@@ -163,6 +167,24 @@ export default function ClientPortal() {
         finally { setCommenting(false); }
     }
 
+    async function updateTicketStatus(ticketId: number, newStatus: string) {
+        // Optimistic update
+        setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
+        try {
+            const res = await fetch(`${API}/tickets/${ticketId}/status`, {
+                method: 'PATCH',
+                headers: headers(),
+                body: JSON.stringify({ status: newStatus }),
+            });
+            if (!res.ok) {
+                // Revert on failure
+                fetchTickets();
+            }
+        } catch {
+            fetchTickets();
+        }
+    }
+
     // ═══════════════════════════════════════
     //  LOGIN
     // ═══════════════════════════════════════
@@ -254,7 +276,19 @@ export default function ClientPortal() {
         return (
             <button
                 onClick={() => fetchTicketDetail(ticket.id)}
-                className={`w-full bg-white rounded-xl border border-gray-200 hover:border-blue-200 hover:shadow-md transition-all p-3 text-left group ${compact ? 'p-2.5' : 'p-4'}`}
+                draggable
+                onDragStart={(e) => {
+                    setDraggedTicket(ticket.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', String(ticket.id));
+                    (e.currentTarget as HTMLElement).style.opacity = '0.5';
+                }}
+                onDragEnd={(e) => {
+                    setDraggedTicket(null);
+                    setDragOverColumn(null);
+                    (e.currentTarget as HTMLElement).style.opacity = '1';
+                }}
+                className={`w-full bg-white rounded-xl border border-gray-200 hover:border-blue-200 hover:shadow-md transition-all text-left group cursor-grab active:cursor-grabbing ${compact ? 'p-2.5' : 'p-4'} ${draggedTicket === ticket.id ? 'opacity-50 scale-95' : ''}`}
             >
                 <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-mono text-gray-400">{ticket.ticket_number}</span>
@@ -474,14 +508,44 @@ export default function ClientPortal() {
                         {KANBAN_COLUMNS.map(status => {
                             const st = statusConfig[status] || statusConfig.open;
                             const count = grouped[status]?.length || 0;
+                            const isOver = dragOverColumn === status;
                             return (
                                 <div key={status} className="flex-shrink-0 w-64 sm:w-72">
                                     <div className={`bg-gradient-to-r ${st.headerBg} rounded-t-xl px-3 py-2 flex items-center justify-between`}>
                                         <span className="text-white text-xs font-bold uppercase tracking-wider">{st.label}</span>
                                         <span className="bg-white/30 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{count}</span>
                                     </div>
-                                    <div className="bg-gray-100/60 rounded-b-xl p-2 space-y-2 min-h-[200px]">
-                                        {count === 0 ? (
+                                    <div
+                                        className={`rounded-b-xl p-2 space-y-2 min-h-[200px] transition-all duration-200 ${
+                                            isOver
+                                                ? 'bg-blue-100/80 border-2 border-dashed border-blue-400 shadow-inner'
+                                                : 'bg-gray-100/60'
+                                        }`}
+                                        onDragOver={(e) => {
+                                            e.preventDefault();
+                                            e.dataTransfer.dropEffect = 'move';
+                                            setDragOverColumn(status);
+                                        }}
+                                        onDragLeave={() => setDragOverColumn(null)}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            setDragOverColumn(null);
+                                            const ticketId = parseInt(e.dataTransfer.getData('text/plain'));
+                                            if (ticketId && !isNaN(ticketId)) {
+                                                const ticket = tickets.find(t => t.id === ticketId);
+                                                if (ticket && ticket.status !== status) {
+                                                    updateTicketStatus(ticketId, status);
+                                                }
+                                            }
+                                            setDraggedTicket(null);
+                                        }}
+                                    >
+                                        {isOver && draggedTicket && (
+                                            <div className="border-2 border-dashed border-blue-300 rounded-xl p-3 text-center text-xs text-blue-500 font-medium bg-blue-50/50">
+                                                Soltar aquí → {st.label}
+                                            </div>
+                                        )}
+                                        {count === 0 && !isOver ? (
                                             <p className="text-center text-gray-400 text-xs py-8">Sin tickets</p>
                                         ) : (
                                             grouped[status].map(ticket => (
