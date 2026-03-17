@@ -10,7 +10,11 @@ interface TicketType {
     status: string;
     priority: string;
     category?: string;
+    ticket_type?: string;
     assigned_to_name?: string;
+    estimated_hours?: number;
+    actual_hours?: number;
+    estimated_date?: string;
     created_at: string;
     updated_at?: string;
     closed_at?: string;
@@ -24,12 +28,23 @@ interface CommentType {
     created_at: string;
 }
 
-const statusConfig: Record<string, { label: string; color: string; bg: string; headerBg: string }> = {
-    open: { label: 'Abierto', color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200', headerBg: 'from-yellow-400 to-amber-500' },
-    in_progress: { label: 'En Progreso', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', headerBg: 'from-blue-400 to-blue-600' },
-    pending: { label: 'Pendiente', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', headerBg: 'from-orange-400 to-orange-600' },
-    resolved: { label: 'Resuelto', color: 'text-green-700', bg: 'bg-green-50 border-green-200', headerBg: 'from-green-400 to-emerald-600' },
-    closed: { label: 'Cerrado', color: 'text-gray-700', bg: 'bg-gray-50 border-gray-200', headerBg: 'from-gray-400 to-gray-600' },
+interface KpiData {
+    total: number;
+    by_status: Record<string, number>;
+    by_type: Record<string, number>;
+    total_estimated_hours: number;
+    total_actual_hours: number;
+    avg_hours_per_ticket: number;
+    avg_resolution_days: number;
+    resolved_count: number;
+}
+
+const statusConfig: Record<string, { label: string; color: string; bg: string; headerBg: string; icon: string }> = {
+    open: { label: 'Abierto', color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200', headerBg: 'from-yellow-400 to-amber-500', icon: '📋' },
+    in_progress: { label: 'En Progreso', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', headerBg: 'from-blue-400 to-blue-600', icon: '🔄' },
+    pending: { label: 'Pendiente', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', headerBg: 'from-orange-400 to-orange-600', icon: '⏳' },
+    resolved: { label: 'Resuelto', color: 'text-green-700', bg: 'bg-green-50 border-green-200', headerBg: 'from-green-400 to-emerald-600', icon: '✅' },
+    closed: { label: 'Cerrado', color: 'text-gray-700', bg: 'bg-gray-50 border-gray-200', headerBg: 'from-gray-400 to-gray-600', icon: '🔒' },
 };
 
 const priorityConfig: Record<string, { label: string; color: string; dot: string }> = {
@@ -37,6 +52,12 @@ const priorityConfig: Record<string, { label: string; color: string; dot: string
     medium: { label: 'Media', color: 'text-yellow-600', dot: 'bg-yellow-400' },
     high: { label: 'Alta', color: 'text-orange-600', dot: 'bg-orange-400' },
     critical: { label: 'Crítica', color: 'text-red-600', dot: 'bg-red-500' },
+};
+
+const typeConfig: Record<string, { label: string; icon: string; color: string }> = {
+    bug: { label: 'Bug', icon: '🐛', color: 'text-red-600 bg-red-50 border-red-200' },
+    feature: { label: 'Requerimiento', icon: '✨', color: 'text-purple-600 bg-purple-50 border-purple-200' },
+    consultation: { label: 'Consulta', icon: '💬', color: 'text-blue-600 bg-blue-50 border-blue-200' },
 };
 
 const KANBAN_COLUMNS = ['open', 'in_progress', 'pending', 'resolved', 'closed'];
@@ -49,15 +70,17 @@ export default function ClientPortal() {
     const [loginError, setLoginError] = useState('');
     const [loginLoading, setLoginLoading] = useState(false);
 
-    const [view, setView] = useState<'list' | 'kanban' | 'create' | 'detail'>('list');
+    const [view, setView] = useState<'list' | 'kanban' | 'create' | 'detail' | 'kpis'>('list');
     const [tickets, setTickets] = useState<TicketType[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
     const [loading, setLoading] = useState(false);
+    const [kpis, setKpis] = useState<KpiData | null>(null);
 
     // Create form
     const [subject, setSubject] = useState('');
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState('medium');
+    const [ticketType, setTicketType] = useState('consultation');
     const [creating, setCreating] = useState(false);
 
     // Comment
@@ -68,8 +91,12 @@ export default function ClientPortal() {
     const [draggedTicket, setDraggedTicket] = useState<number | null>(null);
     const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
+    // Resolve modal
+    const [resolveModal, setResolveModal] = useState<{ticketId: number; targetStatus: string} | null>(null);
+    const [resolveHours, setResolveHours] = useState('');
+
     useEffect(() => {
-        if (token) fetchTickets();
+        if (token) { fetchTickets(); fetchKpis(); }
     }, [token]);
 
     const headers = () => ({
@@ -123,12 +150,18 @@ export default function ClientPortal() {
         finally { setLoading(false); }
     }
 
+    async function fetchKpis() {
+        try {
+            const res = await fetch(`${API}/kpis`, { headers: headers() });
+            if (res.ok) setKpis(await res.json());
+        } catch { /* ignore */ }
+    }
+
     async function fetchTicketDetail(id: number) {
         try {
             const res = await fetch(`${API}/tickets/${id}`, { headers: headers() });
             if (res.status === 401) { logout(); return; }
-            const data = await res.json();
-            setSelectedTicket(data);
+            setSelectedTicket(await res.json());
             setView('detail');
         } catch { /* ignore */ }
     }
@@ -141,11 +174,11 @@ export default function ClientPortal() {
             const res = await fetch(`${API}/tickets`, {
                 method: 'POST',
                 headers: headers(),
-                body: JSON.stringify({ subject, description, priority }),
+                body: JSON.stringify({ subject, description, priority, ticket_type: ticketType }),
             });
             if (res.ok) {
-                setSubject(''); setDescription(''); setPriority('medium');
-                fetchTickets();
+                setSubject(''); setDescription(''); setPriority('medium'); setTicketType('consultation');
+                fetchTickets(); fetchKpis();
                 setView('list');
             }
         } catch { /* ignore */ }
@@ -167,22 +200,35 @@ export default function ClientPortal() {
         finally { setCommenting(false); }
     }
 
-    async function updateTicketStatus(ticketId: number, newStatus: string) {
-        // Optimistic update
+    async function updateTicketStatus(ticketId: number, newStatus: string, actualHours?: number) {
+        // If moving to resolved/closed, show modal for hours
+        if ((newStatus === 'resolved' || newStatus === 'closed') && actualHours === undefined) {
+            setResolveModal({ ticketId, targetStatus: newStatus });
+            return;
+        }
+
         setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
         try {
+            const body: Record<string, unknown> = { status: newStatus };
+            if (actualHours !== undefined) body.actual_hours = actualHours;
             const res = await fetch(`${API}/tickets/${ticketId}/status`, {
                 method: 'PATCH',
                 headers: headers(),
-                body: JSON.stringify({ status: newStatus }),
+                body: JSON.stringify(body),
             });
-            if (!res.ok) {
-                // Revert on failure
-                fetchTickets();
-            }
+            if (!res.ok) fetchTickets();
+            else { fetchTickets(); fetchKpis(); }
         } catch {
             fetchTickets();
         }
+    }
+
+    function handleResolveConfirm() {
+        if (!resolveModal) return;
+        const hours = parseFloat(resolveHours) || 0;
+        updateTicketStatus(resolveModal.ticketId, resolveModal.targetStatus, hours);
+        setResolveModal(null);
+        setResolveHours('');
     }
 
     // ═══════════════════════════════════════
@@ -199,48 +245,26 @@ export default function ClientPortal() {
                         <h1 className="text-3xl font-bold text-white tracking-tight">Zeron 360°</h1>
                         <p className="text-blue-300 mt-1 text-sm">Portal de Soporte</p>
                     </div>
-
                     <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
                         <h2 className="text-xl font-semibold text-white mb-6">Iniciar Sesión</h2>
                         <form onSubmit={handleLogin} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-blue-200 mb-1.5">Email de la empresa</label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="info@empresa.com"
-                                    required
-                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
-                                />
+                                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="info@empresa.com" required
+                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-blue-400 transition-all" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-blue-200 mb-1.5">Contraseña</label>
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    required
-                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
-                                />
+                                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required
+                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-blue-400 transition-all" />
                             </div>
-                            {loginError && (
-                                <div className="px-4 py-2.5 bg-red-500/20 border border-red-400/30 rounded-xl text-red-200 text-sm">
-                                    {loginError}
-                                </div>
-                            )}
-                            <button
-                                type="submit"
-                                disabled={loginLoading}
-                                className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all disabled:opacity-50"
-                            >
+                            {loginError && <div className="px-4 py-2.5 bg-red-500/20 border border-red-400/30 rounded-xl text-red-200 text-sm">{loginError}</div>}
+                            <button type="submit" disabled={loginLoading}
+                                className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-xl transition-all disabled:opacity-50">
                                 {loginLoading ? 'Verificando...' : 'Acceder al Portal'}
                             </button>
                         </form>
-                        <p className="text-center text-white/40 text-xs mt-6">
-                            Usá el email y contraseña proporcionados por tu proveedor
-                        </p>
+                        <p className="text-center text-white/40 text-xs mt-6">Usá el email y contraseña proporcionados por tu proveedor</p>
                     </div>
                 </div>
             </div>
@@ -248,7 +272,36 @@ export default function ClientPortal() {
     }
 
     // ═══════════════════════════════════════
-    //  HEADER
+    //  RESOLVE HOURS MODAL
+    // ═══════════════════════════════════════
+    const ResolveModal = () => {
+        if (!resolveModal) return null;
+        const targetLabel = statusConfig[resolveModal.targetStatus]?.label || resolveModal.targetStatus;
+        return (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setResolveModal(null)}>
+                <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">Marcar como {targetLabel}</h3>
+                    <p className="text-sm text-gray-500 mb-4">¿Cuántas horas llevó resolver este ticket?</p>
+                    <input type="number" step="0.5" min="0" value={resolveHours} onChange={(e) => setResolveHours(e.target.value)}
+                        placeholder="Ej: 2.5" autoFocus
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400 mb-4" />
+                    <div className="flex gap-2">
+                        <button onClick={() => setResolveModal(null)}
+                            className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button onClick={handleResolveConfirm}
+                            className="flex-1 py-2.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md">
+                            Confirmar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // ═══════════════════════════════════════
+    //  HEADER  +  NAV
     // ═══════════════════════════════════════
     const Header = () => (
         <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
@@ -262,17 +315,24 @@ export default function ClientPortal() {
                         <p className="text-xs text-gray-500">{clientName}</p>
                     </div>
                 </div>
-                <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500 transition-colors font-medium">
-                    Cerrar sesión
-                </button>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => { setView('kpis'); fetchKpis(); }}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${view === 'kpis' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}>
+                        📊 KPIs
+                    </button>
+                    <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500 transition-colors font-medium">
+                        Cerrar sesión
+                    </button>
+                </div>
             </div>
         </header>
     );
 
-    // ═══════ TICKET CARD (reused in both views) ═══════
+    // ═══════ TICKET CARD ═══════
     const TicketCard = ({ ticket, compact = false }: { ticket: TicketType; compact?: boolean }) => {
         const st = statusConfig[ticket.status] || statusConfig.open;
         const pr = priorityConfig[ticket.priority] || priorityConfig.medium;
+        const tt = typeConfig[ticket.ticket_type || 'consultation'] || typeConfig.consultation;
         return (
             <button
                 onClick={() => fetchTicketDetail(ticket.id)}
@@ -290,8 +350,9 @@ export default function ClientPortal() {
                 }}
                 className={`w-full bg-white rounded-xl border border-gray-200 hover:border-blue-200 hover:shadow-md transition-all text-left group cursor-grab active:cursor-grabbing ${compact ? 'p-2.5' : 'p-4'} ${draggedTicket === ticket.id ? 'opacity-50 scale-95' : ''}`}
             >
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                     <span className="text-[10px] font-mono text-gray-400">{ticket.ticket_number}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${tt.color}`}>{tt.icon} {tt.label}</span>
                     {!compact && <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${st.bg} ${st.color}`}>{st.label}</span>}
                     <span className="flex items-center gap-1 text-[10px] font-medium">
                         <span className={`w-1.5 h-1.5 rounded-full ${pr.dot}`}></span>
@@ -299,10 +360,12 @@ export default function ClientPortal() {
                     </span>
                 </div>
                 <h3 className={`font-semibold text-gray-900 group-hover:text-blue-600 transition-colors ${compact ? 'text-xs line-clamp-2' : 'text-sm truncate'}`}>{ticket.subject}</h3>
-                <div className="flex items-center justify-between mt-1.5">
-                    <p className="text-[10px] text-gray-400">
-                        {new Date(ticket.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}
-                    </p>
+                <div className="flex items-center justify-between mt-1.5 gap-2">
+                    <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                        <span>{new Date(ticket.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}</span>
+                        {ticket.actual_hours != null && <span className="text-green-600 font-medium">⏱ {ticket.actual_hours}h</span>}
+                        {ticket.estimated_hours != null && !ticket.actual_hours && <span className="text-blue-500 font-medium">~{ticket.estimated_hours}h est.</span>}
+                    </div>
                     {ticket.assigned_to_name && (
                         <span className="flex items-center gap-1 text-[10px] text-gray-500">
                             <span className="w-4 h-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-[8px] font-bold">
@@ -317,25 +380,154 @@ export default function ClientPortal() {
     };
 
     // ═══════════════════════════════════════
+    //  VIEW TOGGLE
+    // ═══════════════════════════════════════
+    const ViewToggle = ({ current }: { current: 'list' | 'kanban' }) => (
+        <div className="flex items-center gap-2">
+            <div className="flex bg-gray-100 rounded-lg p-0.5">
+                <button onClick={() => setView('list')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${current === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                    ☰ Lista
+                </button>
+                <button onClick={() => setView('kanban')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${current === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                    ▦ Kanban
+                </button>
+            </div>
+            <button onClick={() => setView('create')}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all">
+                + Nuevo Ticket
+            </button>
+        </div>
+    );
+
+    // ═══════════════════════════════════════
+    //  KPI DASHBOARD
+    // ═══════════════════════════════════════
+    if (view === 'kpis') {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <Header />
+                <ResolveModal />
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+                    <button onClick={() => setView('list')} className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mb-4">← Volver a tickets</button>
+                    <h2 className="text-xl font-bold text-gray-900 mb-5">📊 KPIs de Soporte</h2>
+
+                    {!kpis ? <p className="text-gray-500">Cargando KPIs...</p> : (
+                        <>
+                            {/* Summary cards */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                                <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                                    <p className="text-2xl font-bold text-gray-900">{kpis.total}</p>
+                                    <p className="text-xs text-gray-500 mt-1">Total Tickets</p>
+                                </div>
+                                <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                                    <p className="text-2xl font-bold text-green-600">{kpis.resolved_count}</p>
+                                    <p className="text-xs text-gray-500 mt-1">Resueltos</p>
+                                </div>
+                                <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                                    <p className="text-2xl font-bold text-blue-600">{kpis.total_actual_hours}h</p>
+                                    <p className="text-xs text-gray-500 mt-1">Horas Reales</p>
+                                </div>
+                                <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                                    <p className="text-2xl font-bold text-purple-600">{kpis.avg_hours_per_ticket}h</p>
+                                    <p className="text-xs text-gray-500 mt-1">Promedio/Ticket</p>
+                                </div>
+                            </div>
+
+                            {/* By Status */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                                    <h3 className="text-sm font-bold text-gray-700 mb-3">Tickets por Estado</h3>
+                                    <div className="space-y-2">
+                                        {KANBAN_COLUMNS.map(s => {
+                                            const st = statusConfig[s];
+                                            const count = kpis.by_status[s] || 0;
+                                            const pct = kpis.total > 0 ? (count / kpis.total) * 100 : 0;
+                                            return (
+                                                <div key={s}>
+                                                    <div className="flex items-center justify-between text-xs mb-0.5">
+                                                        <span className="font-medium text-gray-600">{st.icon} {st.label}</span>
+                                                        <span className="font-bold text-gray-900">{count}</span>
+                                                    </div>
+                                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div className={`h-full bg-gradient-to-r ${st.headerBg} rounded-full transition-all`} style={{ width: `${pct}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                                    <h3 className="text-sm font-bold text-gray-700 mb-3">Tickets por Tipo</h3>
+                                    <div className="space-y-3">
+                                        {Object.entries(typeConfig).map(([key, tc]) => {
+                                            const count = kpis.by_type[key] || 0;
+                                            const pct = kpis.total > 0 ? (count / kpis.total) * 100 : 0;
+                                            return (
+                                                <div key={key}>
+                                                    <div className="flex items-center justify-between text-xs mb-0.5">
+                                                        <span className="font-medium text-gray-600">{tc.icon} {tc.label}</span>
+                                                        <span className="font-bold text-gray-900">{count}</span>
+                                                    </div>
+                                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all" style={{ width: `${pct}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="mt-4 pt-4 border-t border-gray-100">
+                                        <h3 className="text-sm font-bold text-gray-700 mb-2">Horas</h3>
+                                        <div className="grid grid-cols-2 gap-3 text-center">
+                                            <div className="bg-blue-50 rounded-lg p-2">
+                                                <p className="text-lg font-bold text-blue-700">{kpis.total_estimated_hours}h</p>
+                                                <p className="text-[10px] text-blue-500">Estimadas</p>
+                                            </div>
+                                            <div className="bg-green-50 rounded-lg p-2">
+                                                <p className="text-lg font-bold text-green-700">{kpis.total_actual_hours}h</p>
+                                                <p className="text-[10px] text-green-500">Reales</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3 bg-gray-50 rounded-lg p-3 text-center">
+                                        <p className="text-sm font-bold text-gray-700">{kpis.avg_resolution_days} días</p>
+                                        <p className="text-[10px] text-gray-500">Tiempo promedio de resolución</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // ═══════════════════════════════════════
     //  TICKET DETAIL
     // ═══════════════════════════════════════
     if (view === 'detail' && selectedTicket) {
         const st = statusConfig[selectedTicket.status] || statusConfig.open;
         const pr = priorityConfig[selectedTicket.priority] || priorityConfig.medium;
+        const tt = typeConfig[selectedTicket.ticket_type || 'consultation'] || typeConfig.consultation;
         return (
             <div className="min-h-screen bg-gray-50">
                 <Header />
+                <ResolveModal />
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
-                    <button onClick={() => { setView('list'); fetchTickets(); }} className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mb-4">
-                        ← Volver a tickets
-                    </button>
-
+                    <button onClick={() => { setView('list'); fetchTickets(); }} className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mb-4">← Volver a tickets</button>
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                         <div className="px-6 py-5 border-b border-gray-100">
                             <div className="flex items-start justify-between gap-3 flex-wrap">
                                 <div>
-                                    <span className="text-xs font-mono text-gray-400">{selectedTicket.ticket_number}</span>
-                                    <h2 className="text-lg font-bold text-gray-900 mt-0.5">{selectedTicket.subject}</h2>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-mono text-gray-400">{selectedTicket.ticket_number}</span>
+                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${tt.color}`}>{tt.icon} {tt.label}</span>
+                                    </div>
+                                    <h2 className="text-lg font-bold text-gray-900">{selectedTicket.subject}</h2>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${st.bg} ${st.color}`}>{st.label}</span>
@@ -349,10 +541,12 @@ export default function ClientPortal() {
                                         <span className="w-5 h-5 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-[9px] font-bold">
                                             {selectedTicket.assigned_to_name.charAt(0).toUpperCase()}
                                         </span>
-                                        Asignado a: <strong className="text-gray-600">{selectedTicket.assigned_to_name}</strong>
+                                        Asignado: <strong className="text-gray-600">{selectedTicket.assigned_to_name}</strong>
                                     </span>
                                 )}
-                                {selectedTicket.closed_at && <span>Cerrado: {new Date(selectedTicket.closed_at).toLocaleString('es-AR')}</span>}
+                                {selectedTicket.estimated_hours != null && <span className="text-blue-500 font-medium">~{selectedTicket.estimated_hours}h estimadas</span>}
+                                {selectedTicket.actual_hours != null && <span className="text-green-600 font-medium">⏱ {selectedTicket.actual_hours}h reales</span>}
+                                {selectedTicket.estimated_date && <span>📅 Tentativa: {new Date(selectedTicket.estimated_date).toLocaleDateString('es-AR')}</span>}
                             </div>
                         </div>
 
@@ -364,23 +558,21 @@ export default function ClientPortal() {
                         )}
 
                         <div className="px-6 py-4">
-                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                                Conversación ({selectedTicket.comments?.length || 0})
-                            </h3>
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Conversación ({selectedTicket.comments?.length || 0})</h3>
                             {(!selectedTicket.comments || selectedTicket.comments.length === 0) ? (
                                 <p className="text-sm text-gray-400 italic">Sin mensajes aún</p>
                             ) : (
                                 <div className="space-y-3">
                                     {selectedTicket.comments.map(c => (
                                         <div key={c.id} className={`p-3 rounded-xl text-sm ${
-                                            c.comment_type === 'client_reply'
-                                                ? 'bg-blue-50 border border-blue-100 ml-4'
-                                                : 'bg-gray-50 border border-gray-100 mr-4'
+                                            c.comment_type === 'client_reply' ? 'bg-blue-50 border border-blue-100 ml-4'
+                                            : c.comment_type === 'status_change' ? 'bg-amber-50 border border-amber-100 text-center text-amber-700 text-xs italic'
+                                            : 'bg-gray-50 border border-gray-100 mr-4'
                                         }`}>
                                             <p className="text-gray-700 whitespace-pre-wrap">{c.content}</p>
                                             <p className="text-[10px] text-gray-400 mt-1.5">
                                                 {new Date(c.created_at).toLocaleString('es-AR')}
-                                                {c.comment_type === 'client_reply' ? ' · Vos' : ' · Soporte'}
+                                                {c.comment_type === 'client_reply' ? ' · Vos' : c.comment_type === 'status_change' ? '' : ' · Soporte'}
                                             </p>
                                         </div>
                                     ))}
@@ -389,18 +581,10 @@ export default function ClientPortal() {
 
                             {selectedTicket.status !== 'closed' && (
                                 <form onSubmit={addComment} className="mt-4 flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={comment}
-                                        onChange={(e) => setComment(e.target.value)}
-                                        placeholder="Escribí un mensaje..."
-                                        className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={commenting || !comment.trim()}
-                                        className="px-4 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-blue-600 transition-colors disabled:opacity-50"
-                                    >
+                                    <input type="text" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Escribí un mensaje..."
+                                        className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400" />
+                                    <button type="submit" disabled={commenting || !comment.trim()}
+                                        className="px-4 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-blue-600 disabled:opacity-50">
                                         {commenting ? '...' : 'Enviar'}
                                     </button>
                                 </form>
@@ -420,41 +604,59 @@ export default function ClientPortal() {
             <div className="min-h-screen bg-gray-50">
                 <Header />
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
-                    <button onClick={() => setView('list')} className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mb-4">
-                        ← Volver
-                    </button>
+                    <button onClick={() => setView('list')} className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium mb-4">← Volver</button>
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                         <h2 className="text-lg font-bold text-gray-900 mb-5">Nuevo Ticket de Soporte</h2>
                         <form onSubmit={createTicket} className="space-y-4">
+                            {/* Type */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de solicitud *</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {Object.entries(typeConfig).map(([key, tc]) => (
+                                        <button key={key} type="button" onClick={() => setTicketType(key)}
+                                            className={`p-3 rounded-xl border-2 text-center transition-all ${ticketType === key ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-gray-300'}`}>
+                                            <span className="text-xl">{tc.icon}</span>
+                                            <p className="text-xs font-semibold text-gray-700 mt-1">{tc.label}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Subject */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Asunto *</label>
                                 <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)}
                                     placeholder="Resumen breve del problema" required maxLength={120}
                                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400" />
                             </div>
+
+                            {/* Description */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
                                 <textarea value={description} onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Describí el problema con el mayor detalle posible..." required rows={5}
                                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
                             </div>
+
+                            {/* Priority */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Criticidad</label>
                                 <select value={priority} onChange={(e) => setPriority(e.target.value)}
                                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-400">
                                     <option value="low">🟢 Baja</option>
                                     <option value="medium">🟡 Media</option>
-                                    <option value="high">🟠 Alta</option>
+                                    <option value="high">🟠 Alta / Urgente</option>
                                     <option value="critical">🔴 Crítica</option>
                                 </select>
                             </div>
+
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setView('list')}
-                                    className="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+                                    className="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50">
                                     Cancelar
                                 </button>
                                 <button type="submit" disabled={creating}
-                                    className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-50">
+                                    className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md disabled:opacity-50">
                                     {creating ? 'Creando...' : 'Crear Ticket'}
                                 </button>
                             </div>
@@ -473,35 +675,20 @@ export default function ClientPortal() {
         KANBAN_COLUMNS.forEach(s => grouped[s] = []);
         tickets.forEach(t => {
             if (grouped[t.status]) grouped[t.status].push(t);
-            else if (grouped.open) grouped.open.push(t);
+            else grouped.open?.push(t);
         });
 
         return (
             <div className="min-h-screen bg-gray-50">
                 <Header />
+                <ResolveModal />
                 <div className="max-w-full mx-auto px-4 sm:px-6 py-6">
                     <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900">Mis Tickets</h2>
                             <p className="text-sm text-gray-500">{tickets.length} tickets</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            {/* View Toggle */}
-                            <div className="flex bg-gray-100 rounded-lg p-0.5">
-                                <button onClick={() => setView('list')}
-                                    className="px-3 py-1.5 text-xs font-medium rounded-md transition-all text-gray-500 hover:text-gray-700">
-                                    ☰ Lista
-                                </button>
-                                <button
-                                    className="px-3 py-1.5 text-xs font-medium rounded-md transition-all bg-white text-gray-900 shadow-sm">
-                                    ▦ Kanban
-                                </button>
-                            </div>
-                            <button onClick={() => setView('create')}
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all">
-                                + Nuevo Ticket
-                            </button>
-                        </div>
+                        <ViewToggle current="kanban" />
                     </div>
 
                     <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 'calc(100vh - 200px)' }}>
@@ -517,15 +704,9 @@ export default function ClientPortal() {
                                     </div>
                                     <div
                                         className={`rounded-b-xl p-2 space-y-2 min-h-[200px] transition-all duration-200 ${
-                                            isOver
-                                                ? 'bg-blue-100/80 border-2 border-dashed border-blue-400 shadow-inner'
-                                                : 'bg-gray-100/60'
+                                            isOver ? 'bg-blue-100/80 border-2 border-dashed border-blue-400 shadow-inner' : 'bg-gray-100/60'
                                         }`}
-                                        onDragOver={(e) => {
-                                            e.preventDefault();
-                                            e.dataTransfer.dropEffect = 'move';
-                                            setDragOverColumn(status);
-                                        }}
+                                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverColumn(status); }}
                                         onDragLeave={() => setDragOverColumn(null)}
                                         onDrop={(e) => {
                                             e.preventDefault();
@@ -568,29 +749,14 @@ export default function ClientPortal() {
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
+            <ResolveModal />
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
                 <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                     <div>
                         <h2 className="text-xl font-bold text-gray-900">Mis Tickets</h2>
                         <p className="text-sm text-gray-500">{tickets.length} tickets en total</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        {/* View Toggle */}
-                        <div className="flex bg-gray-100 rounded-lg p-0.5">
-                            <button
-                                className="px-3 py-1.5 text-xs font-medium rounded-md transition-all bg-white text-gray-900 shadow-sm">
-                                ☰ Lista
-                            </button>
-                            <button onClick={() => setView('kanban')}
-                                className="px-3 py-1.5 text-xs font-medium rounded-md transition-all text-gray-500 hover:text-gray-700">
-                                ▦ Kanban
-                            </button>
-                        </div>
-                        <button onClick={() => setView('create')}
-                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all">
-                            + Nuevo Ticket
-                        </button>
-                    </div>
+                    <ViewToggle current="list" />
                 </div>
 
                 {loading ? (
@@ -603,7 +769,7 @@ export default function ClientPortal() {
                         <p className="text-gray-500 font-medium">No tenés tickets aún</p>
                         <p className="text-sm text-gray-400 mt-1">Creá tu primer ticket de soporte</p>
                         <button onClick={() => setView('create')}
-                            className="mt-4 px-5 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors">
+                            className="mt-4 px-5 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600">
                             Crear Ticket
                         </button>
                     </div>
