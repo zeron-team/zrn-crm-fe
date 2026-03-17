@@ -73,7 +73,7 @@ export default function NotificationBar() {
             // WhatsApp unread count
             let waCount = 0;
             try {
-                const waRes = await api.get('/whatsapp/api/chats');
+                const waRes = await api.get('/whatsapp/chats');
                 if (waRes.data?.length) {
                     waCount = waRes.data.reduce((sum: number, chat: any) => sum + (chat.unread_count || 0), 0);
                 }
