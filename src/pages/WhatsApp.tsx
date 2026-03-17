@@ -16,7 +16,7 @@ interface WAMessage {
     media_type: string | null; timestamp: string; is_read: boolean;
 }
 
-const WA_API = '/api/v1/wa';
+const WA_API = '/api/v1/whatsapp';
 
 export default function WhatsApp() {
     const [status, setStatus] = useState<string>('disconnected');
