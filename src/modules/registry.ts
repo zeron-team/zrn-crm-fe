@@ -40,6 +40,7 @@ export interface ModuleManifest {
 }
 
 // ─── Lazy Page Imports ───────────────────────────────────
+// LandingPage is rendered as a public route in App.tsx, not via registry
 const Home = lazy(() => import("../pages/Home"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const DashboardHub = lazy(() => import("../pages/DashboardHub"));
@@ -91,7 +92,7 @@ const Accounting = lazy(() => import("../pages/Accounting"));
 const coreModule: ModuleManifest = {
     name: "Principal",
     slug: "core",
-    version: "5.0.0",
+    version: "8.2.5",
     description: "Módulo base: inicio, dashboard, notas, calendario",
     icon: "LayoutDashboard",
     category: "core",
@@ -102,14 +103,15 @@ const coreModule: ModuleManifest = {
         icon: "LayoutDashboard",
         defaultOpen: true,
         items: [
-            { to: "/", label: "Inicio", icon: "Home" },
+            { to: "/dashboard", label: "Inicio", icon: "Home" },
             { to: "/dashboard", label: "Panel de Control", icon: "LayoutDashboard" },
             { to: "/dashboards", label: "Dashboards", icon: "BarChart3" },
+            { to: "/news", label: "Noticias", icon: "Newspaper" },
             { to: "/notes", label: "Notas", icon: "StickyNote" },
         ],
     },
     routes: [
-        { path: "", component: Home },
+        { path: "news", component: Home },
         { path: "dashboard", component: Dashboard },
         { path: "dashboards", component: DashboardHub },
         { path: "notes", component: Notes },
@@ -121,7 +123,7 @@ const coreModule: ModuleManifest = {
 const crmModule: ModuleManifest = {
     name: "CRM",
     slug: "crm",
-    version: "5.0.0",
+    version: "8.2.5",
     description: "Gestión comercial: leads, cuentas, contactos, presupuestos",
     icon: "Briefcase",
     category: "business",
@@ -157,7 +159,7 @@ const crmModule: ModuleManifest = {
 const projectsModule: ModuleManifest = {
     name: "Proyectos",
     slug: "projects",
-    version: "5.0.0",
+    version: "8.2.5",
     description: "Gestión de proyectos con tablero Kanban y Wiki",
     icon: "FolderKanban",
     category: "business",
@@ -182,7 +184,7 @@ const projectsModule: ModuleManifest = {
 const hrModule: ModuleManifest = {
     name: "RRHH",
     slug: "hr",
-    version: "5.0.0",
+    version: "8.2.5",
     description: "Recursos Humanos: empleados, fichadas, liquidación",
     icon: "UserCheck",
     category: "business",
@@ -210,7 +212,7 @@ const hrModule: ModuleManifest = {
 const communicationsModule: ModuleManifest = {
     name: "Comunicaciones",
     slug: "communications",
-    version: "5.1.0",
+    version: "8.2.5",
     description: "Email corporativo, WhatsApp integrado, Bot Flows",
     icon: "Mail",
     category: "business",
@@ -236,7 +238,7 @@ const communicationsModule: ModuleManifest = {
 const erpModule: ModuleManifest = {
     name: "ERP",
     slug: "erp",
-    version: "5.0.0",
+    version: "8.2.5",
     description: "Facturación, ARCA/AFIP, remitos, inventario, depósitos",
     icon: "Receipt",
     category: "business",
@@ -278,7 +280,7 @@ const erpModule: ModuleManifest = {
 const accountingModule: ModuleManifest = {
     name: "Contabilidad",
     slug: "accounting",
-    version: "5.0.0",
+    version: "8.2.5",
     description: "Liquidaciones de empresas y obligaciones fiscales",
     icon: "Calculator",
     category: "business",
@@ -300,7 +302,7 @@ const accountingModule: ModuleManifest = {
 const catalogModule: ModuleManifest = {
     name: "Catálogo",
     slug: "catalog",
-    version: "5.0.0",
+    version: "8.2.5",
     description: "Productos, servicios y categorías",
     icon: "Package",
     category: "business",
@@ -324,7 +326,7 @@ const catalogModule: ModuleManifest = {
 const systemModule: ModuleManifest = {
     name: "Sistema",
     slug: "system",
-    version: "5.0.0",
+    version: "8.2.5",
     description: "Configuración, seguridad, auditoría, roles",
     icon: "Cog",
     category: "core",

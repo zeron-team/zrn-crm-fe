@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import {
     Users, Building2, Contact, Package, Clock,
     Truck, FileText, Calendar, Settings, LineChart, Globe, UserPlus, Menu, X, LogOut,
-    FolderTree, Ticket, LayoutDashboard, ChevronDown, ChevronRight, Home,
+    FolderTree, Ticket, LayoutDashboard, ChevronDown, ChevronRight, Home, Newspaper,
     Briefcase, HeadphonesIcon, Receipt, BookOpen, Cog, CreditCard, ShoppingCart, Warehouse, Building, BarChart3, Mail, MessageCircle, StickyNote, FolderKanban, UserCheck, Shield, Banknote
 } from "lucide-react";
 import SidebarItem from "./SidebarItem";
@@ -20,7 +20,7 @@ import registry from "../modules/registry";
 
 // Icon lookup map for dynamic sidebar rendering from module manifests
 const ICON_MAP: Record<string, any> = {
-    Home, Users, Building2, Contact, Package, Clock, Truck, FileText, Calendar,
+    Home, Newspaper, Users, Building2, Contact, Package, Clock, Truck, FileText, Calendar,
     Settings, LineChart, Globe, UserPlus, Menu, X, LogOut, FolderTree, Ticket,
     LayoutDashboard, ChevronDown, ChevronRight, Briefcase, HeadphonesIcon, Receipt,
     BookOpen, Cog, CreditCard, ShoppingCart, Warehouse, Building, BarChart3,

@@ -11,7 +11,7 @@ import {
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
-const VERSION = "6.1.0";
+const VERSION = "8.2.5";
 
 interface ModuleCard {
     title: string;

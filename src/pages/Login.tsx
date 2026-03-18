@@ -21,7 +21,7 @@ export default function Login() {
         setLoading(true);
         try {
             await login(email, password);
-            navigate("/", { replace: true });
+            navigate("/dashboard", { replace: true });
         } catch (err: any) {
             let msg = t('login.error.generic');
             if (err?.response?.data?.detail) {

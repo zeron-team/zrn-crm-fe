@@ -7,11 +7,15 @@ import Login from "./pages/Login";
 import registry from "./modules/registry";
 
 const ClientPortal = lazy(() => import("./pages/ClientPortal"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 
 /**
  * App.tsx — Dynamic route generation from Module Registry
  * Routes are no longer hardcoded. Each module declares its routes
  * in src/modules/registry.ts and they are rendered here automatically.
+ *
+ * "/" is a PUBLIC landing page (no auth required).
+ * All other routes require authentication via ProtectedRoute + Layout.
  */
 function App() {
   const allRoutes = registry.getAllRoutes();
@@ -28,10 +32,13 @@ function App() {
           </div>
         }>
           <Routes>
+            {/* ── Public routes ── */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/portal" element={<ClientPortal />} />
+
+            {/* ── Protected routes (require auth + Layout sidebar) ── */}
             <Route
-              path="/"
               element={
                 <ProtectedRoute>
                   <Layout />
@@ -42,7 +49,7 @@ function App() {
               {allRoutes.map((route) => (
                 <Route
                   key={route.path || "index"}
-                  {...(route.path === "" ? { index: true } : { path: route.path })}
+                  path={route.path || undefined}
                   element={<route.component />}
                 />
               ))}
