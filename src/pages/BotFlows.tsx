@@ -54,6 +54,7 @@ const nodeColors: Record<string, { bg: string; border: string; icon: string; lab
     assign_agent: { bg: 'bg-red-50', border: 'border-red-300', icon: '👤', label: 'Asignar Agente' },
     ticket_lookup: { bg: 'bg-cyan-50', border: 'border-cyan-300', icon: '🎫', label: 'Consultar Tickets' },
     ticket_create: { bg: 'bg-teal-50', border: 'border-teal-300', icon: '📝', label: 'Crear Ticket' },
+    sales_lookup: { bg: 'bg-indigo-50', border: 'border-indigo-300', icon: '📊', label: 'Consultar Ventas' },
 };
 
 function FlowNode({ data, type, selected }: NodeProps) {
@@ -99,6 +100,9 @@ function FlowNode({ data, type, selected }: NodeProps) {
                 {type === 'ticket_create' && (
                     <p className="text-xs text-gray-700">Crea un ticket con la descripción del usuario</p>
                 )}
+                {type === 'sales_lookup' && (
+                    <p className="text-xs text-gray-700">Consulta presupuestos y pedidos del contacto</p>
+                )}
             </div>
             {/* Handles */}
             {type !== 'trigger' && <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white" />}
@@ -128,6 +132,7 @@ const nodeTypes = {
     assign_agent: FlowNode,
     ticket_lookup: FlowNode,
     ticket_create: FlowNode,
+    sales_lookup: FlowNode,
 };
 
 // ═══════════════════════════════════════════
@@ -143,6 +148,7 @@ const paletteItems = [
     { type: 'assign_agent', icon: UserCheck, label: 'Asignar Agente', color: 'text-red-600 bg-red-50 border-red-200' },
     { type: 'ticket_lookup', icon: Ticket, label: 'Consultar Tickets', color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
     { type: 'ticket_create', icon: FilePlus2, label: 'Crear Ticket', color: 'text-teal-600 bg-teal-50 border-teal-200' },
+    { type: 'sales_lookup', icon: Ticket, label: 'Consultar Ventas', color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
 ];
 
 // ═══════════════════════════════════════════

@@ -74,6 +74,8 @@ const Inventory = lazy(() => import("../pages/Inventory"));
 const Warehouses = lazy(() => import("../pages/Warehouses"));
 const ExchangeRates = lazy(() => import("../pages/ExchangeRates"));
 const Providers = lazy(() => import("../pages/Providers"));
+const SalesOrders = lazy(() => import("../pages/SalesOrders"));
+const SalesPipeline = lazy(() => import("../pages/SalesPipeline"));
 const Products = lazy(() => import("../pages/Products"));
 const Categories = lazy(() => import("../pages/Categories"));
 const Settings = lazy(() => import("../pages/Settings"));
@@ -245,7 +247,9 @@ const erpModule: ModuleManifest = {
         icon: "Receipt",
         defaultOpen: false,
         items: [
+            { to: "/sales-pipeline", label: "Ventas", icon: "TrendingUp" },
             { to: "/billing", label: "Facturación", icon: "FileText" },
+            { to: "/sales-orders", label: "Órdenes de Pedido", icon: "ClipboardList" },
             { to: "/service-purchases", label: "Compras de Servicios", icon: "CreditCard" },
             { to: "/delivery-notes", label: "Remitos", icon: "Truck" },
             { to: "/payment-orders", label: "Orden de Pago", icon: "CreditCard" },
@@ -256,7 +260,9 @@ const erpModule: ModuleManifest = {
         ],
     },
     routes: [
+        { path: "sales-pipeline", component: SalesPipeline },
         { path: "billing", component: Billing },
+        { path: "sales-orders", component: SalesOrders },
         { path: "finances", component: Finances },
         { path: "service-purchases", component: ServicePurchases },
         { path: "delivery-notes", component: DeliveryNotes },

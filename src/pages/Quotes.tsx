@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/client";
-import { Plus, Pencil, Trash2, FileText, UploadCloud, X, ChevronRight, CreditCard, CheckCircle2, Clock, AlertCircle, ArrowLeft, Receipt, FolderKanban, AlertTriangle, List, LayoutGrid, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, UploadCloud, X, ChevronRight, CreditCard, CheckCircle2, Clock, AlertCircle, ArrowLeft, Receipt, FolderKanban, AlertTriangle, List, LayoutGrid, GripVertical, ClipboardList } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface Quote {
@@ -382,6 +382,21 @@ export default function Quotes() {
         }
     };
 
+    const handleCreateSalesOrder = async (quote: Quote) => {
+        if (quote.status !== 'Accepted') {
+            alert('Solo se pueden generar pedidos de presupuestos aceptados.');
+            return;
+        }
+        try {
+            const res = await api.post(`/sales-orders/from-quote/${quote.id}`);
+            alert(`✅ Pedido ${res.data.order_number} creado exitosamente`);
+            navigate('/sales-orders');
+        } catch (error: any) {
+            const msg = error.response?.data?.detail || 'Error al crear el pedido';
+            alert(msg);
+        }
+    };
+
     const handleStatusChange = async (quoteId: number, newStatus: string) => {
         try {
             const quote = quotes.find(q => q.id === quoteId);
@@ -698,6 +713,11 @@ export default function Quotes() {
                                                     <button onClick={(e) => { e.stopPropagation(); openQuoteDetail(quote); }} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Cuotas">
                                                         <CreditCard size={14} />
                                                     </button>
+                                                    {quote.status === 'Accepted' && (
+                                                        <button onClick={(e) => { e.stopPropagation(); handleCreateSalesOrder(quote); }} className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Generar Pedido">
+                                                            <ClipboardList size={14} />
+                                                        </button>
+                                                    )}
                                                     <button onClick={(e) => { e.stopPropagation(); handleCreateProject(quote); }} className="p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg" title="Crear Proyecto">
                                                         <FolderKanban size={14} />
                                                     </button>
@@ -818,6 +838,15 @@ export default function Quotes() {
                                                 >
                                                     <FolderKanban size={18} />
                                                 </button>
+                                                {quote.status === 'Accepted' && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleCreateSalesOrder(quote); }}
+                                                        className="p-1.5 text-gray-400 hover:text-emerald-600 bg-white hover:bg-emerald-50 rounded-lg shadow-sm border border-transparent hover:border-emerald-100 transition-colors"
+                                                        title="Generar Pedido"
+                                                    >
+                                                        <ClipboardList size={18} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); openEditModal(quote); }}
                                                     className="p-1.5 text-gray-400 hover:text-blue-600 bg-white hover:bg-blue-50 rounded-lg shadow-sm border border-transparent hover:border-blue-100 transition-colors"
